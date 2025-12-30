@@ -29,6 +29,8 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@skeletonlabs/skeleton": "^4.8.0",
+    "@skeletonlabs/skeleton-react": "^4.8.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.27",
     "@types/react": "^19",

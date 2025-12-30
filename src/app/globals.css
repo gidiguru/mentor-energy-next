@@ -1,45 +1,12 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton-react';
+@import '@skeletonlabs/skeleton/themes/crimson';
 
-/* Theme Configuration for mentor.energy */
+/* Custom overrides for mentor.energy */
 @theme {
   /* Font families */
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-
-  /* Primary colors - Cyan for action buttons */
-  --color-primary-50: #ecfeff;
-  --color-primary-100: #cffafe;
-  --color-primary-200: #a5f3fc;
-  --color-primary-300: #67e8f9;
-  --color-primary-400: #22d3ee;
-  --color-primary-500: #06b6d4;
-  --color-primary-600: #0891b2;
-  --color-primary-700: #0e7490;
-  --color-primary-800: #155e75;
-  --color-primary-900: #164e63;
-
-  /* Surface colors - Neutral grays for readability */
-  --color-surface-50: #f8fafc;
-  --color-surface-100: #f1f5f9;
-  --color-surface-200: #e2e8f0;
-  --color-surface-300: #cbd5e1;
-  --color-surface-400: #94a3b8;
-  --color-surface-500: #64748b;
-  --color-surface-600: #475569;
-  --color-surface-700: #334155;
-  --color-surface-800: #1e293b;
-  --color-surface-900: #0f172a;
-
-  /* Brand/Accent color - Logo red for highlights */
-  --color-brand-50: #fef2f4;
-  --color-brand-100: #fee2e6;
-  --color-brand-200: #fecdd4;
-  --color-brand-300: #fda4b1;
-  --color-brand-400: #fa7186;
-  --color-brand-500: #f1435e;
-  --color-brand-600: #d4163c;
-  --color-brand-700: #b91034;
-  --color-brand-800: #9a1131;
-  --color-brand-900: #84132d;
 
   /* Breakpoints matching original */
   --breakpoint-sm: 640px;
@@ -49,102 +16,33 @@
   --breakpoint-2xl: 1536px;
 }
 
-/* CSS Variables for both light and dark modes */
-:root {
-  --background: #ffffff;
-  --foreground: #0f172a;
-  --card: #f8fafc;
-  --card-foreground: #0f172a;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #06b6d4;
-  --primary: #06b6d4;
-  --primary-foreground: #000000;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #d4163c;
-  --accent-foreground: #ffffff;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-}
-
-.dark {
-  --background: #0f172a;
-  --foreground: #f8fafc;
-  --card: #1e293b;
-  --card-foreground: #f8fafc;
-  --border: #334155;
-  --input: #334155;
-  --ring: #22d3ee;
-  --primary: #22d3ee;
-  --primary-foreground: #000000;
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-  --muted: #334155;
-  --muted-foreground: #94a3b8;
-  --accent: #d4163c;
-  --accent-foreground: #ffffff;
-  --destructive: #dc2626;
-  --destructive-foreground: #f8fafc;
-}
-
 /* Base styles */
-* {
-  border-color: var(--border);
-}
-
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
   font-family: var(--font-sans);
+  background-color: var(--body-background-color);
+  color: var(--base-font-color);
 }
 
-/* Custom component classes */
+/* Support for color-scheme dark mode toggle */
+html[style*="color-scheme: dark"] body {
+  background-color: var(--body-background-color-dark);
+  color: var(--base-font-color-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([style*="color-scheme: light"]) body {
+    background-color: var(--body-background-color-dark);
+    color: var(--base-font-color-dark);
+  }
+}
+
+/* Custom component classes that extend Skeleton */
 @layer components {
-  .btn {
-    @apply inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
-  }
-
-  .btn-primary {
-    @apply bg-brand-600 text-white hover:bg-brand-700;
-  }
-
-  .btn-secondary {
-    @apply bg-surface-200 text-surface-900 hover:bg-surface-300 dark:bg-surface-700 dark:text-surface-100 dark:hover:bg-surface-600;
-  }
-
-  .btn-ghost {
-    @apply bg-transparent text-brand-600 hover:bg-brand-50 dark:text-brand-400 dark:hover:bg-brand-900/20;
-  }
-
-  .btn-outline {
-    @apply border-2 border-brand-600 bg-transparent text-brand-600 hover:bg-brand-600 hover:text-white dark:border-brand-400 dark:text-brand-400 dark:hover:bg-brand-400 dark:hover:text-surface-900;
-  }
-
-  .btn-error {
-    @apply bg-red-500 text-white hover:bg-red-600;
-  }
-
-  /* Brand accent button */
-  .btn-brand {
-    @apply bg-brand-600 text-white hover:bg-brand-700;
-  }
-
-  .card {
-    @apply rounded-lg border border-surface-200 bg-white dark:border-surface-700 dark:bg-surface-800;
-  }
-
-  .input {
-    @apply w-full rounded-lg border border-surface-300 bg-white px-4 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-surface-600 dark:bg-surface-800 dark:text-white;
-  }
-
-  /* Typography */
+  /* Typography helpers */
   .h1 {
     @apply text-4xl font-bold tracking-tight md:text-5xl;
   }
@@ -157,9 +55,27 @@ body {
     @apply text-xl font-semibold md:text-2xl;
   }
 
-  /* Brand accent text */
-  .text-brand {
-    @apply text-brand-600 dark:text-brand-500;
+  /* Button compatibility layer - maps to Skeleton presets */
+  .btn-primary {
+    @apply btn preset-filled-primary-500;
+  }
+
+  .btn-secondary {
+    @apply btn preset-filled-surface-200-800;
+  }
+
+  .btn-ghost {
+    @apply btn preset-tonal;
+  }
+
+  .btn-error {
+    @apply btn preset-filled-error-500;
+  }
+
+  /* Input styling */
+  .input {
+    @apply w-full rounded-lg border px-4 py-2.5 text-sm preset-outlined-surface-200-800;
+    background-color: var(--color-surface-50-950);
   }
 }
 
