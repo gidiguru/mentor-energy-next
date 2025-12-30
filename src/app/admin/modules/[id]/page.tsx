@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Loader2, Trash2, Plus, ChevronRight, Video, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Trash2, Plus, ChevronRight, Video, FileText, AlertCircle } from 'lucide-react';
 import FileUpload from '@/components/FileUpload';
 
 interface Page {
@@ -45,6 +45,10 @@ export default function EditModulePage() {
   const [sections, setSections] = useState<Section[]>([]);
   const [newSectionTitle, setNewSectionTitle] = useState('');
   const [addingSection, setAddingSection] = useState(false);
+  const [deletingSection, setDeletingSection] = useState<string | null>(null);
+  const [deletingPage, setDeletingPage] = useState<string | null>(null);
+  const [confirmDeleteSection, setConfirmDeleteSection] = useState<Section | null>(null);
+  const [confirmDeletePage, setConfirmDeletePage] = useState<{ page: Page; sectionId: string } | null>(null);
 
   const [formData, setFormData] = useState({
     moduleId: '',
@@ -138,6 +142,60 @@ export default function EditModulePage() {
       console.error('Failed to add section');
     } finally {
       setAddingSection(false);
+    }
+  };
+
+  const handleDeleteSection = async (sectionId: string) => {
+    setDeletingSection(sectionId);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/admin/modules/${moduleUuid}/sections/${sectionId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setSections(sections.filter(s => s.id !== sectionId));
+        setConfirmDeleteSection(null);
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to delete section');
+      }
+    } catch (err) {
+      setError('Failed to delete section');
+    } finally {
+      setDeletingSection(null);
+    }
+  };
+
+  const handleDeletePage = async (sectionId: string, pageId: string) => {
+    setDeletingPage(pageId);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/admin/modules/${moduleUuid}/sections/${sectionId}/pages/${pageId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setSections(sections.map(section => {
+          if (section.id === sectionId) {
+            return {
+              ...section,
+              pages: section.pages.filter(p => p.id !== pageId),
+            };
+          }
+          return section;
+        }));
+        setConfirmDeletePage(null);
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to delete page');
+      }
+    } catch (err) {
+      setError('Failed to delete page');
+    } finally {
+      setDeletingPage(null);
     }
   };
 
@@ -397,31 +455,48 @@ export default function EditModulePage() {
                   key={section.id}
                   className="border border-surface-200 dark:border-surface-600 rounded-lg overflow-hidden"
                 >
-                  <div className="p-4 bg-surface-50 dark:bg-surface-700 flex items-center justify-between">
-                    <div>
+                  <div className="p-4 bg-surface-50 dark:bg-surface-700 flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
                       <span className="text-sm text-surface-500">Section {index + 1}</span>
-                      <h3 className="font-medium text-surface-900 dark:text-white">{section.title}</h3>
+                      <h3 className="font-medium text-surface-900 dark:text-white truncate">{section.title}</h3>
                     </div>
-                    <Link
-                      href={`/admin/modules/${moduleUuid}/sections/${section.id}/pages/new`}
-                      className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Lesson
-                    </Link>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Link
+                        href={`/admin/modules/${moduleUuid}/sections/${section.id}/pages/new`}
+                        className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 px-2 py-1"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span className="hidden sm:inline">Add Lesson</span>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteSection(section)}
+                        className="p-2 text-surface-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        title="Delete section"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   {section.pages.length > 0 && (
                     <div className="divide-y divide-surface-100 dark:divide-surface-700">
                       {section.pages.map((page) => (
-                        <div key={page.id} className="p-3 flex items-center gap-3 hover:bg-surface-50 dark:hover:bg-surface-700/50">
+                        <div key={page.id} className="p-3 flex items-center gap-3 hover:bg-surface-50 dark:hover:bg-surface-700/50 group">
                           {page.pageType === 'lesson' ? (
-                            <FileText className="w-4 h-4 text-primary-500" />
+                            <FileText className="w-4 h-4 text-primary-500 flex-shrink-0" />
                           ) : (
-                            <Video className="w-4 h-4 text-purple-500" />
+                            <Video className="w-4 h-4 text-purple-500 flex-shrink-0" />
                           )}
-                          <span className="flex-1 text-surface-700 dark:text-surface-300">{page.title}</span>
-                          <ChevronRight className="w-4 h-4 text-surface-400" />
+                          <span className="flex-1 text-surface-700 dark:text-surface-300 truncate">{page.title}</span>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeletePage({ page, sectionId: section.id })}
+                            className="p-1.5 text-surface-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors opacity-0 group-hover:opacity-100 sm:opacity-100"
+                            title="Delete lesson"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -469,6 +544,102 @@ export default function EditModulePage() {
           </button>
         </div>
       </form>
+
+      {/* Delete Section Confirmation Modal */}
+      {confirmDeleteSection && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50">
+          <div className="bg-white dark:bg-surface-800 rounded-t-2xl sm:rounded-xl p-6 w-full sm:max-w-md shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-white">
+                Delete Section?
+              </h3>
+            </div>
+            <p className="text-surface-600 dark:text-surface-400 mb-2">
+              Are you sure you want to delete &quot;{confirmDeleteSection.title}&quot;?
+            </p>
+            <p className="text-sm text-red-600 dark:text-red-400 mb-6">
+              This will also delete all {confirmDeleteSection.pages.length} lesson(s) in this section. This action cannot be undone.
+            </p>
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmDeleteSection(null)}
+                disabled={deletingSection === confirmDeleteSection.id}
+                className="px-4 py-3 sm:py-2 rounded-lg border border-surface-300 dark:border-surface-600 text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteSection(confirmDeleteSection.id)}
+                disabled={deletingSection === confirmDeleteSection.id}
+                className="flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold transition-colors"
+              >
+                {deletingSection === confirmDeleteSection.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete Section
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Page Confirmation Modal */}
+      {confirmDeletePage && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50">
+          <div className="bg-white dark:bg-surface-800 rounded-t-2xl sm:rounded-xl p-6 w-full sm:max-w-md shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-white">
+                Delete Lesson?
+              </h3>
+            </div>
+            <p className="text-surface-600 dark:text-surface-400 mb-2">
+              Are you sure you want to delete &quot;{confirmDeletePage.page.title}&quot;?
+            </p>
+            <p className="text-sm text-red-600 dark:text-red-400 mb-6">
+              This will also delete any associated video content. This action cannot be undone.
+            </p>
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmDeletePage(null)}
+                disabled={deletingPage === confirmDeletePage.page.id}
+                className="px-4 py-3 sm:py-2 rounded-lg border border-surface-300 dark:border-surface-600 text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeletePage(confirmDeletePage.sectionId, confirmDeletePage.page.id)}
+                disabled={deletingPage === confirmDeletePage.page.id}
+                className="flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold transition-colors"
+              >
+                {deletingPage === confirmDeletePage.page.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete Lesson
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
