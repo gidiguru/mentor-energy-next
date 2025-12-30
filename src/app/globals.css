@@ -118,6 +118,28 @@ html[style*="color-scheme: dark"] body {
   .text-muted-dark {
     color: var(--color-surface-600-200);
   }
+
+  /* Sidebar styling */
+  .sidebar-bg {
+    background-color: #f3f4f6 !important;
+  }
+
+  /* Sidebar nav item - black text, crimson hover */
+  .nav-item {
+    color: #111827 !important;
+    background-color: transparent;
+    transition: all 0.2s ease;
+  }
+
+  .nav-item:hover {
+    background-color: #dc2626 !important;
+    color: #ffffff !important;
+  }
+
+  .nav-item-active {
+    background-color: #dc2626 !important;
+    color: #ffffff !important;
+  }
 }
 
 /* Animations */
