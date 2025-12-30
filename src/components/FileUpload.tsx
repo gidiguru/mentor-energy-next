@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, X, FileText, Video, Image, Music, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface UploadedFile {
@@ -40,7 +40,23 @@ export default function FileUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Detect iOS/mobile on mount
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor;
+      const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+      const isAndroid = /Android/.test(userAgent);
+      setIsMobile(isIOS || isAndroid);
+    };
+    checkMobile();
+  }, []);
+
+  // On iOS, accept="video/*" greys out photo library
+  // Use permissive accept on mobile to allow all media selection
+  const mobileAccept = isMobile ? '*/*' : accept;
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -72,8 +88,42 @@ export default function FileUpload({
   // Threshold for using presigned URLs (4MB - under Netlify's limit)
   const PRESIGNED_THRESHOLD = 4 * 1024 * 1024;
 
+  // Allowed file types for validation
+  const allowedTypes: Record<string, string[]> = {
+    'image/*': ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/heic', 'image/heif'],
+    'video/*': ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-m4v', 'video/3gpp', 'video/3gpp2', 'video/x-msvideo', 'video/mpeg', 'video/x-matroska'],
+    'application/pdf': ['application/pdf'],
+    'audio/*': ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/mp4', 'audio/x-m4a', 'audio/aac'],
+  };
+
+  const isFileTypeAllowed = (file: File): boolean => {
+    // If accept is permissive, check against all allowed types
+    if (accept === '*/*' || isMobile) {
+      const allAllowed = Object.values(allowedTypes).flat();
+      return allAllowed.some(type => file.type === type || file.type.startsWith(type.replace('/*', '/')));
+    }
+
+    // Check against specified accept types
+    const acceptTypes = accept.split(',').map(t => t.trim());
+    for (const acceptType of acceptTypes) {
+      if (acceptType.endsWith('/*')) {
+        const category = acceptType.replace('/*', '');
+        if (file.type.startsWith(category + '/')) return true;
+      } else if (file.type === acceptType) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const uploadFile = async (file: File) => {
     setError(null);
+
+    // Validate file type (especially important on mobile where we allow */*)
+    if (!isFileTypeAllowed(file)) {
+      setError(`File type not supported: ${file.type || 'unknown'}. Please select an image, video, or document.`);
+      return;
+    }
 
     // Validate file size
     if (file.size > maxSize) {
@@ -237,7 +287,7 @@ export default function FileUpload({
           <input
             ref={fileInputRef}
             type="file"
-            accept={accept}
+            accept={mobileAccept}
             onChange={handleFileSelect}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             style={{ fontSize: '16px' }} // Prevents iOS zoom on focus
