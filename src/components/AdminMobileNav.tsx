@@ -20,14 +20,14 @@ export default function AdminMobileNav() {
   return (
     <>
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700 safe-area-top">
         <div className="flex items-center justify-between p-4">
           <div>
             <h1 className="text-lg font-bold text-surface-900 dark:text-white">Admin Panel</h1>
           </div>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+            className="p-2 -mr-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors active:scale-95"
             aria-label="Toggle menu"
           >
             {isOpen ? (
@@ -50,7 +50,7 @@ export default function AdminMobileNav() {
       {/* Mobile Sidebar */}
       <aside
         className={`
-          lg:hidden fixed top-0 left-0 bottom-0 z-50 w-72 bg-white dark:bg-surface-800
+          lg:hidden fixed top-0 left-0 bottom-0 z-50 w-72 bg-white dark:bg-surface-800 safe-area-left
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}

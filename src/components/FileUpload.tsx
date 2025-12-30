@@ -68,7 +68,7 @@ export default function FileUpload({
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
 
@@ -76,14 +76,14 @@ export default function FileUpload({
     if (file) {
       uploadFile(file);
     }
-  }, []);
+  };
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       uploadFile(file);
     }
-  }, []);
+  };
 
   // Threshold for using presigned URLs (4MB - under Netlify's limit)
   const PRESIGNED_THRESHOLD = 4 * 1024 * 1024;
@@ -97,10 +97,28 @@ export default function FileUpload({
   };
 
   const isFileTypeAllowed = (file: File): boolean => {
-    // If accept is permissive, check against all allowed types
+    // If file has no type (common on iOS), check by extension
+    if (!file.type || file.type === '') {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      const videoExts = ['mp4', 'mov', 'webm', 'm4v', '3gp', 'avi', 'mkv'];
+      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'];
+      const docExts = ['pdf'];
+      const audioExts = ['mp3', 'wav', 'ogg', 'm4a', 'aac'];
+
+      if (ext && [...videoExts, ...imageExts, ...docExts, ...audioExts].includes(ext)) {
+        return true;
+      }
+    }
+
+    // If accept is permissive or on mobile, check against all allowed types
     if (accept === '*/*' || isMobile) {
       const allAllowed = Object.values(allowedTypes).flat();
-      return allAllowed.some(type => file.type === type || file.type.startsWith(type.replace('/*', '/')));
+      // Also check if it starts with a valid category prefix
+      if (file.type.startsWith('video/') || file.type.startsWith('image/') ||
+          file.type.startsWith('audio/') || file.type === 'application/pdf') {
+        return true;
+      }
+      return allAllowed.some(type => file.type === type);
     }
 
     // Check against specified accept types
