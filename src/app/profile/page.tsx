@@ -2,13 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useUser } from '@clerk/nextjs';
 import { User, Mail, GraduationCap, Building } from 'lucide-react';
-import type { User as DBUser } from '@/lib/types/database';
+
+interface UserProfile {
+  id: string;
+  clerk_id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  discipline: string | null;
+  qualification: string | null;
+  university: string | null;
+  role: string;
+}
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<DBUser | null>(null);
+  const { user, isLoaded } = useUser();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -22,71 +34,84 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function loadProfile() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      if (!isLoaded) return;
 
       if (!user) {
         router.push('/auth');
         return;
       }
 
-      const { data } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (data) {
-        setProfile(data);
-        setFirstName(data.first_name || '');
-        setLastName(data.last_name || '');
-        setDiscipline(data.discipline || '');
-        setQualification(data.qualification || '');
-        setUniversity(data.university || '');
+      try {
+        const response = await fetch('/api/user/profile');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.profile) {
+            setProfile(data.profile);
+            setFirstName(data.profile.first_name || '');
+            setLastName(data.profile.last_name || '');
+            setDiscipline(data.profile.discipline || '');
+            setQualification(data.profile.qualification || '');
+            setUniversity(data.profile.university || '');
+          } else if (data.clerkUser) {
+            // Use Clerk user info as defaults
+            setFirstName(data.clerkUser.firstName || '');
+            setLastName(data.clerkUser.lastName || '');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
       }
 
       setLoading(false);
     }
 
     loadProfile();
-  }, [router]);
+  }, [user, isLoaded, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!profile) return;
-
     setSaving(true);
     setError('');
     setSuccess('');
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('users')
-      .update({
-        first_name: firstName,
-        last_name: lastName,
-        discipline,
-        qualification,
-        university: university || null,
-      })
-      .eq('id', profile.id);
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: profile ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          discipline,
+          qualification,
+          university: university || null,
+        }),
+      });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setSuccess('Profile updated successfully!');
+      if (response.ok) {
+        const data = await response.json();
+        setProfile(data.profile);
+        setSuccess('Profile updated successfully!');
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to update profile');
+      }
+    } catch (error) {
+      setError('Failed to save profile');
     }
 
     setSaving(false);
   }
 
-  if (loading) {
+  if (loading || !isLoaded) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-lg">Loading profile...</div>
       </div>
     );
   }
+
+  const userEmail = profile?.email || user?.emailAddresses[0]?.emailAddress || '';
+  const profilePicture = user?.imageUrl;
 
   return (
     <div className="container mx-auto max-w-2xl p-4 py-8">
@@ -108,9 +133,9 @@ export default function ProfilePage() {
         {/* Profile Picture */}
         <div className="flex items-center gap-4">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface-200 dark:bg-surface-700">
-            {profile?.profile_picture ? (
+            {profilePicture ? (
               <img
-                src={profile.profile_picture}
+                src={profilePicture}
                 alt="Profile"
                 className="h-full w-full rounded-full object-cover"
               />
@@ -122,7 +147,7 @@ export default function ProfilePage() {
             <p className="font-medium">
               {firstName} {lastName}
             </p>
-            <p className="text-sm text-surface-500">{profile?.email}</p>
+            <p className="text-sm text-surface-500">{userEmail}</p>
           </div>
         </div>
 
@@ -166,7 +191,7 @@ export default function ProfilePage() {
             <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-surface-400" />
             <input
               type="email"
-              value={profile?.email || ''}
+              value={userEmail}
               className="input pl-10 opacity-60"
               disabled
             />

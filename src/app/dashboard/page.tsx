@@ -2,8 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import type { User } from '@/lib/types/database';
+import { useUser } from '@clerk/nextjs';
+
+interface UserProfile {
+  id: string;
+  clerk_id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  discipline: string | null;
+  qualification: string | null;
+  university: string | null;
+  role: string;
+}
 
 interface DashboardStats {
   completedModules: number;
@@ -12,7 +23,8 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const [profile, setProfile] = useState<User | null>(null);
+  const { user, isLoaded } = useUser();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
     completedModules: 0,
     totalModules: 4,
@@ -22,55 +34,36 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function loadDashboard() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      if (!isLoaded || !user) {
+        setLoading(false);
+        return;
+      }
 
-      if (user) {
-        // Load profile
-        const { data: profileData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (profileData) {
-          setProfile(profileData);
+      try {
+        // Fetch user profile from Neon database
+        const response = await fetch(`/api/user/profile`);
+        if (response.ok) {
+          const data = await response.json();
+          setProfile(data.profile);
         }
 
-        // Load stats (simplified for now)
-        const { data: modules } = await supabase
-          .from('learning_modules')
-          .select('id')
-          .eq('status', 'published');
-
-        const totalModules = modules?.length || 4;
-
-        // Get completed modules for this user
-        const { data: progress } = await supabase
-          .from('section_progress')
-          .select('module_id')
-          .eq('user_id', user.id)
-          .eq('completed', true);
-
-        const uniqueCompletedModules = new Set(
-          progress?.map((p) => p.module_id) || []
-        );
-        const completedModules = uniqueCompletedModules.size;
-
+        // For now, use default stats since we don't have modules yet
         setStats({
-          completedModules,
-          totalModules,
-          progressPercentage: Math.round((completedModules / totalModules) * 100),
+          completedModules: 0,
+          totalModules: 4,
+          progressPercentage: 0,
         });
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
       }
 
       setLoading(false);
     }
 
     loadDashboard();
-  }, []);
+  }, [user, isLoaded]);
 
-  if (loading) {
+  if (loading || !isLoaded) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <div className="text-lg">Loading dashboard...</div>
@@ -78,11 +71,13 @@ export default function DashboardPage() {
     );
   }
 
+  const displayName = profile?.first_name || user?.firstName || 'User';
+
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
       <header className="space-y-4">
-        <h1 className="h1">Welcome back, {profile?.first_name || 'User'}</h1>
+        <h1 className="h1">Welcome back, {displayName}</h1>
         <p className="text-surface-600 dark:text-surface-400">
           Your learning progress: {stats.progressPercentage}%
         </p>

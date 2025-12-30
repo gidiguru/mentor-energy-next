@@ -4,6 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useDrawerStore } from '@/lib/stores/drawer';
 import { cn } from '@/lib/utils';
+import {
+  SignInButton,
+  SignOutButton,
+  SignedIn,
+  SignedOut,
+} from '@clerk/nextjs';
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -39,6 +45,30 @@ export function MobileNav() {
           ))}
         </ul>
       </nav>
+
+      {/* Auth buttons for mobile */}
+      <div className="mt-6 space-y-2">
+        <SignedIn>
+          <SignOutButton>
+            <button
+              onClick={close}
+              className="btn btn-error w-full"
+            >
+              Sign Out
+            </button>
+          </SignOutButton>
+        </SignedIn>
+        <SignedOut>
+          <SignInButton mode="modal">
+            <button
+              onClick={close}
+              className="btn btn-primary w-full"
+            >
+              Sign In
+            </button>
+          </SignInButton>
+        </SignedOut>
+      </div>
     </div>
   );
 }

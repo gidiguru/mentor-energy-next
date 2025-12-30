@@ -1,14 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { Menu, Moon, Sun, User } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Menu, Moon, Sun } from 'lucide-react';
 import { useThemeStore } from '@/lib/stores/theme';
 import { useDrawerStore } from '@/lib/stores/drawer';
-import { useAuthStore } from '@/lib/stores/auth';
-import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
+import {
+  SignInButton,
+  SignOutButton,
+  UserButton,
+  SignedIn,
+  SignedOut,
+  useUser,
+} from '@clerk/nextjs';
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -19,59 +25,14 @@ const navItems = [
 
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
   const { isDarkMode, toggleTheme } = useThemeStore();
   const { open: openDrawer } = useDrawerStore();
-  const { session, profile, setSession, setProfile, clearAuth } = useAuthStore();
+  const { user } = useUser();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-
-    const supabase = createClient();
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        if (session?.user) {
-          fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [setSession, setProfile]);
-
-  async function fetchProfile(userId: string) {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (data) {
-      setProfile(data);
-    }
-  }
-
-  async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    clearAuth();
-    router.push('/');
-  }
+  }, []);
 
   const logoSrc = isDarkMode
     ? '/logos/mentorenergy_Main_Logo2.svg'
@@ -117,27 +78,17 @@ export function Header() {
         {/* Right side actions */}
         <div className="flex items-center gap-4">
           {/* Profile link when logged in */}
-          {session && profile && (
+          <SignedIn>
             <Link
               href="/profile"
               className="hidden items-center gap-2 transition-colors hover:text-primary-500 md:flex"
             >
-              {profile.profile_picture ? (
-                <img
-                  src={profile.profile_picture}
-                  alt="Profile"
-                  className="h-8 w-8 rounded-full border-2 border-surface-500 object-cover"
-                />
-              ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface-500 bg-surface-200 dark:bg-surface-700">
-                  <User className="h-5 w-5" />
-                </div>
-              )}
+              <UserButton afterSignOutUrl="/" />
               <span className="hidden md:inline">
-                {profile.first_name || 'Profile'}
+                {user?.firstName || 'Profile'}
               </span>
             </Link>
-          )}
+          </SignedIn>
 
           {/* Theme toggle */}
           {mounted && (
@@ -164,18 +115,20 @@ export function Header() {
           </button>
 
           {/* Auth buttons */}
-          {session ? (
-            <button
-              onClick={handleSignOut}
-              className="btn btn-error hidden md:inline-flex"
-            >
-              Sign Out
-            </button>
-          ) : (
-            <Link href="/auth" className="btn btn-primary hidden md:inline-flex">
-              Sign In
-            </Link>
-          )}
+          <SignedIn>
+            <SignOutButton>
+              <button className="btn btn-error hidden md:inline-flex">
+                Sign Out
+              </button>
+            </SignOutButton>
+          </SignedIn>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="btn btn-primary hidden md:inline-flex">
+                Sign In
+              </button>
+            </SignInButton>
+          </SignedOut>
         </div>
       </div>
     </header>

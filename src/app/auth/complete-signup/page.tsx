@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useUser } from '@clerk/nextjs';
 
 const disciplines = [
   'Geology',
@@ -28,10 +28,9 @@ const roles = ['student', 'mentor'] as const;
 
 export default function CompleteSignupPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const { user, isLoaded } = useUser();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [userId, setUserId] = useState<string | null>(null);
 
   const [discipline, setDiscipline] = useState('');
   const [qualification, setQualification] = useState('');
@@ -39,49 +38,44 @@ export default function CompleteSignupPage() {
   const [university, setUniversity] = useState('');
 
   useEffect(() => {
-    async function checkUser() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push('/auth');
-        return;
-      }
-
-      setUserId(user.id);
-      setLoading(false);
+    if (isLoaded && !user) {
+      router.push('/auth');
     }
-
-    checkUser();
-  }, [router]);
+  }, [isLoaded, user, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!userId) return;
+    if (!user) return;
 
     setSaving(true);
     setError('');
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('users')
-      .update({
-        discipline,
-        qualification,
-        role,
-        university: university || null,
-      })
-      .eq('id', userId);
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          discipline,
+          qualification,
+          role,
+          university: university || null,
+        }),
+      });
 
-    if (error) {
-      setError(error.message);
+      if (response.ok) {
+        router.push('/dashboard');
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to save profile');
+        setSaving(false);
+      }
+    } catch (error) {
+      setError('Failed to save profile');
       setSaving(false);
-    } else {
-      router.push('/dashboard');
     }
   }
 
-  if (loading) {
+  if (!isLoaded) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-lg">Loading...</div>
