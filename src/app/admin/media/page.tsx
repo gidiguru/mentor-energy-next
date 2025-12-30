@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import {
-  ArrowLeft,
   Loader2,
   Trash2,
   Image,
@@ -11,7 +9,6 @@ import {
   FileText,
   Music,
   RefreshCw,
-  Filter,
   ExternalLink,
   AlertCircle,
 } from 'lucide-react';
@@ -52,8 +49,6 @@ function formatDate(dateString: string): string {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
   });
 }
 
@@ -107,7 +102,6 @@ export default function MediaLibrary() {
         throw new Error(data.error || 'Failed to delete file');
       }
 
-      // Remove from local state
       setFiles(files.filter((f) => f.key !== key));
       setConfirmDelete(null);
     } catch (err) {
@@ -118,8 +112,6 @@ export default function MediaLibrary() {
   };
 
   const filteredFiles = files;
-
-  // Calculate storage stats
   const totalSize = files.reduce((acc, f) => acc + f.size, 0);
   const categoryStats = files.reduce((acc, f) => {
     acc[f.category] = (acc[f.category] || 0) + 1;
@@ -127,29 +119,22 @@ export default function MediaLibrary() {
   }, {} as Record<string, number>);
 
   return (
-    <div className="max-w-7xl">
+    <div>
       {/* Header */}
-      <div className="mb-8">
-        <Link
-          href="/admin"
-          className="inline-flex items-center text-sm text-surface-600 dark:text-surface-400 hover:text-primary-600 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Admin
-        </Link>
-        <div className="flex items-center justify-between">
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-surface-900 dark:text-white">
+            <h1 className="text-2xl md:text-3xl font-bold text-surface-900 dark:text-white">
               Media Library
             </h1>
-            <p className="text-surface-600 dark:text-surface-400 mt-1">
-              Manage all uploaded files in your R2 bucket
+            <p className="text-sm md:text-base text-surface-600 dark:text-surface-400 mt-1">
+              Manage uploaded files
             </p>
           </div>
           <button
             onClick={fetchFiles}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-surface-300 dark:border-surface-600 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-surface-300 dark:border-surface-600 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors w-full sm:w-auto"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -158,52 +143,52 @@ export default function MediaLibrary() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <div className="bg-white dark:bg-surface-800 rounded-xl p-4 border border-surface-200 dark:border-surface-700">
-          <p className="text-sm text-surface-500">Total Files</p>
-          <p className="text-2xl font-bold text-surface-900 dark:text-white">{files.length}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
+        <div className="bg-white dark:bg-surface-800 rounded-xl p-3 md:p-4 border border-surface-200 dark:border-surface-700">
+          <p className="text-xs md:text-sm text-surface-500">Files</p>
+          <p className="text-xl md:text-2xl font-bold text-surface-900 dark:text-white">{files.length}</p>
         </div>
-        <div className="bg-white dark:bg-surface-800 rounded-xl p-4 border border-surface-200 dark:border-surface-700">
-          <p className="text-sm text-surface-500">Storage Used</p>
-          <p className="text-2xl font-bold text-surface-900 dark:text-white">{formatFileSize(totalSize)}</p>
+        <div className="bg-white dark:bg-surface-800 rounded-xl p-3 md:p-4 border border-surface-200 dark:border-surface-700">
+          <p className="text-xs md:text-sm text-surface-500">Storage</p>
+          <p className="text-xl md:text-2xl font-bold text-surface-900 dark:text-white">{formatFileSize(totalSize)}</p>
         </div>
-        {Object.entries(categoryStats).map(([cat, count]) => {
+        {Object.entries(categoryStats).slice(0, 3).map(([cat, count]) => {
           const Icon = categoryIcons[cat] || FileText;
           return (
-            <div key={cat} className="bg-white dark:bg-surface-800 rounded-xl p-4 border border-surface-200 dark:border-surface-700">
-              <div className="flex items-center gap-2">
-                <Icon className="w-4 h-4 text-surface-400" />
-                <p className="text-sm text-surface-500 capitalize">{cat}s</p>
+            <div key={cat} className="bg-white dark:bg-surface-800 rounded-xl p-3 md:p-4 border border-surface-200 dark:border-surface-700">
+              <div className="flex items-center gap-1.5">
+                <Icon className="w-3.5 h-3.5 text-surface-400" />
+                <p className="text-xs md:text-sm text-surface-500 capitalize">{cat}s</p>
               </div>
-              <p className="text-2xl font-bold text-surface-900 dark:text-white">{count}</p>
+              <p className="text-xl md:text-2xl font-bold text-surface-900 dark:text-white">{count}</p>
             </div>
           );
         })}
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-2 mb-6">
-        <Filter className="w-4 h-4 text-surface-400" />
-        <span className="text-sm text-surface-600 dark:text-surface-400">Filter:</span>
-        {['all', 'image', 'video', 'document', 'audio'].map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setFilter(cat)}
-            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-              filter === cat
-                ? 'bg-primary-600 text-white'
-                : 'bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-600'
-            }`}
-          >
-            {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1) + 's'}
-          </button>
-        ))}
+      {/* Filters - Horizontal scroll on mobile */}
+      <div className="mb-6 -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 md:flex-wrap">
+          {['all', 'image', 'video', 'document', 'audio'].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat)}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                filter === cat
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-600'
+              }`}
+            >
+              {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1) + 's'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" />
+        <div className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 flex items-center gap-2 text-sm">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
           {error}
         </div>
       )}
@@ -217,22 +202,22 @@ export default function MediaLibrary() {
 
       {/* Empty state */}
       {!loading && filteredFiles.length === 0 && (
-        <div className="text-center py-20 bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-surface-100 dark:bg-surface-700 flex items-center justify-center">
-            <Image className="w-8 h-8 text-surface-400" />
+        <div className="text-center py-16 md:py-20 bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700">
+          <div className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-4 rounded-full bg-surface-100 dark:bg-surface-700 flex items-center justify-center">
+            <Image className="w-7 h-7 md:w-8 md:h-8 text-surface-400" />
           </div>
-          <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
+          <h3 className="text-base md:text-lg font-semibold text-surface-900 dark:text-white mb-2">
             No files found
           </h3>
-          <p className="text-surface-500">
-            {filter === 'all' ? 'Upload your first file to get started' : `No ${filter} files found`}
+          <p className="text-sm text-surface-500">
+            {filter === 'all' ? 'Upload your first file' : `No ${filter} files`}
           </p>
         </div>
       )}
 
       {/* File Grid */}
       {!loading && filteredFiles.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredFiles.map((file) => {
             const Icon = categoryIcons[file.category] || FileText;
             const colorClass = categoryColors[file.category] || 'bg-gray-100 text-gray-600';
@@ -241,7 +226,7 @@ export default function MediaLibrary() {
             return (
               <div
                 key={file.key}
-                className="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden group"
+                className="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden"
               >
                 {/* Preview */}
                 <div className="aspect-video bg-surface-100 dark:bg-surface-700 relative">
@@ -259,12 +244,7 @@ export default function MediaLibrary() {
                       src={file.url}
                       className="w-full h-full object-cover"
                       muted
-                      onMouseOver={(e) => (e.target as HTMLVideoElement).play()}
-                      onMouseOut={(e) => {
-                        const vid = e.target as HTMLVideoElement;
-                        vid.pause();
-                        vid.currentTime = 0;
-                      }}
+                      playsInline
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -275,24 +255,6 @@ export default function MediaLibrary() {
                   {/* Category badge */}
                   <div className={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
                     {file.category}
-                  </div>
-
-                  {/* Actions overlay */}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <a
-                      href={file.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 bg-white rounded-full hover:bg-surface-100 transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4 text-surface-700" />
-                    </a>
-                    <button
-                      onClick={() => setConfirmDelete(file.key)}
-                      className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4 text-white" />
-                    </button>
                   </div>
                 </div>
 
@@ -305,20 +267,20 @@ export default function MediaLibrary() {
                     <span>{formatFileSize(file.size)}</span>
                     <span>{formatDate(file.lastModified)}</span>
                   </div>
-                  {/* Mobile-friendly action buttons */}
+                  {/* Action buttons */}
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-surface-200 dark:border-surface-600">
                     <a
                       href={file.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-surface-100 dark:bg-surface-700 hover:bg-surface-200 dark:hover:bg-surface-600 text-surface-700 dark:text-surface-300 text-sm font-medium transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-surface-100 dark:bg-surface-700 hover:bg-surface-200 dark:hover:bg-surface-600 text-surface-700 dark:text-surface-300 text-sm font-medium transition-colors active:scale-[0.98]"
                     >
                       <ExternalLink className="w-4 h-4" />
                       View
                     </a>
                     <button
                       onClick={() => setConfirmDelete(file.key)}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-sm font-medium transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-sm font-medium transition-colors active:scale-[0.98]"
                     >
                       <Trash2 className="w-4 h-4" />
                       Delete
@@ -333,29 +295,29 @@ export default function MediaLibrary() {
 
       {/* Delete confirmation modal */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-surface-800 rounded-xl p-6 max-w-md w-full shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50">
+          <div className="bg-white dark:bg-surface-800 rounded-t-2xl sm:rounded-xl p-6 w-full sm:max-w-md shadow-xl">
             <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
               Delete File?
             </h3>
-            <p className="text-surface-600 dark:text-surface-400 mb-4">
-              Are you sure you want to delete this file? This action cannot be undone.
+            <p className="text-surface-600 dark:text-surface-400 mb-4 text-sm">
+              This action cannot be undone.
             </p>
-            <p className="text-sm text-surface-500 mb-6 font-mono bg-surface-100 dark:bg-surface-700 p-2 rounded truncate">
-              {confirmDelete}
+            <p className="text-xs text-surface-500 mb-6 font-mono bg-surface-100 dark:bg-surface-700 p-2 rounded truncate">
+              {confirmDelete.split('/').pop()}
             </p>
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
                 disabled={deleting === confirmDelete}
-                className="px-4 py-2 rounded-lg border border-surface-300 dark:border-surface-600 text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+                className="px-4 py-3 sm:py-2 rounded-lg border border-surface-300 dark:border-surface-600 text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(confirmDelete)}
                 disabled={deleting === confirmDelete}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold transition-colors"
               >
                 {deleting === confirmDelete ? (
                   <>

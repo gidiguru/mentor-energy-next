@@ -40,43 +40,43 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-surface-900 dark:text-white mb-2">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-surface-900 dark:text-white mb-2">
           Admin Dashboard
         </h1>
-        <p className="text-surface-600 dark:text-surface-400">
+        <p className="text-sm md:text-base text-surface-600 dark:text-surface-400">
           Manage your learning content and resources.
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6 md:mb-8">
         {stats.map((stat) => (
           <Link
             key={stat.label}
             href={stat.href}
-            className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700 hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-surface-800 rounded-xl p-4 md:p-6 border border-surface-200 dark:border-surface-700 hover:shadow-md transition-shadow active:scale-[0.98]"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${stat.color}`}>
-                <stat.icon className="w-6 h-6" />
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center ${stat.color}`}>
+                <stat.icon className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <TrendingUp className="w-5 h-5 text-green-500" />
+              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
             </div>
-            <p className="text-3xl font-bold text-surface-900 dark:text-white mb-1">
+            <p className="text-2xl md:text-3xl font-bold text-surface-900 dark:text-white mb-1">
               {stat.value}
             </p>
-            <p className="text-surface-500 dark:text-surface-400">{stat.label}</p>
+            <p className="text-sm md:text-base text-surface-500 dark:text-surface-400">{stat.label}</p>
           </Link>
         ))}
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
-        <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-4">
+      <div className="bg-white dark:bg-surface-800 rounded-xl p-4 md:p-6 border border-surface-200 dark:border-surface-700">
+        <h2 className="text-lg md:text-xl font-semibold text-surface-900 dark:text-white mb-4">
           Quick Actions
         </h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           <Link
             href="/admin/modules"
             className="flex items-center gap-3 p-4 rounded-lg bg-surface-50 dark:bg-surface-700 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors"
