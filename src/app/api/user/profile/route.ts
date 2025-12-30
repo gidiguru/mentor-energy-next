@@ -1,20 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
-
-interface UserProfile {
-  id: string;
-  clerk_id: string;
-  email: string;
-  first_name: string | null;
-  last_name: string | null;
-  discipline: string | null;
-  qualification: string | null;
-  university: string | null;
-  role: string;
-  created_at: string;
-  updated_at: string;
-}
+import { db, users, eq } from '@/lib/db';
 
 export async function GET() {
   const { userId } = await auth();
@@ -24,9 +10,10 @@ export async function GET() {
   }
 
   try {
-    const sql = getDb();
-    const results = await sql`SELECT * FROM users WHERE clerk_id = ${userId}`;
-    const profile = results[0] as UserProfile | undefined;
+    const database = db();
+    const profile = await database.query.users.findFirst({
+      where: eq(users.clerkId, userId),
+    });
 
     if (!profile) {
       // User not in database yet, get info from Clerk
@@ -60,40 +47,52 @@ export async function POST(request: Request) {
   }
 
   try {
-    const sql = getDb();
+    const database = db();
     const clerkUser = await currentUser();
     const body = await request.json();
     const { discipline, qualification, university, role } = body;
 
     // Check if user exists
-    const existingResults = await sql`SELECT * FROM users WHERE clerk_id = ${userId}`;
-    const existingUser = existingResults[0] as UserProfile | undefined;
+    const existingUser = await database.query.users.findFirst({
+      where: eq(users.clerkId, userId),
+    });
 
     if (existingUser) {
       // Update existing user
-      const updated = await sql`
-        UPDATE users
-        SET discipline = ${discipline},
-            qualification = ${qualification},
-            university = ${university},
-            role = ${role},
-            updated_at = NOW()
-        WHERE clerk_id = ${userId}
-        RETURNING *
-      `;
-      return NextResponse.json({ profile: updated[0] });
+      const [updated] = await database
+        .update(users)
+        .set({
+          discipline,
+          qualification,
+          university,
+          role: role as 'student' | 'mentor' | 'admin',
+          updatedAt: new Date(),
+        })
+        .where(eq(users.clerkId, userId))
+        .returning();
+
+      return NextResponse.json({ profile: updated });
     } else {
       // Create new user
       const email = clerkUser?.emailAddresses[0]?.emailAddress || '';
       const firstName = clerkUser?.firstName || null;
       const lastName = clerkUser?.lastName || null;
 
-      const created = await sql`
-        INSERT INTO users (clerk_id, email, first_name, last_name, discipline, qualification, university, role)
-        VALUES (${userId}, ${email}, ${firstName}, ${lastName}, ${discipline}, ${qualification}, ${university}, ${role})
-        RETURNING *
-      `;
-      return NextResponse.json({ profile: created[0] });
+      const [created] = await database
+        .insert(users)
+        .values({
+          clerkId: userId,
+          email,
+          firstName,
+          lastName,
+          discipline,
+          qualification,
+          university,
+          role: (role as 'student' | 'mentor' | 'admin') || 'student',
+        })
+        .returning();
+
+      return NextResponse.json({ profile: created });
     }
   } catch (error) {
     console.error('Error saving profile:', error);
@@ -112,27 +111,28 @@ export async function PUT(request: Request) {
   }
 
   try {
-    const sql = getDb();
+    const database = db();
     const body = await request.json();
     const { first_name, last_name, discipline, qualification, university } = body;
 
-    const updated = await sql`
-      UPDATE users
-      SET first_name = ${first_name},
-          last_name = ${last_name},
-          discipline = ${discipline},
-          qualification = ${qualification},
-          university = ${university},
-          updated_at = NOW()
-      WHERE clerk_id = ${userId}
-      RETURNING *
-    `;
+    const [updated] = await database
+      .update(users)
+      .set({
+        firstName: first_name,
+        lastName: last_name,
+        discipline,
+        qualification,
+        university,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.clerkId, userId))
+      .returning();
 
-    if (!updated[0]) {
+    if (!updated) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ profile: updated[0] });
+    return NextResponse.json({ profile: updated });
   } catch (error) {
     console.error('Error updating profile:', error);
     return NextResponse.json(
