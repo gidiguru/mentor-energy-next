@@ -33,7 +33,7 @@ export default function RootLayout({
             rel="stylesheet"
           />
         </head>
-        <body className="font-sans antialiased">
+        <body className="overflow-x-hidden font-sans antialiased">
           <ThemeProvider>
             <Drawer>
               <MobileNav />

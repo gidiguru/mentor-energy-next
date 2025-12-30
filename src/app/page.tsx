@@ -53,7 +53,7 @@ const testimonials = [
 
 export default function Home() {
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in overflow-x-hidden">
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-8 md:py-24">
         <div className="grid items-center gap-6 md:grid-cols-2 md:gap-8">
