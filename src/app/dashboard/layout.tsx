@@ -95,7 +95,7 @@ export default function DashboardLayout({
               'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors',
               isActive
                 ? 'bg-primary-500 text-white'
-                : 'hover:bg-surface-100 dark:hover:bg-surface-800'
+                : 'text-surface-900 hover:bg-primary-500 hover:text-white'
             )}
           >
             <span className="text-xl">{item.icon}</span>
@@ -118,7 +118,7 @@ export default function DashboardLayout({
                     'flex items-center gap-3 rounded-lg px-3 py-2 pl-8 transition-colors',
                     pathname === subItem.path
                       ? 'bg-primary-500 text-white'
-                      : 'hover:bg-surface-200 dark:hover:bg-surface-700'
+                      : 'text-surface-900 hover:bg-primary-500 hover:text-white'
                   )}
                 >
                   <span className="text-lg">{subItem.icon}</span>
@@ -140,7 +140,7 @@ export default function DashboardLayout({
           'flex items-center gap-3 rounded-lg px-3 py-3 transition-colors',
           isActive
             ? 'bg-primary-500 text-white'
-            : 'hover:bg-surface-100 dark:hover:bg-surface-800'
+            : 'text-surface-900 hover:bg-primary-500 hover:text-white'
         )}
       >
         <span className="text-xl">{item.icon}</span>
