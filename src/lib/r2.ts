@@ -1,0 +1,167 @@
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+// Cloudflare R2 configuration
+// R2 is S3-compatible, so we use the AWS SDK
+const R2_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'mentor-energy-content';
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL; // Optional: Custom domain or R2.dev URL
+
+// Create S3 client configured for R2
+export function getR2Client(): S3Client | null {
+  if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+    console.warn('R2 credentials not configured');
+    return null;
+  }
+
+  return new S3Client({
+    region: 'auto',
+    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: R2_ACCESS_KEY_ID,
+      secretAccessKey: R2_SECRET_ACCESS_KEY,
+    },
+  });
+}
+
+// File type configurations
+export const ALLOWED_FILE_TYPES = {
+  image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
+  video: ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'],
+  document: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm'],
+};
+
+export const MAX_FILE_SIZES = {
+  image: 10 * 1024 * 1024,      // 10MB
+  video: 500 * 1024 * 1024,     // 500MB
+  document: 50 * 1024 * 1024,   // 50MB
+  audio: 100 * 1024 * 1024,     // 100MB
+};
+
+// Get file type category from MIME type
+export function getFileCategory(mimeType: string): keyof typeof ALLOWED_FILE_TYPES | null {
+  for (const [category, types] of Object.entries(ALLOWED_FILE_TYPES)) {
+    if (types.includes(mimeType)) {
+      return category as keyof typeof ALLOWED_FILE_TYPES;
+    }
+  }
+  return null;
+}
+
+// Generate a unique file path
+export function generateFilePath(category: string, originalName: string): string {
+  const timestamp = Date.now();
+  const randomId = Math.random().toString(36).substring(2, 8);
+  const extension = originalName.split('.').pop() || '';
+  const safeName = originalName
+    .replace(/\.[^/.]+$/, '') // Remove extension
+    .replace(/[^a-zA-Z0-9-_]/g, '-') // Replace special chars
+    .substring(0, 50); // Limit length
+
+  return `${category}/${timestamp}-${randomId}-${safeName}.${extension}`;
+}
+
+// Upload file to R2
+export async function uploadToR2(
+  file: Buffer,
+  filePath: string,
+  contentType: string
+): Promise<string | null> {
+  const client = getR2Client();
+  if (!client) return null;
+
+  try {
+    await client.send(
+      new PutObjectCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: filePath,
+        Body: file,
+        ContentType: contentType,
+      })
+    );
+
+    // Return public URL
+    if (R2_PUBLIC_URL) {
+      return `${R2_PUBLIC_URL}/${filePath}`;
+    }
+
+    // Default R2.dev URL format
+    return `https://${R2_BUCKET_NAME}.${R2_ACCOUNT_ID}.r2.dev/${filePath}`;
+  } catch (error) {
+    console.error('R2 upload error:', error);
+    return null;
+  }
+}
+
+// Delete file from R2
+export async function deleteFromR2(filePath: string): Promise<boolean> {
+  const client = getR2Client();
+  if (!client) return false;
+
+  try {
+    await client.send(
+      new DeleteObjectCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: filePath,
+      })
+    );
+    return true;
+  } catch (error) {
+    console.error('R2 delete error:', error);
+    return false;
+  }
+}
+
+// Generate a presigned URL for direct upload (client-side upload)
+export async function getPresignedUploadUrl(
+  filePath: string,
+  contentType: string,
+  expiresIn: number = 3600
+): Promise<string | null> {
+  const client = getR2Client();
+  if (!client) return null;
+
+  try {
+    const command = new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: filePath,
+      ContentType: contentType,
+    });
+
+    const url = await getSignedUrl(client, command, { expiresIn });
+    return url;
+  } catch (error) {
+    console.error('Presigned URL error:', error);
+    return null;
+  }
+}
+
+// Generate a presigned URL for downloading (private files)
+export async function getPresignedDownloadUrl(
+  filePath: string,
+  expiresIn: number = 3600
+): Promise<string | null> {
+  const client = getR2Client();
+  if (!client) return null;
+
+  try {
+    const command = new GetObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: filePath,
+    });
+
+    const url = await getSignedUrl(client, command, { expiresIn });
+    return url;
+  } catch (error) {
+    console.error('Presigned download URL error:', error);
+    return null;
+  }
+}
+
+// Check if R2 is configured
+export function isR2Configured(): boolean {
+  return !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY);
+}
