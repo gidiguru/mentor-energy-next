@@ -17,17 +17,17 @@
   --color-primary-800: #155e75;
   --color-primary-900: #164e63;
 
-  /* Surface colors - Indigo/Dark Blue (matching SvelteKit theme) */
-  --color-surface-50: #eef2ff;
-  --color-surface-100: #e0e7ff;
-  --color-surface-200: #c7d2fe;
-  --color-surface-300: #a5b4fc;
-  --color-surface-400: #818cf8;
-  --color-surface-500: #6366f1;
-  --color-surface-600: #4f46e5;
-  --color-surface-700: #4338ca;
-  --color-surface-800: #3730a3;
-  --color-surface-900: #111827;
+  /* Surface colors - Brand Red/Crimson (#D4163C from logo) */
+  --color-surface-50: #fef2f4;
+  --color-surface-100: #fee2e6;
+  --color-surface-200: #fecdd4;
+  --color-surface-300: #fda4b1;
+  --color-surface-400: #fa7186;
+  --color-surface-500: #f1435e;
+  --color-surface-600: #d4163c;
+  --color-surface-700: #b91034;
+  --color-surface-800: #9a1131;
+  --color-surface-900: #1a0a0d;
 
   /* Breakpoints matching original */
   --breakpoint-sm: 640px;
@@ -40,42 +40,42 @@
 /* CSS Variables for both light and dark modes */
 :root {
   --background: #ffffff;
-  --foreground: #111827;
-  --card: #f8fafc;
-  --card-foreground: #111827;
-  --border: #c7d2fe;
-  --input: #c7d2fe;
+  --foreground: #1a0a0d;
+  --card: #fef2f4;
+  --card-foreground: #1a0a0d;
+  --border: #fecdd4;
+  --input: #fecdd4;
   --ring: #06b6d4;
   --primary: #06b6d4;
   --primary-foreground: #000000;
-  --secondary: #e0e7ff;
-  --secondary-foreground: #111827;
-  --muted: #eef2ff;
-  --muted-foreground: #6366f1;
-  --accent: #e0e7ff;
-  --accent-foreground: #111827;
+  --secondary: #fee2e6;
+  --secondary-foreground: #1a0a0d;
+  --muted: #fef2f4;
+  --muted-foreground: #d4163c;
+  --accent: #fee2e6;
+  --accent-foreground: #1a0a0d;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 }
 
 .dark {
-  --background: #111827;
-  --foreground: #eef2ff;
-  --card: #3730a3;
-  --card-foreground: #eef2ff;
-  --border: #4338ca;
-  --input: #4338ca;
+  --background: #1a0a0d;
+  --foreground: #fef2f4;
+  --card: #9a1131;
+  --card-foreground: #fef2f4;
+  --border: #b91034;
+  --input: #b91034;
   --ring: #22d3ee;
   --primary: #22d3ee;
   --primary-foreground: #000000;
-  --secondary: #3730a3;
-  --secondary-foreground: #eef2ff;
-  --muted: #3730a3;
-  --muted-foreground: #a5b4fc;
-  --accent: #4338ca;
-  --accent-foreground: #eef2ff;
+  --secondary: #9a1131;
+  --secondary-foreground: #fef2f4;
+  --muted: #9a1131;
+  --muted-foreground: #fda4b1;
+  --accent: #b91034;
+  --accent-foreground: #fef2f4;
   --destructive: #dc2626;
-  --destructive-foreground: #eef2ff;
+  --destructive-foreground: #fef2f4;
 }
 
 /* Base styles */
