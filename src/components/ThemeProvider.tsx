@@ -8,23 +8,37 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Apply theme on mount and when it changes
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode);
-    document.documentElement.style.colorScheme = isDarkMode ? 'dark' : 'light';
+    const html = document.documentElement;
+
+    // Toggle dark class
+    html.classList.toggle('dark', isDarkMode);
+
+    // Set color-scheme for light-dark() CSS function
+    html.style.colorScheme = isDarkMode ? 'dark' : 'light';
+
+    // Ensure data-theme is always set
+    html.setAttribute('data-theme', 'crimson');
   }, [isDarkMode]);
 
-  // Also apply immediately on first render (for SSR hydration)
+  // Apply immediately on first render (for SSR hydration)
   useEffect(() => {
+    const html = document.documentElement;
+
+    // Ensure data-theme is set
+    html.setAttribute('data-theme', 'crimson');
+
+    // Check localStorage for saved preference
     const stored = localStorage.getItem('theme-storage');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
         const dark = parsed.state?.isDarkMode ?? true;
-        document.documentElement.classList.toggle('dark', dark);
-        document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        html.classList.toggle('dark', dark);
+        html.style.colorScheme = dark ? 'dark' : 'light';
       } catch {
         // Default to dark
-        document.documentElement.classList.add('dark');
-        document.documentElement.style.colorScheme = 'dark';
+        html.classList.add('dark');
+        html.style.colorScheme = 'dark';
       }
     }
   }, []);
