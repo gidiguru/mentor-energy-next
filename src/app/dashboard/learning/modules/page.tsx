@@ -1,75 +1,23 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import { db, learningModules, eq } from '@/lib/db';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import { Clock, BookOpen, Target } from 'lucide-react';
+import { Clock, BookOpen } from 'lucide-react';
 
-interface Module {
-  id: string;
-  module_id: string;
-  title: string;
-  description: string | null;
-  duration: string | null;
-  difficulty_level: string | null;
-}
+export const dynamic = 'force-dynamic';
 
-const defaultModules = [
-  {
-    id: '1',
-    module_id: 'intro-petroleum',
-    title: 'Introduction to Petroleum Geology',
-    description: 'Learn the fundamentals of petroleum geology, including the origin, migration, and accumulation of hydrocarbons.',
-    duration: '4 hours',
-    difficulty_level: 'Beginner',
-  },
-  {
-    id: '2',
-    module_id: 'structural-geology',
-    title: 'Structural Geology',
-    description: 'Understand geological structures, faults, folds, and their role in petroleum traps.',
-    duration: '6 hours',
-    difficulty_level: 'Intermediate',
-  },
-  {
-    id: '3',
-    module_id: 'seismic-interpretation',
-    title: 'Seismic Interpretation',
-    description: 'Learn to interpret seismic data for subsurface mapping and reservoir characterization.',
-    duration: '8 hours',
-    difficulty_level: 'Intermediate',
-  },
-  {
-    id: '4',
-    module_id: 'petroleum-systems',
-    title: 'Petroleum Systems',
-    description: 'Explore the components and processes that create and preserve petroleum accumulations.',
-    duration: '5 hours',
-    difficulty_level: 'Advanced',
-  },
-];
+export default async function ModulesPage() {
+  const database = db();
 
-export default function ModulesPage() {
-  const [modules, setModules] = useState<Module[]>(defaultModules);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadModules() {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('learning_modules')
-        .select('*')
-        .eq('status', 'published')
-        .order('created_at', { ascending: true });
-
-      if (data && data.length > 0) {
-        setModules(data);
-      }
-      setLoading(false);
-    }
-
-    loadModules();
-  }, []);
+  const modules = await database.query.learningModules.findMany({
+    where: eq(learningModules.status, 'published'),
+    orderBy: (modules, { asc }) => [asc(modules.orderIndex)],
+    with: {
+      sections: {
+        with: {
+          pages: true,
+        },
+      },
+    },
+  });
 
   const getDifficultyColor = (level: string | null) => {
     switch (level?.toLowerCase()) {
@@ -84,6 +32,10 @@ export default function ModulesPage() {
     }
   };
 
+  const getTotalLessons = (module: typeof modules[0]) => {
+    return module.sections?.reduce((acc, section) => acc + (section.pages?.length || 0), 0) || 0;
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -93,9 +45,9 @@ export default function ModulesPage() {
         </p>
       </div>
 
-      {loading ? (
+      {modules.length === 0 ? (
         <div className="flex h-40 items-center justify-center">
-          <div className="text-lg">Loading modules...</div>
+          <div className="text-lg text-surface-500">No modules available yet</div>
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2">
@@ -107,10 +59,10 @@ export default function ModulesPage() {
                 </div>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-medium ${getDifficultyColor(
-                    module.difficulty_level
+                    module.difficultyLevel
                   )}`}
                 >
-                  {module.difficulty_level || 'All Levels'}
+                  {module.difficultyLevel || 'All Levels'}
                 </span>
               </div>
 
@@ -128,7 +80,10 @@ export default function ModulesPage() {
                 )}
                 <div className="flex items-center gap-1">
                   <BookOpen className="h-4 w-4" />
-                  <span>4 sections</span>
+                  <span>{module.sections?.length || 0} sections</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span>{getTotalLessons(module)} lessons</span>
                 </div>
               </div>
 
@@ -144,7 +99,7 @@ export default function ModulesPage() {
               </div>
 
               <Link
-                href={`/dashboard/learning/modules/${module.module_id}`}
+                href={`/learn/${module.moduleId}`}
                 className="btn btn-primary w-full"
               >
                 Start Learning
