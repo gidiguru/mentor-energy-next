@@ -17,6 +17,7 @@ const navItems = [
   { href: '/mentors', label: 'Find Mentors' },
   { href: '/resources', label: 'Resources' },
   { href: '/profile', label: 'Profile' },
+  { href: '/admin', label: 'Admin' },
 ];
 
 export function MobileNav() {

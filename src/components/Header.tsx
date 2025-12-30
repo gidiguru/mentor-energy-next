@@ -21,6 +21,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/mentors', label: 'Find Mentors' },
   { href: '/resources', label: 'Resources' },
+  { href: '/admin', label: 'Admin' },
 ];
 
 export function Header() {

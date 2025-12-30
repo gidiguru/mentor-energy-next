@@ -42,6 +42,7 @@ const navItems: NavItem[] = [
   { path: '/dashboard/projects', label: 'Projects', icon: '📋' },
   { path: '/dashboard/certifications', label: 'Certificates', icon: '🏆' },
   { path: '/dashboard/settings', label: 'Settings', icon: '⚙️' },
+  { path: '/admin', label: 'Admin', icon: '🔧' },
 ];
 
 export default function DashboardLayout({
