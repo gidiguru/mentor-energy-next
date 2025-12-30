@@ -1,6 +1,6 @@
 import { db, learningModules, resources, users } from '@/lib/db';
 import Link from 'next/link';
-import { BookOpen, FileText, Users, TrendingUp } from 'lucide-react';
+import { BookOpen, FileText, Users, TrendingUp, Image } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,6 +90,13 @@ export default async function AdminDashboard() {
           >
             <FileText className="w-5 h-5 text-primary-600" />
             <span className="font-medium text-surface-900 dark:text-white">Add Resource</span>
+          </Link>
+          <Link
+            href="/admin/media"
+            className="flex items-center gap-3 p-4 rounded-lg bg-surface-50 dark:bg-surface-700 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors"
+          >
+            <Image className="w-5 h-5 text-primary-600" />
+            <span className="font-medium text-surface-900 dark:text-white">Media Library</span>
           </Link>
           <Link
             href="/admin/seed"

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 // Cloudflare R2 configuration
@@ -175,4 +175,61 @@ export async function getPresignedDownloadUrl(
 // Check if R2 is configured
 export function isR2Configured(): boolean {
   return !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY);
+}
+
+// Get public URL for a file path
+export function getPublicUrl(filePath: string): string {
+  if (R2_PUBLIC_URL) {
+    return `${R2_PUBLIC_URL}/${filePath}`;
+  }
+  return `https://${R2_BUCKET_NAME}.${R2_ACCOUNT_ID}.r2.dev/${filePath}`;
+}
+
+// List all files in the bucket
+export interface R2File {
+  key: string;
+  size: number;
+  lastModified: Date;
+  url: string;
+  category: string;
+}
+
+export async function listR2Files(prefix?: string): Promise<R2File[]> {
+  const client = getR2Client();
+  if (!client) return [];
+
+  try {
+    const command = new ListObjectsV2Command({
+      Bucket: R2_BUCKET_NAME,
+      Prefix: prefix,
+    });
+
+    const response = await client.send(command);
+    const files: R2File[] = [];
+
+    if (response.Contents) {
+      for (const obj of response.Contents) {
+        if (obj.Key && obj.Size !== undefined && obj.LastModified) {
+          // Determine category from the path prefix
+          const category = obj.Key.split('/')[0] || 'other';
+
+          files.push({
+            key: obj.Key,
+            size: obj.Size,
+            lastModified: obj.LastModified,
+            url: getPublicUrl(obj.Key),
+            category,
+          });
+        }
+      }
+    }
+
+    // Sort by most recent first
+    files.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
+
+    return files;
+  } catch (error) {
+    console.error('R2 list error:', error);
+    return [];
+  }
 }
