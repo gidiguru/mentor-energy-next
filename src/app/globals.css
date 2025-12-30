@@ -16,15 +16,25 @@
   --breakpoint-2xl: 1536px;
 }
 
-/* Base styles */
+/* Base styles - Skeleton uses scheme-light/dark:scheme-dark for color-scheme */
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: light-dark(var(--body-background-color), var(--body-background-color-dark));
-  color: light-dark(var(--base-font-color), var(--base-font-color-dark));
+  background-color: var(--body-background-color);
+  color: var(--base-font-color);
+}
+
+html.dark body {
+  background-color: var(--body-background-color-dark);
+  color: var(--base-font-color-dark);
 }
 
 /* Custom component classes that extend Skeleton */

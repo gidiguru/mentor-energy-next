@@ -11,8 +11,12 @@ interface ThemeState {
 
 function applyTheme(dark: boolean) {
   if (typeof window !== 'undefined') {
-    document.documentElement.classList.toggle('dark', dark);
-    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    const html = document.documentElement;
+    if (dark) {
+      html.classList.add('dark');
+    } else {
+      html.classList.remove('dark');
+    }
   }
 }
 
