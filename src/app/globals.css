@@ -23,6 +23,8 @@ html {
 
 body {
   font-family: var(--font-sans);
+  background-color: light-dark(var(--color-surface-50), var(--color-surface-950));
+  color: light-dark(var(--color-surface-950), var(--color-surface-50));
 }
 
 /* Custom component classes that extend Skeleton */
