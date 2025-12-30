@@ -166,3 +166,34 @@ html[style*="color-scheme: dark"] body {
 .animate-slide-up {
   animation: slide-up 0.5s ease-out;
 }
+
+/* HIGH SPECIFICITY OVERRIDES - outside @layer for maximum priority */
+.header-bg {
+  background-color: #1f2937 !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+.sidebar-bg {
+  background-color: #f3f4f6 !important;
+}
+
+.nav-item {
+  color: #111827 !important;
+  background-color: transparent !important;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+.nav-item-active {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+.bg-light {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+}
