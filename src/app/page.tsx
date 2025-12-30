@@ -76,7 +76,7 @@ export default function Home() {
             </div>
           </div>
           <div className="animate-slide-up">
-            <div className="bg-light flex h-[400px] items-center justify-center rounded-lg p-8">
+            <div className="preset-filled-surface-100-900 flex h-[400px] items-center justify-center rounded-lg p-8">
               <div className="text-center">
                 <span className="mb-4 block text-6xl">🎓🌍</span>
                 <p className="text-xl font-medium">
@@ -89,7 +89,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="bg-dark py-12">
+      <section className="preset-filled-surface-200-800 py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {stats.map((stat) => (
@@ -119,10 +119,10 @@ export default function Home() {
         <h2 className="h2 mb-12 text-center">Why Choose mentor.energy?</h2>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {features.map((feature) => (
-            <div key={feature.title} className="card p-6 text-center">
+            <div key={feature.title} className="card preset-filled-surface-100-900 p-6 text-center">
               <div className="mb-4 text-4xl">{feature.icon}</div>
               <h3 className="h3 mb-2">{feature.title}</h3>
-              <p className="text-muted">
+              <p className="text-surface-600-400">
                 {feature.description}
               </p>
             </div>
@@ -131,21 +131,21 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="bg-adaptive py-16">
+      <section className="preset-filled-surface-100-900 py-16">
         <div className="container mx-auto px-4">
           <h2 className="h2 mb-12 text-center">What Our Community Says</h2>
           <div className="grid gap-8 md:grid-cols-2">
             {testimonials.map((testimonial) => (
-              <div key={testimonial.author} className="card p-6">
+              <div key={testimonial.author} className="card preset-filled-surface-50-950 p-6">
                 <p className="mb-4 text-lg italic">
                   &ldquo;{testimonial.quote}&rdquo;
                 </p>
                 <div>
                   <p className="font-bold">{testimonial.author}</p>
-                  <p className="text-muted">
+                  <p className="text-surface-600-400">
                     {testimonial.role}
                   </p>
-                  <p className="text-sm text-muted">
+                  <p className="text-sm text-surface-600-400">
                     {testimonial.organization}
                   </p>
                 </div>

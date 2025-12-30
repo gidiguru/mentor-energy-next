@@ -23,21 +23,6 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--body-background-color);
-  color: var(--base-font-color);
-}
-
-/* Support for color-scheme dark mode toggle */
-html[style*="color-scheme: dark"] body {
-  background-color: var(--body-background-color-dark);
-  color: var(--base-font-color-dark);
-}
-
-@media (prefers-color-scheme: dark) {
-  html:not([style*="color-scheme: light"]) body {
-    background-color: var(--body-background-color-dark);
-    color: var(--base-font-color-dark);
-  }
 }
 
 /* Custom component classes that extend Skeleton */
@@ -75,70 +60,6 @@ html[style*="color-scheme: dark"] body {
   /* Input styling */
   .input {
     @apply w-full rounded-lg border px-4 py-2.5 text-sm preset-outlined-surface-200-800;
-    background-color: var(--color-surface-50-950);
-  }
-
-  /* Card with proper contrast */
-  .card {
-    @apply rounded-lg;
-    background-color: var(--color-surface-100-900);
-    color: var(--color-surface-contrast-100-900);
-  }
-
-  /* Light background section - darker grey with black text */
-  .bg-light {
-    background-color: #374151;
-    color: #f9fafb;
-  }
-
-  /* Dark background section - white text */
-  .bg-dark {
-    background-color: var(--color-surface-900);
-    color: var(--color-surface-50);
-  }
-
-  /* Header background - darker for dark mode */
-  .header-bg {
-    background-color: #1f2937;
-    border-bottom: 1px solid #374151;
-  }
-
-  /* Adaptive background - light in light mode, dark in dark mode */
-  .bg-adaptive {
-    background-color: var(--color-surface-100-900);
-    color: var(--color-surface-contrast-100-900);
-  }
-
-  /* Muted text that adapts to mode - darker grey on dark backgrounds */
-  .text-muted {
-    color: var(--color-surface-500-300);
-  }
-
-  /* Even more muted text */
-  .text-muted-dark {
-    color: var(--color-surface-600-200);
-  }
-
-  /* Sidebar styling */
-  .sidebar-bg {
-    background-color: #f3f4f6 !important;
-  }
-
-  /* Sidebar nav item - black text, crimson hover */
-  .nav-item {
-    color: #111827 !important;
-    background-color: transparent;
-    transition: all 0.2s ease;
-  }
-
-  .nav-item:hover {
-    background-color: #dc2626 !important;
-    color: #ffffff !important;
-  }
-
-  .nav-item-active {
-    background-color: #dc2626 !important;
-    color: #ffffff !important;
   }
 }
 
@@ -165,35 +86,4 @@ html[style*="color-scheme: dark"] body {
 
 .animate-slide-up {
   animation: slide-up 0.5s ease-out;
-}
-
-/* HIGH SPECIFICITY OVERRIDES - outside @layer for maximum priority */
-.header-bg {
-  background-color: #1f2937 !important;
-  border-bottom: 1px solid #374151 !important;
-}
-
-.sidebar-bg {
-  background-color: #f3f4f6 !important;
-}
-
-.nav-item {
-  color: #111827 !important;
-  background-color: transparent !important;
-  transition: all 0.2s ease;
-}
-
-.nav-item:hover {
-  background-color: #dc2626 !important;
-  color: #ffffff !important;
-}
-
-.nav-item-active {
-  background-color: #dc2626 !important;
-  color: #ffffff !important;
-}
-
-.bg-light {
-  background-color: #374151 !important;
-  color: #f9fafb !important;
 }

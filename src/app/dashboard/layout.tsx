@@ -92,8 +92,8 @@ export default function DashboardLayout({
           <button
             onClick={() => toggleSubMenu(item.path)}
             className={cn(
-              'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left',
-              isActive ? 'nav-item-active' : 'nav-item'
+              'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors',
+              isActive ? 'preset-filled-primary-500' : 'hover:preset-tonal-primary'
             )}
           >
             <span className="text-xl">{item.icon}</span>
@@ -113,8 +113,8 @@ export default function DashboardLayout({
                   href={subItem.path}
                   onClick={handleNavClick}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 pl-8',
-                    pathname === subItem.path ? 'nav-item-active' : 'nav-item'
+                    'flex items-center gap-3 rounded-lg px-3 py-2 pl-8 transition-colors',
+                    pathname === subItem.path ? 'preset-filled-primary-500' : 'hover:preset-tonal-primary'
                   )}
                 >
                   <span className="text-lg">{subItem.icon}</span>
@@ -133,8 +133,8 @@ export default function DashboardLayout({
         href={item.path}
         onClick={handleNavClick}
         className={cn(
-          'flex items-center gap-3 rounded-lg px-3 py-3',
-          isActive ? 'nav-item-active' : 'nav-item'
+          'flex items-center gap-3 rounded-lg px-3 py-3 transition-colors',
+          isActive ? 'preset-filled-primary-500' : 'hover:preset-tonal-primary'
         )}
       >
         <span className="text-xl">{item.icon}</span>
@@ -147,7 +147,7 @@ export default function DashboardLayout({
     <div className="flex h-[calc(100vh-4rem)] flex-col md:flex-row">
       {/* Desktop Sidebar */}
       {!isMobile && (
-        <aside className="sidebar-bg h-full w-64 overflow-y-auto border-r border-gray-300 p-4">
+        <aside className="preset-filled-surface-50-950 h-full w-64 overflow-y-auto border-r border-surface-200-800 p-4">
           <div className="flex h-full flex-col gap-2">
             {navItems.map(renderNavItem)}
 
