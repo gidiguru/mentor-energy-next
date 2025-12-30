@@ -305,6 +305,25 @@ export default function MediaLibrary() {
                     <span>{formatFileSize(file.size)}</span>
                     <span>{formatDate(file.lastModified)}</span>
                   </div>
+                  {/* Mobile-friendly action buttons */}
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-surface-200 dark:border-surface-600">
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-surface-100 dark:bg-surface-700 hover:bg-surface-200 dark:hover:bg-surface-600 text-surface-700 dark:text-surface-300 text-sm font-medium transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      View
+                    </a>
+                    <button
+                      onClick={() => setConfirmDelete(file.key)}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-sm font-medium transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             );
