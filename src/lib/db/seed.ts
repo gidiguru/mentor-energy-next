@@ -283,6 +283,18 @@ export async function seedDatabase() {
 
   console.log('🌱 Starting database seed...');
 
+  // Clear existing data first (in reverse order due to foreign keys)
+  console.log('🗑️ Clearing existing data...');
+  try {
+    await database.delete(sectionPages);
+    await database.delete(moduleSections);
+    await database.delete(learningModules);
+    await database.delete(resources);
+    console.log('   ✓ Cleared existing data');
+  } catch (e) {
+    console.log('   ⚠ No existing data to clear');
+  }
+
   // Insert modules
   console.log('📚 Inserting learning modules...');
   const insertedModules = await database.insert(learningModules).values(mockModules).returning();
