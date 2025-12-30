@@ -103,9 +103,14 @@ html[style*="color-scheme: dark"] body {
     color: var(--color-surface-contrast-100-900);
   }
 
-  /* Muted text that adapts to mode */
+  /* Muted text that adapts to mode - darker grey on dark backgrounds */
   .text-muted {
-    color: var(--color-surface-600-400);
+    color: var(--color-surface-500-300);
+  }
+
+  /* Even more muted text */
+  .text-muted-dark {
+    color: var(--color-surface-600-200);
   }
 }
 
