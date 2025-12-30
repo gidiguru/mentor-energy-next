@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Loader2, Trash2, Plus, ChevronRight, Video, FileText, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Trash2, Plus, ChevronRight, Video, FileText, AlertCircle, Pencil } from 'lucide-react';
 import FileUpload from '@/components/FileUpload';
 
 interface Page {
@@ -489,14 +489,23 @@ export default function EditModulePage() {
                             <Video className="w-4 h-4 text-purple-500 flex-shrink-0" />
                           )}
                           <span className="flex-1 text-surface-700 dark:text-surface-300 truncate">{page.title}</span>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeletePage({ page, sectionId: section.id })}
-                            className="p-2 text-surface-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Delete lesson"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <Link
+                              href={`/admin/modules/${moduleUuid}/sections/${section.id}/pages/${page.id}/edit`}
+                              className="p-2 text-surface-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                              title="Edit lesson"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeletePage({ page, sectionId: section.id })}
+                              className="p-2 text-surface-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              title="Delete lesson"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>

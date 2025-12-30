@@ -1,9 +1,138 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { db, sectionPages, eq } from '@/lib/db';
+import { db, sectionPages, mediaContent, eq } from '@/lib/db';
 
 interface Props {
   params: Promise<{ id: string; sectionId: string; pageId: string }>;
+}
+
+// GET a page
+export async function GET(request: NextRequest, { params }: Props) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { pageId } = await params;
+
+  try {
+    const database = db();
+
+    const page = await database.query.sectionPages.findFirst({
+      where: eq(sectionPages.id, pageId),
+      with: {
+        media: true,
+      },
+    });
+
+    if (!page) {
+      return NextResponse.json({ error: 'Page not found' }, { status: 404 });
+    }
+
+    // Get video URL from media if exists
+    const videoMedia = page.media?.find(m => m.type === 'video');
+
+    return NextResponse.json({
+      page: {
+        id: page.id,
+        title: page.title,
+        content: page.content,
+        pageType: page.pageType,
+        estimatedDuration: page.estimatedDuration,
+        videoUrl: videoMedia?.url || null,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching page:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch page' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT update a page
+export async function PUT(request: NextRequest, { params }: Props) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { pageId } = await params;
+
+  try {
+    const body = await request.json();
+    const { title, content, pageType, estimatedDuration, videoUrl } = body;
+
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    }
+
+    const database = db();
+
+    // Check page exists
+    const existingPage = await database.query.sectionPages.findFirst({
+      where: eq(sectionPages.id, pageId),
+      with: {
+        media: true,
+      },
+    });
+
+    if (!existingPage) {
+      return NextResponse.json({ error: 'Page not found' }, { status: 404 });
+    }
+
+    // Update the page
+    const [updatedPage] = await database
+      .update(sectionPages)
+      .set({
+        title,
+        content: content || null,
+        pageType: pageType || 'lesson',
+        estimatedDuration: estimatedDuration || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(sectionPages.id, pageId))
+      .returning();
+
+    // Handle video media
+    const existingVideo = existingPage.media?.find(m => m.type === 'video');
+
+    if (videoUrl) {
+      if (existingVideo) {
+        // Update existing video
+        await database
+          .update(mediaContent)
+          .set({ url: videoUrl, title: `Video: ${title}` })
+          .where(eq(mediaContent.id, existingVideo.id));
+      } else {
+        // Create new video media
+        await database.insert(mediaContent).values({
+          pageId: pageId,
+          type: 'video',
+          url: videoUrl,
+          title: `Video: ${title}`,
+          sequence: 0,
+        });
+      }
+    } else if (existingVideo && !videoUrl) {
+      // Remove video if URL is cleared
+      await database.delete(mediaContent).where(eq(mediaContent.id, existingVideo.id));
+    }
+
+    return NextResponse.json({
+      success: true,
+      page: updatedPage,
+    });
+  } catch (error) {
+    console.error('Error updating page:', error);
+    return NextResponse.json(
+      { error: 'Failed to update page' },
+      { status: 500 }
+    );
+  }
 }
 
 // DELETE a page
