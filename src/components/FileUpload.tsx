@@ -239,7 +239,8 @@ export default function FileUpload({
             type="file"
             accept={accept}
             onChange={handleFileSelect}
-            className="hidden"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            style={{ fontSize: '16px' }} // Prevents iOS zoom on focus
           />
 
           {isUploading ? (
