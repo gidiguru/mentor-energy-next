@@ -5,6 +5,13 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle } from 'lucide-react';
 
+interface Media {
+  id: string;
+  type: string;
+  url: string;
+  title: string | null;
+}
+
 interface Page {
   id: string;
   title: string;
@@ -13,6 +20,7 @@ interface Page {
   sequence: number;
   estimatedDuration: string | null;
   quizQuestions: unknown;
+  media: Media[];
 }
 
 interface Section {
@@ -232,13 +240,40 @@ export default function LessonPage() {
                 </div>
               </div>
             ) : (
-              <article className="prose prose-lg dark:prose-invert max-w-none">
-                {page.content ? (
-                  <div dangerouslySetInnerHTML={{ __html: formatMarkdown(page.content) }} />
-                ) : (
-                  <p className="text-surface-500">No content available for this lesson.</p>
+              <div className="space-y-8">
+                {/* Video Content */}
+                {page.media && page.media.length > 0 && (
+                  <div className="space-y-4">
+                    {page.media.filter(m => m.type === 'video').map((video) => (
+                      <div key={video.id} className="bg-black rounded-xl overflow-hidden">
+                        <video
+                          src={video.url}
+                          controls
+                          playsInline
+                          className="w-full aspect-video"
+                          controlsList="nodownload"
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                        {video.title && (
+                          <p className="p-3 text-sm text-surface-400 bg-surface-900">
+                            {video.title}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </article>
+
+                {/* Text Content */}
+                <article className="prose prose-lg dark:prose-invert max-w-none">
+                  {page.content ? (
+                    <div dangerouslySetInnerHTML={{ __html: formatMarkdown(page.content) }} />
+                  ) : !page.media?.length ? (
+                    <p className="text-surface-500">No content available for this lesson.</p>
+                  ) : null}
+                </article>
+              </div>
             )}
           </div>
         </div>

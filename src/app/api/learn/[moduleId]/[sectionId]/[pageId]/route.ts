@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db, learningModules, moduleSections, sectionPages, eq, and } from '@/lib/db';
+import { db, learningModules, moduleSections, sectionPages, mediaContent, eq, and } from '@/lib/db';
 
 interface Props {
   params: Promise<{
@@ -23,6 +23,11 @@ export async function GET(request: Request, { params }: Props) {
           with: {
             pages: {
               orderBy: (pages, { asc }) => [asc(pages.sequence)],
+              with: {
+                media: {
+                  orderBy: (media, { asc }) => [asc(media.sequence)],
+                },
+              },
             },
           },
         },
@@ -88,6 +93,12 @@ export async function GET(request: Request, { params }: Props) {
         sequence: page.sequence,
         estimatedDuration: page.estimatedDuration,
         quizQuestions: page.quizQuestions,
+        media: page.media?.map(m => ({
+          id: m.id,
+          type: m.type,
+          url: m.url,
+          title: m.title,
+        })) || [],
       },
       navigation,
     });
