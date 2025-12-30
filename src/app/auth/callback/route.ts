@@ -20,8 +20,8 @@ export async function GET(request: Request) {
 
       if (!profile) {
         // User needs to complete their profile
-        // Upsert user data - use type assertion for flexibility
-        await (supabase.from('users') as any).upsert({
+        // Upsert user data
+        await supabase.from('users').upsert({
           id: data.user.id,
           email: data.user.email,
           first_name: data.user.user_metadata?.full_name?.split(' ')[0] || null,
