@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" data-theme="crimson">
+      <html lang="en" className="dark" data-theme="crimson" style={{ colorScheme: 'dark' }}>
         <head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
