@@ -69,6 +69,9 @@ export default function FileUpload({
     }
   }, []);
 
+  // Threshold for using presigned URLs (4MB - under Netlify's limit)
+  const PRESIGNED_THRESHOLD = 4 * 1024 * 1024;
+
   const uploadFile = async (file: File) => {
     setError(null);
 
@@ -81,27 +84,80 @@ export default function FileUpload({
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Upload failed');
+      // Use presigned URL for large files (videos, etc.)
+      if (file.size > PRESIGNED_THRESHOLD) {
+        await uploadWithPresignedUrl(file);
+      } else {
+        await uploadWithFormData(file);
       }
-
-      setUploadedFile(data);
-      onUpload(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const uploadWithFormData = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Upload failed');
+    }
+
+    setUploadedFile(data);
+    onUpload(data);
+  };
+
+  const uploadWithPresignedUrl = async (file: File) => {
+    // Step 1: Get presigned URL from server
+    const presignedResponse = await fetch('/api/upload', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        contentType: file.type,
+      }),
+    });
+
+    const presignedData = await presignedResponse.json();
+
+    if (!presignedResponse.ok) {
+      throw new Error(presignedData.error || 'Failed to get upload URL');
+    }
+
+    // Step 2: Upload directly to R2 using presigned URL
+    const uploadResponse = await fetch(presignedData.presignedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error('Failed to upload file to storage');
+    }
+
+    // Step 3: Return the public URL
+    const uploadedData = {
+      url: presignedData.publicUrl,
+      path: presignedData.path,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      category: presignedData.category,
+    };
+
+    setUploadedFile(uploadedData);
+    onUpload(uploadedData);
   };
 
   const clearUpload = () => {

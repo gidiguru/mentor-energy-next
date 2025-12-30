@@ -28,10 +28,21 @@ export function getR2Client(): S3Client | null {
 
 // File type configurations
 export const ALLOWED_FILE_TYPES = {
-  image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
-  video: ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'],
+  image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/heic', 'image/heif'],
+  video: [
+    'video/mp4',
+    'video/webm',
+    'video/ogg',
+    'video/quicktime',      // MOV files
+    'video/x-m4v',          // iPhone M4V
+    'video/3gpp',           // 3GP (older phones)
+    'video/3gpp2',          // 3G2
+    'video/x-msvideo',      // AVI
+    'video/mpeg',           // MPEG
+    'video/x-matroska',     // MKV
+  ],
   document: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-  audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm'],
+  audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/mp4', 'audio/x-m4a', 'audio/aac'],
 };
 
 export const MAX_FILE_SIZES = {
