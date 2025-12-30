@@ -112,7 +112,7 @@ body {
   }
 
   .btn-primary {
-    @apply bg-primary-500 text-black hover:bg-primary-600;
+    @apply bg-brand-600 text-white hover:bg-brand-700;
   }
 
   .btn-secondary {
