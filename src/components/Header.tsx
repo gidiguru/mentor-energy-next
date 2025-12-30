@@ -43,7 +43,7 @@ export function Header() {
     : '/logos/mentorenergy_Logo_Symbol2.svg';
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-surface-200 bg-white/80 backdrop-blur-lg dark:border-surface-700 dark:bg-surface-900/80">
+    <header className="header-bg sticky top-0 z-50 w-full backdrop-blur-lg">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">

@@ -85,16 +85,22 @@ html[style*="color-scheme: dark"] body {
     color: var(--color-surface-contrast-100-900);
   }
 
-  /* Light background section - black text */
+  /* Light background section - darker grey with black text */
   .bg-light {
-    background-color: var(--color-surface-200);
-    color: var(--color-surface-950);
+    background-color: #374151;
+    color: #f9fafb;
   }
 
   /* Dark background section - white text */
   .bg-dark {
     background-color: var(--color-surface-900);
     color: var(--color-surface-50);
+  }
+
+  /* Header background - darker for dark mode */
+  .header-bg {
+    background-color: #1f2937;
+    border-bottom: 1px solid #374151;
   }
 
   /* Adaptive background - light in light mode, dark in dark mode */
