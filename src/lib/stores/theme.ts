@@ -9,6 +9,13 @@ interface ThemeState {
   setTheme: (dark: boolean) => void;
 }
 
+function applyTheme(dark: boolean) {
+  if (typeof window !== 'undefined') {
+    document.documentElement.classList.toggle('dark', dark);
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+  }
+}
+
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
@@ -16,24 +23,20 @@ export const useThemeStore = create<ThemeState>()(
       toggleTheme: () =>
         set((state) => {
           const newMode = !state.isDarkMode;
-          if (typeof window !== 'undefined') {
-            document.documentElement.classList.toggle('dark', newMode);
-          }
+          applyTheme(newMode);
           return { isDarkMode: newMode };
         }),
       setTheme: (dark: boolean) =>
         set(() => {
-          if (typeof window !== 'undefined') {
-            document.documentElement.classList.toggle('dark', dark);
-          }
+          applyTheme(dark);
           return { isDarkMode: dark };
         }),
     }),
     {
       name: 'theme-storage',
       onRehydrateStorage: () => (state) => {
-        if (typeof window !== 'undefined' && state) {
-          document.documentElement.classList.toggle('dark', state.isDarkMode);
+        if (state) {
+          applyTheme(state.isDarkMode);
         }
       },
     }
