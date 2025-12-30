@@ -77,6 +77,36 @@ html[style*="color-scheme: dark"] body {
     @apply w-full rounded-lg border px-4 py-2.5 text-sm preset-outlined-surface-200-800;
     background-color: var(--color-surface-50-950);
   }
+
+  /* Card with proper contrast */
+  .card {
+    @apply rounded-lg;
+    background-color: var(--color-surface-100-900);
+    color: var(--color-surface-contrast-100-900);
+  }
+
+  /* Light background section - black text */
+  .bg-light {
+    background-color: var(--color-surface-200);
+    color: var(--color-surface-950);
+  }
+
+  /* Dark background section - white text */
+  .bg-dark {
+    background-color: var(--color-surface-900);
+    color: var(--color-surface-50);
+  }
+
+  /* Adaptive background - light in light mode, dark in dark mode */
+  .bg-adaptive {
+    background-color: var(--color-surface-100-900);
+    color: var(--color-surface-contrast-100-900);
+  }
+
+  /* Muted text that adapts to mode */
+  .text-muted {
+    color: var(--color-surface-600-400);
+  }
 }
 
 /* Animations */

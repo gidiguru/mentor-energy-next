@@ -76,7 +76,7 @@ export default function Home() {
             </div>
           </div>
           <div className="animate-slide-up">
-            <div className="flex h-[400px] items-center justify-center rounded-lg bg-surface-200 p-8 text-surface-900">
+            <div className="bg-light flex h-[400px] items-center justify-center rounded-lg p-8">
               <div className="text-center">
                 <span className="mb-4 block text-6xl">🎓🌍</span>
                 <p className="text-xl font-medium">
@@ -89,12 +89,12 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="bg-surface-900 py-12 text-white">
+      <section className="bg-dark py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold text-brand-500 md:text-4xl">
+                <p className="text-3xl font-bold text-primary-500 md:text-4xl">
                   {stat.value}
                 </p>
                 <p className="text-lg">{stat.label}</p>
@@ -122,7 +122,7 @@ export default function Home() {
             <div key={feature.title} className="card p-6 text-center">
               <div className="mb-4 text-4xl">{feature.icon}</div>
               <h3 className="h3 mb-2">{feature.title}</h3>
-              <p className="text-surface-600 dark:text-surface-400">
+              <p className="text-muted">
                 {feature.description}
               </p>
             </div>
@@ -131,7 +131,7 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="bg-surface-100 py-16 dark:bg-surface-800">
+      <section className="bg-adaptive py-16">
         <div className="container mx-auto px-4">
           <h2 className="h2 mb-12 text-center">What Our Community Says</h2>
           <div className="grid gap-8 md:grid-cols-2">
@@ -142,10 +142,10 @@ export default function Home() {
                 </p>
                 <div>
                   <p className="font-bold">{testimonial.author}</p>
-                  <p className="text-surface-600 dark:text-surface-400">
+                  <p className="text-muted">
                     {testimonial.role}
                   </p>
-                  <p className="text-sm text-surface-500">
+                  <p className="text-sm text-muted">
                     {testimonial.organization}
                   </p>
                 </div>
