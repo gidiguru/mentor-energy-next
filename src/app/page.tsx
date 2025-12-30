@@ -76,7 +76,7 @@ export default function Home() {
             </div>
           </div>
           <div className="animate-slide-up">
-            <div className="flex h-[400px] items-center justify-center rounded-lg bg-surface-200 p-8 dark:bg-surface-800">
+            <div className="flex h-[400px] items-center justify-center rounded-lg bg-surface-200 p-8 text-surface-900">
               <div className="text-center">
                 <span className="mb-4 block text-6xl">🎓🌍</span>
                 <p className="text-xl font-medium">
