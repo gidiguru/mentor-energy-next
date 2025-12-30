@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useClerk } from '@clerk/nextjs';
 import { cn } from '@/lib/utils';
 import { ChevronDown, ChevronRight, Menu, LogOut } from 'lucide-react';
 
@@ -51,6 +51,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { signOut } = useClerk();
   const [isMobile, setIsMobile] = useState(false);
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
@@ -82,8 +83,7 @@ export default function DashboardLayout({
     : baseNavItems;
 
   async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await signOut();
     router.push('/');
   }
 
