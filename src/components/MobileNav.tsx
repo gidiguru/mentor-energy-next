@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useDrawerStore } from '@/lib/stores/drawer';
@@ -9,20 +10,38 @@ import {
   SignOutButton,
   SignedIn,
   SignedOut,
+  useUser,
 } from '@clerk/nextjs';
 
-const navItems = [
+const baseNavItems = [
   { href: '/', label: 'Home' },
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/mentors', label: 'Find Mentors' },
   { href: '/resources', label: 'Resources' },
   { href: '/profile', label: 'Profile' },
-  { href: '/admin', label: 'Admin' },
 ];
 
 export function MobileNav() {
   const pathname = usePathname();
   const { close } = useDrawerStore();
+  const { isSignedIn } = useUser();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (isSignedIn) {
+      fetch('/api/user/role')
+        .then(res => res.json())
+        .then(data => setIsAdmin(data.isAdmin))
+        .catch(() => setIsAdmin(false));
+    } else {
+      setIsAdmin(false);
+    }
+  }, [isSignedIn]);
+
+  const navItems = isAdmin
+    ? [...baseNavItems, { href: '/admin', label: 'Admin' }]
+    : baseNavItems;
 
   return (
     <div className="p-4">

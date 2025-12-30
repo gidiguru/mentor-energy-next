@@ -16,24 +16,40 @@ import {
   useUser,
 } from '@clerk/nextjs';
 
-const navItems = [
+const baseNavItems = [
   { href: '/', label: 'Home' },
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/mentors', label: 'Find Mentors' },
   { href: '/resources', label: 'Resources' },
-  { href: '/admin', label: 'Admin' },
 ];
 
 export function Header() {
   const pathname = usePathname();
   const { isDarkMode, toggleTheme } = useThemeStore();
   const { open: openDrawer } = useDrawerStore();
-  const { user } = useUser();
+  const { user, isSignedIn } = useUser();
   const [mounted, setMounted] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (isSignedIn) {
+      fetch('/api/user/role')
+        .then(res => res.json())
+        .then(data => setIsAdmin(data.isAdmin))
+        .catch(() => setIsAdmin(false));
+    } else {
+      setIsAdmin(false);
+    }
+  }, [isSignedIn]);
+
+  const navItems = isAdmin
+    ? [...baseNavItems, { href: '/admin', label: 'Admin' }]
+    : baseNavItems;
 
   const logoSrc = isDarkMode
     ? '/logos/mentorenergy_Main_Logo2.svg'

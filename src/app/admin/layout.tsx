@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { LayoutDashboard, BookOpen, FileText, Database, ArrowLeft, Image } from 'lucide-react';
 import AdminMobileNav from '@/components/AdminMobileNav';
+import { db, users, eq } from '@/lib/db';
 
 export default async function AdminLayout({
   children,
@@ -12,7 +13,17 @@ export default async function AdminLayout({
   const { userId } = await auth();
 
   if (!userId) {
-    redirect('/auth');
+    redirect('/sign-in');
+  }
+
+  // Check if user is admin
+  const database = db();
+  const user = await database.query.users.findFirst({
+    where: eq(users.clerkId, userId),
+  });
+
+  if (!user || user.role !== 'admin') {
+    redirect('/dashboard?error=unauthorized');
   }
 
   const navItems = [

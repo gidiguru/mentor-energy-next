@@ -15,7 +15,7 @@ interface NavItem {
   subItems?: { path: string; label: string; icon: string }[];
 }
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   { path: '/dashboard', label: 'Overview', icon: '🏠' },
   {
     path: '/dashboard/learning',
@@ -42,7 +42,6 @@ const navItems: NavItem[] = [
   { path: '/dashboard/projects', label: 'Projects', icon: '📋' },
   { path: '/dashboard/certifications', label: 'Certificates', icon: '🏆' },
   { path: '/dashboard/settings', label: 'Settings', icon: '⚙️' },
-  { path: '/admin', label: 'Admin', icon: '🔧' },
 ];
 
 export default function DashboardLayout({
@@ -55,6 +54,7 @@ export default function DashboardLayout({
   const [isMobile, setIsMobile] = useState(false);
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     function checkMobile() {
@@ -68,6 +68,18 @@ export default function DashboardLayout({
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Check if user is admin
+  useEffect(() => {
+    fetch('/api/user/role')
+      .then(res => res.json())
+      .then(data => setIsAdmin(data.isAdmin))
+      .catch(() => setIsAdmin(false));
+  }, []);
+
+  const navItems = isAdmin
+    ? [...baseNavItems, { path: '/admin', label: 'Admin', icon: '🔧' }]
+    : baseNavItems;
 
   async function handleSignOut() {
     const supabase = createClient();

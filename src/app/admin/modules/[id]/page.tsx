@@ -482,7 +482,7 @@ export default function EditModulePage() {
                   {section.pages.length > 0 && (
                     <div className="divide-y divide-surface-100 dark:divide-surface-700">
                       {section.pages.map((page) => (
-                        <div key={page.id} className="p-3 flex items-center gap-3 hover:bg-surface-50 dark:hover:bg-surface-700/50 group">
+                        <div key={page.id} className="p-3 flex items-center gap-3 hover:bg-surface-50 dark:hover:bg-surface-700/50">
                           {page.pageType === 'lesson' ? (
                             <FileText className="w-4 h-4 text-primary-500 flex-shrink-0" />
                           ) : (
@@ -492,10 +492,10 @@ export default function EditModulePage() {
                           <button
                             type="button"
                             onClick={() => setConfirmDeletePage({ page, sectionId: section.id })}
-                            className="p-1.5 text-surface-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors opacity-0 group-hover:opacity-100 sm:opacity-100"
+                            className="p-2 text-surface-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             title="Delete lesson"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       ))}
