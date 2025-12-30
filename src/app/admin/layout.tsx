@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, BookOpen, FileText, Settings, Database, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, BookOpen, FileText, Settings, Database, ArrowLeft, Image } from 'lucide-react';
 
 export default async function AdminLayout({
   children,
@@ -21,6 +21,7 @@ export default async function AdminLayout({
     { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/modules', icon: BookOpen, label: 'Modules' },
     { href: '/admin/resources', icon: FileText, label: 'Resources' },
+    { href: '/admin/media', icon: Image, label: 'Media Library' },
     { href: '/admin/seed', icon: Database, label: 'Seed Data' },
   ];
 
