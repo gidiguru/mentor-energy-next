@@ -78,7 +78,7 @@ export default function DashboardPage() {
       {/* Welcome Section */}
       <header className="space-y-4">
         <h1 className="h1">Welcome back, {displayName}</h1>
-        <p className="text-surface-600 dark:text-surface-400">
+        <p className="text-surface-500 dark:text-surface-300">
           Your learning progress: {stats.progressPercentage}%
         </p>
 
@@ -98,7 +98,7 @@ export default function DashboardPage() {
           <h2 className="h3 mb-4">Your Progress</h2>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-surface-600 dark:text-surface-400">
+              <span className="text-surface-500 dark:text-surface-300">
                 Completed Modules
               </span>
               <span className="text-2xl font-bold text-primary-500">
@@ -106,7 +106,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-surface-600 dark:text-surface-400">
+              <span className="text-surface-500 dark:text-surface-300">
                 Total Modules
               </span>
               <span className="text-2xl font-bold">{stats.totalModules}</span>
@@ -125,7 +125,7 @@ export default function DashboardPage() {
         {/* Recent Activity */}
         <div className="card preset-filled-surface-100-900 p-4">
           <h2 className="h3 mb-4">Recent Activity</h2>
-          <div className="space-y-3 text-sm text-surface-600 dark:text-surface-400">
+          <div className="space-y-3 text-sm text-surface-500 dark:text-surface-300">
             <p>No recent activity yet.</p>
             <p>Start learning to see your activity here!</p>
           </div>
@@ -181,7 +181,7 @@ export default function DashboardPage() {
                   style={{ width: `${index === 0 ? 25 : 0}%` }}
                 />
               </div>
-              <p className="mt-1 text-sm text-surface-500">
+              <p className="mt-1 text-sm text-surface-500 dark:text-surface-300">
                 {index === 0 ? '25% complete' : 'Not started'}
               </p>
             </div>
