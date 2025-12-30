@@ -76,7 +76,7 @@ export default function Home() {
             </div>
           </div>
           <div className="animate-slide-up">
-            <div className="card flex h-[400px] items-center justify-center p-8">
+            <div className="flex h-[400px] items-center justify-center rounded-lg bg-surface-200 p-8 dark:bg-surface-800">
               <div className="text-center">
                 <span className="mb-4 block text-6xl">🎓🌍</span>
                 <p className="text-xl font-medium">
@@ -89,12 +89,12 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="bg-surface-100 py-12 dark:bg-surface-800">
+      <section className="bg-surface-900 py-12 text-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold text-primary-500 md:text-4xl">
+                <p className="text-3xl font-bold text-brand-500 md:text-4xl">
                   {stat.value}
                 </p>
                 <p className="text-lg">{stat.label}</p>
