@@ -94,7 +94,7 @@ export default function DashboardPage() {
       {/* Dashboard Grid */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Progress Overview */}
-        <div className="card p-4">
+        <div className="card preset-filled-surface-100-900 p-4">
           <h2 className="h3 mb-4">Your Progress</h2>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -111,7 +111,7 @@ export default function DashboardPage() {
               </span>
               <span className="text-2xl font-bold">{stats.totalModules}</span>
             </div>
-            <div className="border-t border-surface-200 pt-3 dark:border-surface-700">
+            <div className="border-t border-surface-200-800 pt-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Completion Rate</span>
                 <span className="text-lg font-bold text-primary-500">
@@ -123,7 +123,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="card p-4">
+        <div className="card preset-filled-surface-100-900 p-4">
           <h2 className="h3 mb-4">Recent Activity</h2>
           <div className="space-y-3 text-sm text-surface-600 dark:text-surface-400">
             <p>No recent activity yet.</p>
@@ -132,7 +132,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="card p-4">
+        <div className="card preset-filled-surface-100-900 p-4">
           <h2 className="h3 mb-4">Quick Actions</h2>
           <div className="grid gap-2">
             <Link
@@ -172,7 +172,7 @@ export default function DashboardPage() {
             'Seismic Interpretation',
             'Petroleum Systems',
           ].map((module, index) => (
-            <div key={module} className="card p-4">
+            <div key={module} className="card preset-filled-surface-100-900 p-4">
               <div className="mb-2 text-3xl">📖</div>
               <h3 className="font-medium">{module}</h3>
               <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-200 dark:bg-surface-700">

@@ -40,7 +40,7 @@ export default function MentorsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 text-center">
         <h1 className="h1 mb-4">Find Your Mentor</h1>
-        <p className="mx-auto max-w-2xl text-lg text-brand-600 dark:text-brand-400">
+        <p className="mx-auto max-w-2xl text-lg text-surface-600 dark:text-surface-400">
           Connect with experienced professionals in Nigeria&apos;s energy sector.
           Our mentors are here to guide your career journey.
         </p>
@@ -65,12 +65,12 @@ export default function MentorsPage() {
       {/* Mentors Grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {mentors.map((mentor) => (
-          <div key={mentor.id} className="card p-6">
+          <div key={mentor.id} className="card preset-filled-surface-100-900 p-6">
             <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-surface-200 text-4xl dark:bg-surface-700">
               👤
             </div>
             <h3 className="h3 mb-1">{mentor.name}</h3>
-            <p className="text-brand-600 dark:text-brand-400">{mentor.role}</p>
+            <p className="text-primary-500">{mentor.role}</p>
             <p className="mb-4 text-sm text-surface-500">{mentor.company}</p>
 
             <div className="mb-4 flex flex-wrap gap-2">
@@ -94,7 +94,7 @@ export default function MentorsPage() {
       {/* CTA */}
       <div className="mt-12 text-center">
         <h2 className="h3 mb-4">Want to become a mentor?</h2>
-        <p className="mb-6 text-brand-600 dark:text-brand-400">
+        <p className="mb-6 text-surface-600 dark:text-surface-400">
           Share your expertise and help shape the next generation of
           professionals.
         </p>

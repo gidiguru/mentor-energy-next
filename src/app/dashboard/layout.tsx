@@ -106,7 +106,7 @@ export default function DashboardLayout({
           </button>
 
           {isExpanded && item.subItems && (
-            <div className="mt-1 space-y-1 rounded-lg bg-gray-200 p-2">
+            <div className="mt-1 space-y-1 rounded-lg bg-surface-200 dark:bg-surface-700 p-2">
               {item.subItems.map((subItem) => (
                 <Link
                   key={subItem.path}
@@ -166,7 +166,7 @@ export default function DashboardLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Mobile Header */}
         {isMobile && (
-          <header className="sticky top-0 z-40 border-b border-surface-200 bg-white p-4 dark:border-surface-700 dark:bg-surface-900">
+          <header className="sticky top-0 z-40 border-b border-surface-200-800 preset-filled-surface-50-950 p-4">
             <button
               onClick={() => setIsNavOpen(!isNavOpen)}
               className="btn btn-primary flex w-full items-center justify-center gap-2"
@@ -189,7 +189,7 @@ export default function DashboardLayout({
                 />
 
                 {/* Mobile Nav */}
-                <nav className="fixed inset-x-4 top-20 z-50 max-h-[80vh] overflow-y-auto rounded-xl border-2 border-primary-500 bg-white shadow-2xl dark:bg-surface-900">
+                <nav className="fixed inset-x-4 top-20 z-50 max-h-[80vh] overflow-y-auto rounded-xl border-2 border-primary-500 preset-filled-surface-50-950 shadow-2xl">
                   <div className="flex flex-col p-2">
                     {navItems.map(renderNavItem)}
 

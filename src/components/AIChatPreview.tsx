@@ -73,7 +73,7 @@ export function AIChatPreview() {
   }
 
   return (
-    <div className="card mx-auto w-full max-w-2xl p-3 sm:p-4">
+    <div className="card preset-filled-surface-100-900 mx-auto w-full max-w-2xl p-3 sm:p-4">
       {/* Chat messages */}
       <div
         ref={chatContainerRef}

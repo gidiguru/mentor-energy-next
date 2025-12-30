@@ -44,7 +44,7 @@ export function Drawer({ children }: DrawerProps) {
       {/* Drawer panel */}
       <div
         className={cn(
-          'fixed right-0 top-0 z-50 h-full w-80 max-w-full transform bg-white shadow-xl transition-transform duration-300 dark:bg-surface-900',
+          'fixed right-0 top-0 z-50 h-full w-80 max-w-full transform preset-filled-surface-50-950 shadow-xl transition-transform duration-300',
           isOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >

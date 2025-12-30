@@ -67,7 +67,7 @@ export default function ResourcesPage() {
       <div className="grid gap-8 lg:grid-cols-4">
         {/* Sidebar */}
         <aside className="lg:col-span-1">
-          <div className="card p-4">
+          <div className="card preset-filled-surface-100-900 p-4">
             <h2 className="mb-4 font-semibold">Categories</h2>
             <ul className="space-y-2">
               {categories.map((category) => (
@@ -88,7 +88,7 @@ export default function ResourcesPage() {
         <main className="lg:col-span-3">
           <div className="grid gap-4 sm:grid-cols-2">
             {resources.map((resource) => (
-              <div key={resource.title} className="card p-6">
+              <div key={resource.title} className="card preset-filled-surface-100-900 p-6">
                 <div className="mb-3 flex items-start justify-between">
                   <span className="text-3xl">{resource.icon}</span>
                   <span className="rounded-full bg-primary-500/10 px-2 py-1 text-xs text-primary-500">
