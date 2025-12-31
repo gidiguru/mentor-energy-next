@@ -27,7 +27,7 @@ export function Footer() {
   return (
     <footer className="border-t border-surface-200-800">
       {/* Main footer content */}
-      <div className="container mx-auto px-4 py-8 pb-24 md:pb-8">
+      <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-4 md:gap-8">
           {/* About */}
           <div>
@@ -99,8 +99,8 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Fixed bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-surface-200-800 preset-filled-surface-50-950">
+      {/* Bottom bar */}
+      <div className="border-t border-surface-200-800 preset-filled-surface-50-950">
         <div className="container mx-auto p-4">
           <p className="text-center text-sm text-surface-600 dark:text-surface-400">
             &copy; {new Date().getFullYear()} mentor.energy
