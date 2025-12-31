@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { db, users, userAchievements, achievements, certificates, userPageProgress, userStreaks, eq, desc, sql } from '@/lib/db';
+import { db, users, userAchievements, achievements, certificates, userPageProgress, userStreaks, eq, desc } from '@/lib/db';
 
 // GET /api/leaderboard - Get leaderboard data
 export async function GET(request: NextRequest) {
