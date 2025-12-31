@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
-import { Header, Footer, Drawer, MobileNav, ThemeProvider } from '@/components';
+import { ThemeProvider, ConditionalLayout } from '@/components';
 
 export const metadata: Metadata = {
   title: 'mentor.energy - Build Your Future in Nigeria\'s Energy Sector',
@@ -35,14 +35,7 @@ export default function RootLayout({
         </head>
         <body className="overflow-x-hidden font-sans antialiased">
           <ThemeProvider>
-            <Drawer>
-              <MobileNav />
-            </Drawer>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
+            <ConditionalLayout>{children}</ConditionalLayout>
           </ThemeProvider>
         </body>
       </html>
