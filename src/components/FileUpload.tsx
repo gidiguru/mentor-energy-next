@@ -244,11 +244,16 @@ export default function FileUpload({
     setIsUploading(true);
 
     try {
-      // Use presigned URL for files larger than threshold (works for both mobile and desktop)
-      // CORS has been configured on R2 to allow direct uploads
+      // Try presigned URL first for large files, fall back to server upload if it fails
       if (file.size > PRESIGNED_THRESHOLD) {
         console.log('Using presigned URL upload for file size:', file.size, 'isMobile:', isMobile);
-        await uploadWithPresignedUrl(file);
+        try {
+          await uploadWithPresignedUrl(file);
+        } catch (presignedErr) {
+          console.error('Presigned URL upload failed, trying server upload:', presignedErr);
+          // Fall back to server-side upload (may be slower but more reliable)
+          await uploadWithFormData(file);
+        }
       } else {
         console.log('Using form data upload for file size:', file.size);
         await uploadWithFormData(file);
