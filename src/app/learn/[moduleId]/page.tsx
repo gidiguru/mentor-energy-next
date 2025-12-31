@@ -60,6 +60,17 @@ export default async function ModuleDetailPage({ params }: Props) {
     }
   }
 
+  // Calculate overall module rating (average of all ratings across all lessons)
+  const allRatingsFlat = Object.values(pageRatings).flatMap(p =>
+    Array(p.count).fill(p.average)
+  );
+  const moduleRating = allRatingsFlat.length > 0
+    ? {
+        average: Math.round((allRatingsFlat.reduce((a, b) => a + b, 0) / allRatingsFlat.length) * 10) / 10,
+        count: allRatingsFlat.length,
+      }
+    : null;
+
   const pageTypeIcons: Record<string, typeof PlayCircle> = {
     lesson: FileText,
     quiz: HelpCircle,
@@ -104,7 +115,14 @@ export default async function ModuleDetailPage({ params }: Props) {
               <h1 className="text-3xl lg:text-4xl font-bold mb-4">{module.title}</h1>
               <p className="text-lg text-primary-100 mb-4">{module.description}</p>
 
-              <div className="flex items-center gap-6 text-primary-100">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-primary-100">
+                {moduleRating && (
+                  <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-medium text-white">{moduleRating.average}</span>
+                    <span className="text-primary-200">({moduleRating.count} {moduleRating.count === 1 ? 'rating' : 'ratings'})</span>
+                  </span>
+                )}
                 {module.duration && (
                   <span className="flex items-center gap-2">
                     <Clock className="w-5 h-5" />
