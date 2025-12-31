@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle, Loader2, Download, File, FileText, Image, Music } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle, Loader2, Download, File, FileText, Image, Music, Lock } from 'lucide-react';
 import LessonComments from '@/components/LessonComments';
 import LessonRating from '@/components/LessonRating';
 import LessonTools from '@/components/LessonTools';
 import QuizComponent from '@/components/QuizComponent';
+import PrerequisitesBanner from '@/components/PrerequisitesBanner';
 
 interface Media {
   id: string;
@@ -68,10 +69,29 @@ export default function LessonPage() {
   const [completed, setCompleted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [progress, setProgress] = useState<ProgressData | null>(null);
+  const [canAccessModule, setCanAccessModule] = useState<boolean | null>(null);
 
   const moduleId = params.moduleId as string;
   const sectionId = params.sectionId as string;
   const pageId = params.pageId as string;
+
+  // Check prerequisites
+  useEffect(() => {
+    async function checkPrerequisites() {
+      try {
+        const response = await fetch(`/api/modules/${moduleId}/prerequisites`);
+        if (response.ok) {
+          const prereqData = await response.json();
+          setCanAccessModule(prereqData.canAccess);
+        } else {
+          setCanAccessModule(true); // Fail open on error
+        }
+      } catch {
+        setCanAccessModule(true); // Fail open on error
+      }
+    }
+    checkPrerequisites();
+  }, [moduleId]);
 
   // Fetch lesson data
   useEffect(() => {
@@ -174,10 +194,41 @@ export default function LessonPage() {
     }
   };
 
-  if (loading) {
+  if (loading || canAccessModule === null) {
     return (
       <div className="min-h-[calc(100vh-4rem)] bg-surface-50 dark:bg-surface-900 flex items-center justify-center">
         <div className="animate-pulse text-surface-500">Loading lesson...</div>
+      </div>
+    );
+  }
+
+  // Show prerequisites blocked message
+  if (canAccessModule === false) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] bg-surface-50 dark:bg-surface-900 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-surface-900 dark:text-white mb-2">
+              Complete Prerequisites First
+            </h1>
+            <p className="text-surface-600 dark:text-surface-400">
+              This lesson requires you to complete prerequisite courses before you can access it.
+            </p>
+          </div>
+          <PrerequisitesBanner moduleId={moduleId} />
+          <div className="text-center mt-6">
+            <Link
+              href={`/learn/${moduleId}`}
+              className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 dark:text-primary-400"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Course Overview
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -344,7 +395,7 @@ export default function LessonPage() {
                 {page.media && page.media.length > 0 && (
                   <div className="space-y-4">
                     {page.media.filter(m => m.type === 'video').map((video) => (
-                      <VideoPlayer key={video.id} video={video} onEnded={handleVideoEnded} />
+                      <VideoPlayer key={video.id} video={video} onEnded={handleVideoEnded} pageId={page.id} />
                     ))}
                   </div>
                 )}
@@ -505,11 +556,114 @@ function parseVideoUrl(url: string): { type: 'youtube' | 'vimeo' | 'direct'; emb
   return { type: 'direct', embedUrl: url };
 }
 
-// Video player component with error handling
-function VideoPlayer({ video, onEnded }: { video: Media; onEnded?: () => void }) {
+// Video player component with error handling and resume functionality
+function VideoPlayer({ video, onEnded, pageId }: { video: Media; onEnded?: () => void; pageId: string }) {
   const [error, setError] = useState(false);
+  const [savedPosition, setSavedPosition] = useState<number>(0);
+  const [positionLoaded, setPositionLoaded] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedPositionRef = useRef<number>(0);
 
   const { type, embedUrl } = parseVideoUrl(video.url);
+
+  // Load saved position
+  useEffect(() => {
+    async function loadSavedPosition() {
+      try {
+        const response = await fetch(`/api/video-progress?pageId=${pageId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.position && data.position > 0) {
+            setSavedPosition(data.position);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading video position:', err);
+      } finally {
+        setPositionLoaded(true);
+      }
+    }
+    if (type === 'direct') {
+      loadSavedPosition();
+    } else {
+      setPositionLoaded(true);
+    }
+  }, [pageId, type]);
+
+  // Save position to server
+  const savePosition = useCallback(async (position: number, duration: number) => {
+    // Don't save if position hasn't changed significantly (within 2 seconds)
+    if (Math.abs(position - lastSavedPositionRef.current) < 2) {
+      return;
+    }
+    lastSavedPositionRef.current = position;
+
+    try {
+      await fetch('/api/video-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId, position, duration }),
+      });
+    } catch (err) {
+      console.error('Error saving video position:', err);
+    }
+  }, [pageId]);
+
+  // Handle video time update - save position periodically
+  const handleTimeUpdate = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Debounce saves to every 5 seconds
+    saveTimeoutRef.current = setTimeout(() => {
+      savePosition(video.currentTime, video.duration);
+    }, 5000);
+  }, [savePosition]);
+
+  // Handle video pause - save immediately
+  const handlePause = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Clear any pending timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Save immediately on pause
+    savePosition(video.currentTime, video.duration);
+  }, [savePosition]);
+
+  // Set initial position when video is ready
+  const handleLoadedMetadata = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || savedPosition <= 0) return;
+
+    // Only seek if we're not near the end (within 10 seconds)
+    if (savedPosition < video.duration - 10) {
+      video.currentTime = savedPosition;
+    }
+  }, [savedPosition]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      // Save final position on unmount
+      const video = videoRef.current;
+      if (video && video.currentTime > 0) {
+        savePosition(video.currentTime, video.duration);
+      }
+    };
+  }, [savePosition]);
 
   // YouTube or Vimeo embed - auto-complete not supported for embeds
   if (type === 'youtube' || type === 'vimeo') {
@@ -529,6 +683,17 @@ function VideoPlayer({ video, onEnded }: { video: Media; onEnded?: () => void })
             <p className="text-base font-medium text-white">{video.title}</p>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // Wait for position to load before showing video
+  if (!positionLoaded) {
+    return (
+      <div className="bg-black rounded-xl overflow-hidden">
+        <div className="w-full aspect-video flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-white animate-spin" />
+        </div>
       </div>
     );
   }
@@ -561,10 +726,27 @@ function VideoPlayer({ video, onEnded }: { video: Media; onEnded?: () => void })
     );
   }
 
-  // Direct video - show video element immediately (browser handles loading)
+  // Direct video - show video element with resume support
   return (
     <div className="bg-black rounded-xl overflow-hidden">
+      {savedPosition > 0 && (
+        <div className="bg-primary-600 text-white text-sm px-4 py-2 flex items-center justify-between">
+          <span>Resuming from {formatTime(savedPosition)}</span>
+          <button
+            onClick={() => {
+              if (videoRef.current) {
+                videoRef.current.currentTime = 0;
+                setSavedPosition(0);
+              }
+            }}
+            className="text-xs underline hover:no-underline"
+          >
+            Start from beginning
+          </button>
+        </div>
+      )}
       <video
+        ref={videoRef}
         key={embedUrl}
         src={embedUrl}
         controls
@@ -574,6 +756,9 @@ function VideoPlayer({ video, onEnded }: { video: Media; onEnded?: () => void })
         controlsList="nodownload"
         onError={() => setError(true)}
         onEnded={onEnded}
+        onLoadedMetadata={handleLoadedMetadata}
+        onTimeUpdate={handleTimeUpdate}
+        onPause={handlePause}
       >
         Your browser does not support the video tag.
       </video>
@@ -584,6 +769,13 @@ function VideoPlayer({ video, onEnded }: { video: Media; onEnded?: () => void })
       )}
     </div>
   );
+}
+
+// Format time in MM:SS format
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 // Simple markdown to HTML converter

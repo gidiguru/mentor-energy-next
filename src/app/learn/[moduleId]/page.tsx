@@ -3,6 +3,7 @@ import { db, learningModules, moduleSections, sectionPages, lessonRatings, userP
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, Clock, CheckCircle, PlayCircle, FileText, HelpCircle, ChevronRight, Star } from 'lucide-react';
+import PrerequisitesBanner from '@/components/PrerequisitesBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -333,6 +334,9 @@ export default async function ModuleDetailPage({ params }: Props) {
 
           {/* Sidebar - Learning Objectives */}
           <div className="space-y-6">
+            {/* Prerequisites Banner */}
+            <PrerequisitesBanner moduleId={moduleId} />
+
             {/* Progress Card (if user has started) */}
             {hasAnyProgress && (
               <div className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
