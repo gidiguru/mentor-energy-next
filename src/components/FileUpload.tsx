@@ -244,14 +244,17 @@ export default function FileUpload({
     setIsUploading(true);
 
     try {
-      // Try presigned URL first for large files, fall back to server upload if it fails
-      if (file.size > PRESIGNED_THRESHOLD) {
-        console.log('Using presigned URL upload for file size:', file.size, 'isMobile:', isMobile);
+      // Mobile: always use server-side upload (more reliable, avoids CORS/file state issues)
+      // Desktop: use presigned URL for large files (faster for big uploads)
+      if (isMobile) {
+        console.log('Mobile detected, using server upload for file size:', file.size);
+        await uploadWithFormData(file);
+      } else if (file.size > PRESIGNED_THRESHOLD) {
+        console.log('Using presigned URL upload for file size:', file.size);
         try {
           await uploadWithPresignedUrl(file);
         } catch (presignedErr) {
           console.error('Presigned URL upload failed, trying server upload:', presignedErr);
-          // Fall back to server-side upload (may be slower but more reliable)
           await uploadWithFormData(file);
         }
       } else {
