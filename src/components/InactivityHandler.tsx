@@ -31,6 +31,32 @@ export default function InactivityHandler({
   const timeoutMs = timeoutTime * 60 * 1000;
   const warningDuration = timeoutMs - warningMs;
 
+  const handleLogout = useCallback(async () => {
+    try {
+      await signOut({ redirectUrl: '/auth?timeout=true' });
+    } catch (error) {
+      console.error('Error signing out:', error);
+      window.location.href = '/auth?timeout=true';
+    }
+  }, [signOut]);
+
+  // Check if we should logout based on last activity time
+  const checkInactivity = useCallback(() => {
+    if (!isSignedIn || !enabled) return;
+
+    const elapsed = Date.now() - lastActivityRef.current;
+
+    if (elapsed >= timeoutMs) {
+      // Past timeout - logout immediately
+      handleLogout();
+    } else if (elapsed >= warningMs) {
+      // In warning period - show warning with remaining time
+      setShowWarning(true);
+      const remaining = Math.max(0, timeoutMs - elapsed);
+      setCountdown(Math.floor(remaining / 1000));
+    }
+  }, [isSignedIn, enabled, timeoutMs, warningMs, handleLogout]);
+
   // Reset all timers
   const resetTimers = useCallback(() => {
     lastActivityRef.current = Date.now();
@@ -64,20 +90,29 @@ export default function InactivityHandler({
         handleLogout();
       }, warningDuration);
     }, warningMs);
-  }, [isSignedIn, enabled, warningMs, warningDuration]);
-
-  const handleLogout = useCallback(async () => {
-    try {
-      await signOut({ redirectUrl: '/auth?timeout=true' });
-    } catch (error) {
-      console.error('Error signing out:', error);
-      window.location.href = '/auth?timeout=true';
-    }
-  }, [signOut]);
+  }, [isSignedIn, enabled, warningMs, warningDuration, handleLogout]);
 
   const handleStayLoggedIn = useCallback(() => {
     resetTimers();
   }, [resetTimers]);
+
+  // Handle visibility change (tab becomes active/inactive)
+  useEffect(() => {
+    if (!isSignedIn || !enabled) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Tab became visible - check if we should have timed out
+        checkInactivity();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isSignedIn, enabled, checkInactivity]);
 
   // Track user activity
   useEffect(() => {
@@ -125,6 +160,24 @@ export default function InactivityHandler({
       if (throttleTimeout) clearTimeout(throttleTimeout);
     };
   }, [isSignedIn, enabled, resetTimers, showWarning]);
+
+  // Update countdown when in warning state
+  useEffect(() => {
+    if (!showWarning || !isSignedIn || !enabled) return;
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - lastActivityRef.current;
+      const remaining = Math.max(0, timeoutMs - elapsed);
+
+      if (remaining <= 0) {
+        handleLogout();
+      } else {
+        setCountdown(Math.floor(remaining / 1000));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [showWarning, isSignedIn, enabled, timeoutMs, handleLogout]);
 
   // Format countdown for display
   const formatCountdown = (seconds: number) => {
