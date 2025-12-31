@@ -18,6 +18,32 @@ interface Certificate {
 export default function CertificationsPage() {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  const handleDownload = async (cert: Certificate) => {
+    setDownloading(cert.id);
+    try {
+      const response = await fetch(`/api/certificates/${cert.id}/download`);
+      if (!response.ok) {
+        throw new Error('Failed to download certificate');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `certificate-${cert.certificateNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading certificate:', error);
+      alert('Failed to download certificate. Please try again.');
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   useEffect(() => {
     async function fetchCertificates() {
@@ -102,14 +128,21 @@ export default function CertificationsPage() {
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
                   <button
-                    className="flex-1 flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                    onClick={() => {
-                      // TODO: Implement certificate download/view
-                      alert('Certificate download coming soon!');
-                    }}
+                    className="flex-1 flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                    onClick={() => handleDownload(cert)}
+                    disabled={downloading === cert.id}
                   >
-                    <Download className="h-4 w-4" />
-                    Download
+                    {downloading === cert.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Downloading...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        Download PDF
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
