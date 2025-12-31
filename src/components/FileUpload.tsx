@@ -244,21 +244,11 @@ export default function FileUpload({
     setIsUploading(true);
 
     try {
-      // On mobile, always try server upload first (avoids R2 CORS issues)
-      // For large files, try presigned URL but fall back to server upload
-      if (file.size > PRESIGNED_THRESHOLD && !isMobile) {
-        console.log('Using presigned URL upload for file size:', file.size);
+      // Use presigned URL for files larger than threshold (works for both mobile and desktop)
+      // CORS has been configured on R2 to allow direct uploads
+      if (file.size > PRESIGNED_THRESHOLD) {
+        console.log('Using presigned URL upload for file size:', file.size, 'isMobile:', isMobile);
         await uploadWithPresignedUrl(file);
-      } else if (file.size > PRESIGNED_THRESHOLD && isMobile) {
-        // Mobile with large file - try presigned first, fall back to chunked message
-        console.log('Mobile large file upload, trying presigned URL:', file.size);
-        try {
-          await uploadWithPresignedUrl(file);
-        } catch (presignedErr) {
-          console.error('Presigned upload failed on mobile, this may be a CORS issue:', presignedErr);
-          // For mobile large files, show a helpful message
-          throw new Error('Large video uploads from mobile may fail. Try uploading from a desktop browser, or use a shorter video clip under 4MB.');
-        }
       } else {
         console.log('Using form data upload for file size:', file.size);
         await uploadWithFormData(file);
