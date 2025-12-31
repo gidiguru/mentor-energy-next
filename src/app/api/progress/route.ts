@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, userPageProgress, userModuleProgress, sectionPages, moduleSections, learningModules, userStreaks, achievements, userAchievements, certificates, lessonComments, eq, and } from '@/lib/db';
+import { sendCertificateEmail } from '@/lib/email';
 
 // GET /api/progress?moduleId=xxx - Get all page progress for a module
 export async function GET(request: NextRequest) {
@@ -227,7 +228,11 @@ export async function POST(request: NextRequest) {
     // Auto-generate certificate when module is completed
     let certificate = null;
     if (isModuleCompleted) {
-      certificate = await autoGenerateCertificate(database, user.id, module.id);
+      certificate = await autoGenerateCertificate(
+        database,
+        { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName },
+        { id: module.id, title: module.title }
+      );
     }
 
     return NextResponse.json({
@@ -417,14 +422,30 @@ async function updateStreak(database: ReturnType<typeof db>, userId: string) {
   }
 }
 
+interface UserInfo {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+interface ModuleInfo {
+  id: string;
+  title: string;
+}
+
 // Helper function to auto-generate certificate when module is completed
-async function autoGenerateCertificate(database: ReturnType<typeof db>, userId: string, moduleId: string) {
+async function autoGenerateCertificate(
+  database: ReturnType<typeof db>,
+  user: UserInfo,
+  module: ModuleInfo
+) {
   try {
     // Check if certificate already exists
     const existingCert = await database.query.certificates.findFirst({
       where: and(
-        eq(certificates.userId, userId),
-        eq(certificates.moduleId, moduleId),
+        eq(certificates.userId, user.id),
+        eq(certificates.moduleId, module.id),
       ),
     });
 
@@ -435,16 +456,27 @@ async function autoGenerateCertificate(database: ReturnType<typeof db>, userId: 
 
     // Generate certificate number
     const certificateNumber = `CERT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const completedAt = new Date();
 
     // Create certificate
     const [newCertificate] = await database.insert(certificates).values({
-      userId,
-      moduleId,
+      userId: user.id,
+      moduleId: module.id,
       certificateNumber,
-      completedAt: new Date(),
+      completedAt,
     }).returning();
 
-    console.log(`Auto-generated certificate ${certificateNumber} for user ${userId}, module ${moduleId}`);
+    console.log(`Auto-generated certificate ${certificateNumber} for user ${user.id}, module ${module.id}`);
+
+    // Send certificate email (don't await - send in background)
+    const userName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Learner';
+    sendCertificateEmail({
+      to: user.email,
+      userName,
+      moduleTitle: module.title,
+      certificateNumber,
+      completedAt,
+    }).catch(err => console.error('Error sending certificate email:', err));
 
     return newCertificate;
   } catch (error) {
