@@ -244,19 +244,11 @@ export default function FileUpload({
     setIsUploading(true);
 
     try {
-      // Mobile: always use server-side upload (more reliable, avoids CORS/file state issues)
-      // Desktop: use presigned URL for large files (faster for big uploads)
-      if (isMobile) {
-        console.log('Mobile detected, using server upload for file size:', file.size);
-        await uploadWithFormData(file);
-      } else if (file.size > PRESIGNED_THRESHOLD) {
-        console.log('Using presigned URL upload for file size:', file.size);
-        try {
-          await uploadWithPresignedUrl(file);
-        } catch (presignedErr) {
-          console.error('Presigned URL upload failed, trying server upload:', presignedErr);
-          await uploadWithFormData(file);
-        }
+      // For large files, use presigned URL (direct to R2, bypasses Netlify size limits)
+      // For small files, use server upload (simpler, goes through API)
+      if (file.size > PRESIGNED_THRESHOLD) {
+        console.log('Using presigned URL upload for file size:', file.size, 'isMobile:', isMobile);
+        await uploadWithPresignedUrl(file);
       } else {
         console.log('Using form data upload for file size:', file.size);
         await uploadWithFormData(file);
@@ -271,7 +263,21 @@ export default function FileUpload({
 
   const uploadWithFormData = async (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
+
+    // On iOS, re-create the file as a Blob to avoid "pattern" errors
+    if (isMobile) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const mimeType = getFileMimeType(file);
+        const blob = new Blob([arrayBuffer], { type: mimeType });
+        formData.append('file', blob, file.name);
+      } catch (blobErr) {
+        console.error('Failed to read file as blob, using original:', blobErr);
+        formData.append('file', file);
+      }
+    } else {
+      formData.append('file', file);
+    }
 
     const response = await fetch('/api/upload', {
       method: 'POST',
@@ -310,6 +316,18 @@ export default function FileUpload({
 
     // Step 2: Upload directly to R2 using presigned URL
     console.log('Uploading to presigned URL...');
+
+    // On mobile, read file into ArrayBuffer first to avoid iOS file handling issues
+    let uploadBody: File | ArrayBuffer = file;
+    if (isMobile) {
+      try {
+        uploadBody = await file.arrayBuffer();
+      } catch (readErr) {
+        console.error('Failed to read file as ArrayBuffer:', readErr);
+        throw new Error('Failed to read file. Please try again.');
+      }
+    }
+
     let uploadResponse;
     try {
       uploadResponse = await fetch(presignedData.presignedUrl, {
@@ -317,7 +335,7 @@ export default function FileUpload({
         headers: {
           'Content-Type': mimeType,
         },
-        body: file,
+        body: uploadBody,
       });
     } catch (fetchErr) {
       console.error('Fetch to presigned URL failed (likely CORS):', fetchErr);
