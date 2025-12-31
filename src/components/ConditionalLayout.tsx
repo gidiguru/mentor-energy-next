@@ -13,10 +13,9 @@ interface ConditionalLayoutProps {
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
 
-  // Hide main header/footer on admin and learn lesson pages (they have their own layouts)
+  // Hide main header/footer only on admin pages (they have their own layout)
   const isAdminPage = pathname?.startsWith('/admin');
-  const isLearnPage = pathname?.startsWith('/learn/') && pathname.split('/').length > 2;
-  const hideMainLayout = isAdminPage || isLearnPage;
+  const hideMainLayout = isAdminPage;
 
   if (hideMainLayout) {
     return <>{children}</>;
