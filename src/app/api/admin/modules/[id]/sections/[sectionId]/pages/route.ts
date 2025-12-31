@@ -18,7 +18,7 @@ export async function POST(request: NextRequest, { params }: Props) {
 
   try {
     const body = await request.json();
-    const { title, content, pageType, estimatedDuration, videoUrl } = body;
+    const { title, content, pageType, estimatedDuration, videoUrl, labConfig } = body;
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -50,6 +50,7 @@ export async function POST(request: NextRequest, { params }: Props) {
         content: content || null,
         pageType: pageType || 'lesson',
         estimatedDuration: estimatedDuration || null,
+        labConfig: pageType === 'lab' ? labConfig : null,
         sequence,
       })
       .returning();
