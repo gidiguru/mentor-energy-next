@@ -526,10 +526,10 @@ export default function DashboardPage() {
             <h2 className="h3 mb-4">Quick Actions</h2>
             <div className="grid gap-2">
               <Link
-                href="/dashboard/learning/modules"
+                href="/learn"
                 className="btn preset-filled-primary-500 w-full"
               >
-                Continue Learning
+                Browse Courses
               </Link>
               <Link
                 href="/dashboard/mentorship"

@@ -24,7 +24,6 @@ const baseNavItems: NavItem[] = [
     icon: '📚',
     hasSubItems: true,
     subItems: [
-      { path: '/dashboard/learning/modules', label: 'My Courses', icon: '📖' },
       { path: '/dashboard/learning/virtual-labs', label: 'Virtual Labs', icon: '🔬' },
       { path: '/dashboard/learning/field-trips', label: 'Field Trips', icon: '🌍' },
     ],
