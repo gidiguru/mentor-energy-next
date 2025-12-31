@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
-import { Flame, Trophy, Medal, BookOpen, Award, TrendingUp, Bookmark, Clock, ChevronRight, GraduationCap, BarChart3 } from 'lucide-react';
+import { Flame, Trophy, Medal, BookOpen, Award, TrendingUp, Bookmark, Clock, ChevronRight, GraduationCap, BarChart3, FileText, Download } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -65,6 +65,17 @@ interface Bookmark {
   createdAt: string;
 }
 
+interface Certificate {
+  id: string;
+  certificateNumber: string;
+  completedAt: string;
+  module: {
+    id: string;
+    title: string;
+    moduleSlug: string;
+  };
+}
+
 interface DashboardStats {
   completedLessons: number;
   totalLessons: number;
@@ -90,6 +101,7 @@ export default function DashboardPage() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -108,6 +120,7 @@ export default function DashboardPage() {
           achievementsRes,
           leaderboardRes,
           bookmarksRes,
+          certificatesRes,
         ] = await Promise.all([
           fetch('/api/user/profile'),
           fetch('/api/enrollments'),
@@ -115,6 +128,7 @@ export default function DashboardPage() {
           fetch('/api/achievements'),
           fetch('/api/leaderboard?type=points&limit=5'),
           fetch('/api/bookmarks'),
+          fetch('/api/certificates'),
         ]);
 
         // Process profile
@@ -204,6 +218,12 @@ export default function DashboardPage() {
         if (bookmarksRes.ok) {
           const data = await bookmarksRes.json();
           setBookmarks(data.bookmarks || []);
+        }
+
+        // Process certificates
+        if (certificatesRes.ok) {
+          const data = await certificatesRes.json();
+          setCertificates(data.certificates || []);
         }
       } catch (error) {
         console.error('Error loading dashboard:', error);
@@ -454,6 +474,53 @@ export default function DashboardPage() {
                     </div>
                     <ChevronRight className="w-4 h-4 text-surface-400" />
                   </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* My Certificates */}
+          {certificates.length > 0 && (
+            <section className="card preset-filled-surface-100-900 p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="h3 flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-green-500" />
+                  My Certificates
+                </h2>
+                <span className="text-sm text-surface-500">
+                  {certificates.length} earned
+                </span>
+              </div>
+              <div className="space-y-3">
+                {certificates.map((cert) => (
+                  <div
+                    key={cert.id}
+                    className="flex items-center gap-3 rounded-lg border border-green-200 dark:border-green-800/50 bg-green-50 dark:bg-green-900/20 p-3"
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-surface-900 dark:text-white truncate">
+                        {cert.module.title}
+                      </p>
+                      <p className="text-sm text-surface-500">
+                        Completed {new Date(cert.completedAt).toLocaleDateString()}
+                      </p>
+                      <p className="text-xs text-surface-400 font-mono">
+                        {cert.certificateNumber}
+                      </p>
+                    </div>
+                    <a
+                      href={`/api/certificates/${cert.id}/download`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      PDF
+                    </a>
+                  </div>
                 ))}
               </div>
             </section>
