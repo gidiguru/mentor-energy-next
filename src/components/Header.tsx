@@ -18,8 +18,8 @@ import {
 
 const baseNavItems = [
   { href: '/', label: 'Home' },
-  { href: '/learn', label: 'Learning Center' },
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/learn', label: 'Learning Center' },
   { href: '/mentors', label: 'Find Mentors' },
   { href: '/resources', label: 'Resources' },
 ];
