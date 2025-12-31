@@ -58,7 +58,7 @@ export async function sendCertificateEmail({
 
   try {
     const { data, error } = await client.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@send.mentor.energy>',
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
       to: [to],
       subject: `🎓 Congratulations! You've completed ${moduleTitle}`,
       html: `
