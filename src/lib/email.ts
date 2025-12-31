@@ -122,7 +122,7 @@ export async function sendCertificateEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://mentor.energy'}/dashboard/certifications"
+                            <a href="https://mentor.energy/dashboard/certifications"
                                style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               View My Certificates
                             </a>
