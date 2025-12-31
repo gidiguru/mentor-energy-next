@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/progress - Mark a page as complete
+// POST /api/progress - Mark a page as complete or incomplete
 export async function POST(request: NextRequest) {
   try {
     const { userId: clerkId } = await auth();
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { pageId, moduleId } = body;
+    const { pageId, moduleId, completed = true } = body; // completed defaults to true for backwards compatibility
 
     if (!pageId || !moduleId) {
       return NextResponse.json({ error: 'pageId and moduleId are required' }, { status: 400 });
@@ -147,9 +147,9 @@ export async function POST(request: NextRequest) {
       await database
         .update(userPageProgress)
         .set({
-          isCompleted: true,
+          isCompleted: completed,
           isViewed: true,
-          completedAt: new Date(),
+          completedAt: completed ? new Date() : null,
           updatedAt: new Date(),
         })
         .where(eq(userPageProgress.id, existingProgress.id));
@@ -158,9 +158,9 @@ export async function POST(request: NextRequest) {
       await database.insert(userPageProgress).values({
         userId: user.id,
         pageId: pageId,
-        isCompleted: true,
+        isCompleted: completed,
         isViewed: true,
-        completedAt: new Date(),
+        completedAt: completed ? new Date() : null,
       });
     }
 

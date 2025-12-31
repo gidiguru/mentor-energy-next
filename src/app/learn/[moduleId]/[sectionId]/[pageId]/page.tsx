@@ -117,8 +117,8 @@ export default function LessonPage() {
     }
   }, [progress, data?.page?.id]);
 
-  const markComplete = async () => {
-    if (!data?.page?.id || saving || completed) return;
+  const toggleComplete = async (markAsComplete: boolean = !completed) => {
+    if (!data?.page?.id || saving) return;
 
     setSaving(true);
     try {
@@ -128,16 +128,17 @@ export default function LessonPage() {
         body: JSON.stringify({
           pageId: data.page.id,
           moduleId: moduleId,
+          completed: markAsComplete,
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
-        setCompleted(true);
+        setCompleted(markAsComplete);
         // Update local progress state
         setProgress(prev => prev ? {
           ...prev,
-          completedPages: { ...prev.completedPages, [data.page.id]: true },
+          completedPages: { ...prev.completedPages, [data.page.id]: markAsComplete },
           completedCount: result.completedCount,
           progressPercentage: result.progressPercentage,
         } : null);
@@ -146,6 +147,13 @@ export default function LessonPage() {
       console.error('Error saving progress:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Auto-complete when video ends (only if not already completed)
+  const handleVideoEnded = () => {
+    if (!completed && !saving) {
+      toggleComplete(true);
     }
   };
 
@@ -332,7 +340,7 @@ export default function LessonPage() {
                 {page.media && page.media.length > 0 && (
                   <div className="space-y-4">
                     {page.media.filter(m => m.type === 'video').map((video) => (
-                      <VideoPlayer key={video.id} video={video} />
+                      <VideoPlayer key={video.id} video={video} onEnded={handleVideoEnded} />
                     ))}
                   </div>
                 )}
@@ -375,11 +383,11 @@ export default function LessonPage() {
             </button>
 
             <button
-              onClick={markComplete}
-              disabled={saving || completed}
+              onClick={() => toggleComplete()}
+              disabled={saving}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 completed
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
                   : saving
                   ? 'bg-surface-200 text-surface-500 dark:bg-surface-600 dark:text-surface-400 cursor-wait'
                   : 'bg-surface-100 text-surface-700 dark:bg-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-600'
@@ -390,7 +398,7 @@ export default function LessonPage() {
               ) : (
                 <CheckCircle className={`w-4 h-4 ${completed ? 'fill-current' : ''}`} />
               )}
-              {saving ? 'Saving...' : completed ? 'Completed' : 'Mark Complete'}
+              {saving ? 'Saving...' : completed ? 'Completed ✓' : 'Mark Complete'}
             </button>
 
             <button
@@ -440,12 +448,12 @@ function parseVideoUrl(url: string): { type: 'youtube' | 'vimeo' | 'direct'; emb
 }
 
 // Video player component with error handling
-function VideoPlayer({ video }: { video: Media }) {
+function VideoPlayer({ video, onEnded }: { video: Media; onEnded?: () => void }) {
   const [error, setError] = useState(false);
 
   const { type, embedUrl } = parseVideoUrl(video.url);
 
-  // YouTube or Vimeo embed
+  // YouTube or Vimeo embed - auto-complete not supported for embeds
   if (type === 'youtube' || type === 'vimeo') {
     return (
       <div className="bg-black rounded-xl overflow-hidden">
@@ -507,6 +515,7 @@ function VideoPlayer({ video }: { video: Media }) {
         className="w-full aspect-video"
         controlsList="nodownload"
         onError={() => setError(true)}
+        onEnded={onEnded}
       >
         Your browser does not support the video tag.
       </video>
