@@ -21,10 +21,8 @@ export default function AuthPage() {
               'bg-primary-500 hover:bg-primary-600 text-white',
           },
         }}
-        routing="path"
-        path="/auth"
         signUpUrl="/signup"
-        afterSignInUrl="/dashboard"
+        fallbackRedirectUrl="/dashboard"
       />
     </div>
   );
