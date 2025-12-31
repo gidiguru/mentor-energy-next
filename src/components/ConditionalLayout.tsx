@@ -1,7 +1,10 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Header, Footer, Drawer, MobileNav } from '@/components';
+import { Header } from './Header';
+import { Footer } from './Footer';
+import { Drawer } from './Drawer';
+import { MobileNav } from './MobileNav';
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
