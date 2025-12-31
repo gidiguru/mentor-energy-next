@@ -149,7 +149,7 @@ export default function LearnPage() {
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-surface-900">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-12 pb-16">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold mb-4">Learning Center</h1>
           <p className="text-xl text-primary-100 max-w-2xl">
@@ -160,33 +160,35 @@ export default function LearnPage() {
               You are enrolled in {enrolledCount} course{enrolledCount !== 1 ? 's' : ''}
             </p>
           )}
+        </div>
+      </div>
 
-          {/* Search Bar */}
-          <div className="mt-8 max-w-xl">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400" />
-              <input
-                type="text"
-                placeholder="Search courses by title, topic, or difficulty..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-10 py-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <X className="w-4 h-4 text-white/60" />
-                </button>
-              )}
-            </div>
+      {/* Search Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-xl">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400" />
+            <input
+              type="text"
+              placeholder="Search courses by title, topic, or difficulty..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-10 py-3 rounded-lg bg-surface-100 dark:bg-surface-800 border border-surface-300 dark:border-surface-600 text-surface-900 dark:text-white placeholder-surface-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-surface-200 dark:hover:bg-surface-700 rounded-full transition-colors"
+              >
+                <X className="w-4 h-4 text-surface-500" />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Modules Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         {/* Search results info */}
         {searchQuery && (
           <div className="mb-6 flex items-center justify-between">
