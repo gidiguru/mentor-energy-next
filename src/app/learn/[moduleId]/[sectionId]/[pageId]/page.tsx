@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle } from 'lucide-react';
 
 interface Media {
   id: string;
@@ -245,22 +245,7 @@ export default function LessonPage() {
                 {page.media && page.media.length > 0 && (
                   <div className="space-y-4">
                     {page.media.filter(m => m.type === 'video').map((video) => (
-                      <div key={video.id} className="bg-black rounded-xl overflow-hidden">
-                        <video
-                          src={video.url}
-                          controls
-                          playsInline
-                          className="w-full aspect-video"
-                          controlsList="nodownload"
-                        >
-                          Your browser does not support the video tag.
-                        </video>
-                        {video.title && (
-                          <p className="p-3 text-sm text-surface-400 bg-surface-900">
-                            {video.title}
-                          </p>
-                        )}
-                      </div>
+                      <VideoPlayer key={video.id} video={video} />
                     ))}
                   </div>
                 )}
@@ -321,6 +306,60 @@ export default function LessonPage() {
           </div>
         </footer>
       </main>
+    </div>
+  );
+}
+
+// Video player component with error handling
+function VideoPlayer({ video }: { video: Media }) {
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  if (error) {
+    return (
+      <div className="bg-surface-800 rounded-xl overflow-hidden">
+        <div className="w-full aspect-video flex flex-col items-center justify-center bg-surface-900 text-surface-400">
+          <AlertCircle className="w-12 h-12 mb-3" />
+          <p className="text-sm">Video failed to load</p>
+          <p className="text-xs mt-1 text-surface-500 max-w-md text-center px-4">
+            The video may still be processing or the link may have expired. Try refreshing the page.
+          </p>
+        </div>
+        {video.title && (
+          <p className="p-3 text-sm text-surface-400 bg-surface-900">
+            {video.title}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-black rounded-xl overflow-hidden">
+      {loading && (
+        <div className="w-full aspect-video flex items-center justify-center bg-surface-900">
+          <div className="animate-pulse text-surface-400">Loading video...</div>
+        </div>
+      )}
+      <video
+        src={video.url}
+        controls
+        playsInline
+        className={`w-full aspect-video ${loading ? 'hidden' : ''}`}
+        controlsList="nodownload"
+        onLoadedData={() => setLoading(false)}
+        onError={() => {
+          setLoading(false);
+          setError(true);
+        }}
+      >
+        Your browser does not support the video tag.
+      </video>
+      {video.title && !loading && (
+        <p className="p-3 text-sm text-surface-400 bg-surface-900">
+          {video.title}
+        </p>
+      )}
     </div>
   );
 }
