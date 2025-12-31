@@ -322,13 +322,13 @@ function VideoPlayer({ video }: { video: Media }) {
           <AlertCircle className="w-12 h-12 mb-3" />
           <p className="text-sm">Video failed to load</p>
           <p className="text-xs mt-1 text-surface-500 max-w-md text-center px-4">
-            The video may still be processing or the link may have expired. Try refreshing the page.
+            This video format may not be supported on your device. Try viewing on desktop or use a different video format (H.264/MP4).
           </p>
         </div>
         {video.title && (
-          <p className="p-3 text-sm text-surface-400 bg-surface-900">
-            {video.title}
-          </p>
+          <div className="p-4 bg-surface-800 border-t border-surface-700">
+            <p className="text-base font-medium text-white">{video.title}</p>
+          </div>
         )}
       </div>
     );
@@ -345,9 +345,11 @@ function VideoPlayer({ video }: { video: Media }) {
         src={video.url}
         controls
         playsInline
+        preload="metadata"
         className={`w-full aspect-video ${loading ? 'hidden' : ''}`}
         controlsList="nodownload"
         onLoadedData={() => setLoading(false)}
+        onCanPlay={() => setLoading(false)}
         onError={() => {
           setLoading(false);
           setError(true);
@@ -356,9 +358,9 @@ function VideoPlayer({ video }: { video: Media }) {
         Your browser does not support the video tag.
       </video>
       {video.title && !loading && (
-        <p className="p-3 text-sm text-surface-400 bg-surface-900">
-          {video.title}
-        </p>
+        <div className="p-4 bg-surface-800 border-t border-surface-700">
+          <p className="text-base font-medium text-white">{video.title}</p>
+        </div>
       )}
     </div>
   );
