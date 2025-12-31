@@ -348,25 +348,8 @@ function parseVideoUrl(url: string): { type: 'youtube' | 'vimeo' | 'direct'; emb
 // Video player component with error handling
 function VideoPlayer({ video }: { video: Media }) {
   const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [timedOut, setTimedOut] = useState(false);
 
   const { type, embedUrl } = parseVideoUrl(video.url);
-
-  // Add timeout for loading - if video doesn't load in 10 seconds, show it anyway
-  useEffect(() => {
-    if (type === 'youtube' || type === 'vimeo') return;
-
-    const timeout = setTimeout(() => {
-      if (loading && !error) {
-        console.log('Video loading timed out, showing player anyway');
-        setTimedOut(true);
-        setLoading(false);
-      }
-    }, 10000);
-
-    return () => clearTimeout(timeout);
-  }, [loading, error, type]);
 
   // YouTube or Vimeo embed
   if (type === 'youtube' || type === 'vimeo') {
@@ -390,7 +373,7 @@ function VideoPlayer({ video }: { video: Media }) {
     );
   }
 
-  // Direct video file
+  // Direct video file - show error state if failed
   if (error) {
     return (
       <div className="bg-surface-800 rounded-xl overflow-hidden">
@@ -400,7 +383,6 @@ function VideoPlayer({ video }: { video: Media }) {
           <p className="text-xs mt-1 text-surface-500 max-w-md text-center px-4">
             This video format may not be supported on your device. Try viewing on desktop or use a different video format (H.264/MP4).
           </p>
-          {/* Provide direct link as fallback */}
           <a
             href={embedUrl}
             target="_blank"
@@ -419,40 +401,24 @@ function VideoPlayer({ video }: { video: Media }) {
     );
   }
 
+  // Direct video - show video element immediately (browser handles loading)
   return (
     <div className="bg-black rounded-xl overflow-hidden">
-      {loading && (
-        <div className="w-full aspect-video flex items-center justify-center bg-surface-900">
-          <div className="animate-pulse text-surface-400">Loading video...</div>
-        </div>
-      )}
       <video
+        key={embedUrl}
         src={embedUrl}
         controls
         playsInline
-        preload="auto"
-        className={`w-full aspect-video ${loading ? 'hidden' : ''}`}
+        preload="metadata"
+        className="w-full aspect-video"
         controlsList="nodownload"
-        onLoadedData={() => setLoading(false)}
-        onCanPlay={() => setLoading(false)}
-        onLoadedMetadata={() => setLoading(false)}
-        onError={() => {
-          setLoading(false);
-          setError(true);
-        }}
+        onError={() => setError(true)}
       >
         Your browser does not support the video tag.
       </video>
-      {video.title && !loading && (
+      {video.title && (
         <div className="p-4 bg-surface-800 border-t border-surface-700">
           <p className="text-base font-medium text-white">{video.title}</p>
-        </div>
-      )}
-      {timedOut && !error && (
-        <div className="p-2 bg-yellow-900/50 border-t border-yellow-700">
-          <p className="text-xs text-yellow-400 text-center">
-            Video may take longer to load. If it doesn't play, try a different browser or device.
-          </p>
         </div>
       )}
     </div>
