@@ -83,6 +83,7 @@ export async function GET(request: NextRequest) {
       completedCount,
       progressPercentage,
       moduleProgress: moduleProgressRecord || null,
+      userId: user.id,
     });
   } catch (error) {
     console.error('Error fetching progress:', error);

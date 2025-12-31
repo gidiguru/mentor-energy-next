@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle, Loader2 } from 'lucide-react';
+import LessonComments from '@/components/LessonComments';
 
 interface Media {
   id: string;
@@ -52,6 +53,7 @@ interface ProgressData {
   totalPages: number;
   completedCount: number;
   progressPercentage: number;
+  userId?: string;
 }
 
 export default function LessonPage() {
@@ -363,6 +365,11 @@ export default function LessonPage() {
                 )}
               </div>
             )}
+
+            {/* Comments Section */}
+            <div className="mt-8">
+              <LessonComments pageId={page.id} currentUserId={progress?.userId} />
+            </div>
           </div>
         </div>
 

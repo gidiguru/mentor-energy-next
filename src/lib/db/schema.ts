@@ -310,6 +310,26 @@ export const resources = pgTable('resources', {
 ]);
 
 // ============================================================================
+// LESSON COMMENTS
+// ============================================================================
+
+export const lessonComments = pgTable('lesson_comments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  pageId: uuid('page_id').notNull().references(() => sectionPages.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  parentId: uuid('parent_id'), // For replies - references another comment
+  isEdited: boolean('is_edited').default(false).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_comments_page').on(table.pageId),
+  index('idx_comments_user').on(table.userId),
+  index('idx_comments_parent').on(table.parentId),
+  index('idx_comments_created').on(table.createdAt),
+]);
+
+// ============================================================================
 // RELATIONS
 // ============================================================================
 
@@ -324,6 +344,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   studentSessions: many(mentorshipSessions),
   chatSessions: many(aiChatSessions),
   resources: many(resources),
+  comments: many(lessonComments),
 }));
 
 export const mentorsRelations = relations(mentors, ({ one, many }) => ({
@@ -355,6 +376,7 @@ export const sectionPagesRelations = relations(sectionPages, ({ one, many }) => 
   }),
   media: many(mediaContent),
   progress: many(userPageProgress),
+  comments: many(lessonComments),
 }));
 
 export const mediaContentRelations = relations(mediaContent, ({ one }) => ({
@@ -430,6 +452,17 @@ export const resourcesRelations = relations(resources, ({ one }) => ({
   }),
 }));
 
+export const lessonCommentsRelations = relations(lessonComments, ({ one }) => ({
+  page: one(sectionPages, {
+    fields: [lessonComments.pageId],
+    references: [sectionPages.id],
+  }),
+  user: one(users, {
+    fields: [lessonComments.userId],
+    references: [users.id],
+  }),
+}));
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -472,3 +505,6 @@ export type NewAiChatMessage = typeof aiChatMessages.$inferInsert;
 
 export type Resource = typeof resources.$inferSelect;
 export type NewResource = typeof resources.$inferInsert;
+
+export type LessonComment = typeof lessonComments.$inferSelect;
+export type NewLessonComment = typeof lessonComments.$inferInsert;
