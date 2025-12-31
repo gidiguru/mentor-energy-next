@@ -35,6 +35,7 @@ export default function LessonComments({ pageId, currentUserId }: LessonComments
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyingToUser, setReplyingToUser] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +116,29 @@ export default function LessonComments({ pageId, currentUserId }: LessonComments
     }
   };
 
+  // Start replying to a comment
+  const startReply = (comment: Comment, isReply: boolean) => {
+    if (replyingToId === comment.id) {
+      // Toggle off
+      setReplyingToId(null);
+      setReplyingToUser(null);
+      setReplyContent('');
+    } else {
+      // If replying to a reply, we'll attach to the original parent
+      const targetParentId = isReply ? comment.parentId! : comment.id;
+      setReplyingToId(targetParentId);
+      // If it's a reply to a reply, prepend @mention
+      if (isReply) {
+        const userName = getUserName(comment.user);
+        setReplyingToUser(userName);
+        setReplyContent(`@${userName} `);
+      } else {
+        setReplyingToUser(null);
+        setReplyContent('');
+      }
+    }
+  };
+
   // Submit reply
   const handleReply = async (parentId: string) => {
     if (!replyContent.trim() || submitting) return;
@@ -138,6 +162,7 @@ export default function LessonComments({ pageId, currentUserId }: LessonComments
         setComments([...comments, data.comment]);
         setReplyContent('');
         setReplyingToId(null);
+        setReplyingToUser(null);
         // Make sure replies are expanded for this comment
         setExpandedReplies(prev => new Set(prev).add(parentId));
       } else {
@@ -313,13 +338,10 @@ export default function LessonComments({ pageId, currentUserId }: LessonComments
 
                 {/* Actions */}
                 <div className="flex items-center gap-3 mt-2">
-                  {/* Reply button - only for parent comments */}
-                  {!isReply && currentUserId && (
+                  {/* Reply button - works on both parent comments and replies */}
+                  {currentUserId && (
                     <button
-                      onClick={() => {
-                        setReplyingToId(replyingToId === comment.id ? null : comment.id);
-                        setReplyContent('');
-                      }}
+                      onClick={() => startReply(comment, isReply)}
                       className="flex items-center gap-1 text-xs text-surface-500 hover:text-primary-600 dark:hover:text-primary-400"
                     >
                       <Reply className="w-3 h-3" />
@@ -381,7 +403,7 @@ export default function LessonComments({ pageId, currentUserId }: LessonComments
                       <textarea
                         value={replyContent}
                         onChange={(e) => setReplyContent(e.target.value)}
-                        placeholder={`Reply to ${getUserName(comment.user)}...`}
+                        placeholder={replyingToUser ? `Replying to ${replyingToUser}...` : `Reply to ${getUserName(comment.user)}...`}
                         className="w-full px-3 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-surface-50 dark:bg-surface-700 text-surface-900 dark:text-white placeholder-surface-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                         rows={2}
                         autoFocus
@@ -402,6 +424,7 @@ export default function LessonComments({ pageId, currentUserId }: LessonComments
                         <button
                           onClick={() => {
                             setReplyingToId(null);
+                            setReplyingToUser(null);
                             setReplyContent('');
                           }}
                           className="flex items-center gap-1 px-3 py-1 bg-surface-200 dark:bg-surface-600 text-surface-700 dark:text-surface-300 text-sm rounded-lg"
