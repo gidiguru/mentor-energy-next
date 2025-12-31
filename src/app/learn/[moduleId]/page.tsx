@@ -1,7 +1,7 @@
-import { db, learningModules, moduleSections, sectionPages, eq } from '@/lib/db';
+import { db, learningModules, moduleSections, sectionPages, lessonRatings, eq, inArray } from '@/lib/db';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Clock, CheckCircle, PlayCircle, FileText, HelpCircle, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Clock, CheckCircle, PlayCircle, FileText, HelpCircle, ChevronRight, Star } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +30,34 @@ export default async function ModuleDetailPage({ params }: Props) {
 
   if (!module) {
     notFound();
+  }
+
+  // Get all page IDs for this module
+  const allPageIds = module.sections.flatMap(s => s.pages.map(p => p.id));
+
+  // Fetch ratings for all pages in this module
+  let pageRatings: Record<string, { average: number; count: number }> = {};
+  if (allPageIds.length > 0) {
+    const ratings = await database.query.lessonRatings.findMany({
+      where: inArray(lessonRatings.pageId, allPageIds),
+    });
+
+    // Calculate averages per page
+    const ratingsByPage: Record<string, number[]> = {};
+    for (const rating of ratings) {
+      if (!ratingsByPage[rating.pageId]) {
+        ratingsByPage[rating.pageId] = [];
+      }
+      ratingsByPage[rating.pageId].push(rating.rating);
+    }
+
+    for (const [pageId, pageRatingsList] of Object.entries(ratingsByPage)) {
+      const avg = pageRatingsList.reduce((a, b) => a + b, 0) / pageRatingsList.length;
+      pageRatings[pageId] = {
+        average: Math.round(avg * 10) / 10,
+        count: pageRatingsList.length,
+      };
+    }
   }
 
   const pageTypeIcons: Record<string, typeof PlayCircle> = {
@@ -156,16 +184,16 @@ export default async function ModuleDetailPage({ params }: Props) {
                             href={`/learn/${moduleId}/${section.id}/${page.id}`}
                             className="flex items-center justify-between p-4 hover:bg-surface-50 dark:hover:bg-surface-700/50 transition-colors group"
                           >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                                 page.pageType === 'quiz'
                                   ? 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400'
                                   : 'bg-primary-100 text-primary-600 dark:bg-primary-900 dark:text-primary-400'
                               }`}>
                                 <PageIcon className="w-4 h-4" />
                               </div>
-                              <div>
-                                <h4 className="font-medium text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                              <div className="min-w-0 flex-1">
+                                <h4 className="font-medium text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">
                                   {page.title}
                                 </h4>
                                 <p className="text-xs text-surface-500 dark:text-surface-400">
@@ -173,7 +201,16 @@ export default async function ModuleDetailPage({ params }: Props) {
                                 </p>
                               </div>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-surface-400 group-hover:translate-x-1 transition-transform" />
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {pageRatings[page.id] && (
+                                <div className="flex items-center gap-1 text-xs text-surface-500 dark:text-surface-400">
+                                  <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                                  <span>{pageRatings[page.id].average}</span>
+                                  <span className="text-surface-400">({pageRatings[page.id].count})</span>
+                                </div>
+                              )}
+                              <ChevronRight className="w-5 h-5 text-surface-400 group-hover:translate-x-1 transition-transform" />
+                            </div>
                           </Link>
                         );
                       })}
