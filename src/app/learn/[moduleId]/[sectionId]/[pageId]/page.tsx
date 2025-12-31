@@ -318,11 +318,54 @@ export default function LessonPage() {
   );
 }
 
+// Helper to detect and parse video URLs
+function parseVideoUrl(url: string): { type: 'youtube' | 'vimeo' | 'direct'; embedUrl: string } {
+  // YouTube patterns
+  const youtubeMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (youtubeMatch) {
+    return { type: 'youtube', embedUrl: `https://www.youtube.com/embed/${youtubeMatch[1]}` };
+  }
+
+  // Vimeo patterns
+  const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+  if (vimeoMatch) {
+    return { type: 'vimeo', embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}` };
+  }
+
+  // Direct video URL
+  return { type: 'direct', embedUrl: url };
+}
+
 // Video player component with error handling
 function VideoPlayer({ video }: { video: Media }) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const { type, embedUrl } = parseVideoUrl(video.url);
+
+  // YouTube or Vimeo embed
+  if (type === 'youtube' || type === 'vimeo') {
+    return (
+      <div className="bg-black rounded-xl overflow-hidden">
+        <div className="relative w-full aspect-video">
+          <iframe
+            src={embedUrl}
+            className="absolute inset-0 w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={video.title || 'Video'}
+          />
+        </div>
+        {video.title && (
+          <div className="p-4 bg-surface-800 border-t border-surface-700">
+            <p className="text-base font-medium text-white">{video.title}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Direct video file
   if (error) {
     return (
       <div className="bg-surface-800 rounded-xl overflow-hidden">
@@ -350,7 +393,7 @@ function VideoPlayer({ video }: { video: Media }) {
         </div>
       )}
       <video
-        src={video.url}
+        src={embedUrl}
         controls
         playsInline
         preload="metadata"
