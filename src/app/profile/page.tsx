@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
-import { User, Mail, GraduationCap, Building } from 'lucide-react';
+import { useUser, useClerk } from '@clerk/nextjs';
+import { User, Mail, GraduationCap, Building, Lock } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -20,6 +20,7 @@ interface UserProfile {
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const { openUserProfile } = useClerk();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -273,6 +274,30 @@ export default function ProfilePage() {
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </form>
+
+      {/* Security Section */}
+      <div className="mt-8 border-t border-surface-200 pt-8 dark:border-surface-700">
+        <h2 className="h3 mb-4">Security</h2>
+        <div className="card preset-filled-surface-100-900 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Lock className="h-5 w-5 text-surface-500" />
+              <div>
+                <p className="font-medium">Password</p>
+                <p className="text-sm text-surface-500">
+                  Change your password or manage security settings
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => openUserProfile()}
+              className="btn btn-ghost"
+            >
+              Manage
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
