@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useClerk } from '@clerk/nextjs';
@@ -56,6 +56,14 @@ export default function DashboardLayout({
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
+
+  // Scroll to top when navigating between dashboard pages
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [pathname]);
 
   useEffect(() => {
     function checkMobile() {
@@ -178,7 +186,7 @@ export default function DashboardLayout({
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Page Content */}
-        <main className="flex-1 overflow-auto p-4">{children}</main>
+        <main ref={mainRef} className="flex-1 overflow-auto scroll-smooth p-4">{children}</main>
       </div>
     </div>
   );
