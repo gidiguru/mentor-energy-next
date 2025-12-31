@@ -14,6 +14,7 @@ interface UploadedFile {
 
 interface FileUploadProps {
   onUpload: (file: UploadedFile) => void;
+  onClear?: () => void;
   accept?: string;
   maxSize?: number; // in bytes
   label?: string;
@@ -30,6 +31,7 @@ const categoryIcons = {
 
 export default function FileUpload({
   onUpload,
+  onClear,
   accept = 'image/*,video/*,application/pdf',
   maxSize = 100 * 1024 * 1024, // 100MB default
   label = 'Upload File',
@@ -234,10 +236,24 @@ export default function FileUpload({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    // Notify parent to clear the URL
+    if (onClear) {
+      onClear();
+    }
   };
 
   const displayUrl = uploadedFile?.url || currentUrl;
-  const displayCategory = uploadedFile?.category || (currentUrl ? 'image' : null);
+
+  // Detect category from URL if not provided by upload
+  const detectCategory = (url: string): string => {
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.match(/\.(mp4|webm|mov|avi|mkv|m4v)/) || lowerUrl.includes('video')) return 'video';
+    if (lowerUrl.match(/\.(mp3|wav|ogg|m4a|aac)/) || lowerUrl.includes('audio')) return 'audio';
+    if (lowerUrl.match(/\.pdf/)) return 'document';
+    return 'image';
+  };
+
+  const displayCategory = uploadedFile?.category || (currentUrl ? detectCategory(currentUrl) : null);
 
   return (
     <div className="w-full">

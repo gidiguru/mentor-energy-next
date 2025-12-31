@@ -169,6 +169,7 @@ export default function NewPageEditor() {
               maxSize={500 * 1024 * 1024}
               currentUrl={formData.videoUrl}
               onUpload={handleVideoUpload}
+              onClear={() => setFormData(prev => ({ ...prev, videoUrl: '' }))}
             />
 
             <div className="mt-6 pt-6 border-t border-surface-200 dark:border-surface-700">
