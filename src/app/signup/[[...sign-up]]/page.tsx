@@ -21,6 +21,8 @@ export default function SignUpPage() {
               'bg-primary-500 hover:bg-primary-600 text-white',
           },
         }}
+        routing="path"
+        path="/signup"
         signInUrl="/auth"
         fallbackRedirectUrl="/auth/complete-signup"
       />
