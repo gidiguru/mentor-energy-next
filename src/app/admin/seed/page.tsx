@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Database, CheckCircle, AlertCircle, Loader2, Trophy } from 'lucide-react';
+import { Database, CheckCircle, AlertCircle, Loader2, Trophy, Mail } from 'lucide-react';
 
 export default function SeedPage() {
   const [loading, setLoading] = useState(false);
   const [achievementsLoading, setAchievementsLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
@@ -15,6 +16,10 @@ export default function SeedPage() {
     success: boolean;
     message: string;
     count?: number;
+  } | null>(null);
+  const [emailResult, setEmailResult] = useState<{
+    success: boolean;
+    message: string;
   } | null>(null);
 
   const handleSeed = async () => {
@@ -80,6 +85,38 @@ export default function SeedPage() {
       });
     } finally {
       setAchievementsLoading(false);
+    }
+  };
+
+  const handleTestEmail = async () => {
+    setEmailLoading(true);
+    setEmailResult(null);
+
+    try {
+      const response = await fetch('/api/admin/test-email', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setEmailResult({
+          success: true,
+          message: data.message || 'Test email sent successfully!',
+        });
+      } else {
+        setEmailResult({
+          success: false,
+          message: data.error || 'Failed to send test email',
+        });
+      }
+    } catch (error) {
+      setEmailResult({
+        success: false,
+        message: 'Network error. Please try again.',
+      });
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -247,6 +284,71 @@ export default function SeedPage() {
 
         <p className="mt-4 text-xs text-surface-500 dark:text-surface-400">
           Note: This is safe to run multiple times - only new achievements will be added.
+        </p>
+      </div>
+
+      {/* Test Email Section */}
+      <div className="bg-white dark:bg-surface-800 rounded-xl p-8 border border-surface-200 dark:border-surface-700 max-w-2xl mt-6">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+            <Mail className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
+              Test Email
+            </h2>
+            <p className="text-surface-600 dark:text-surface-400 text-sm">
+              Send a test certificate email to verify your email configuration is working.
+              The email will be sent to your admin email address.
+            </p>
+          </div>
+        </div>
+
+        <div className="border-t border-surface-200 dark:border-surface-700 pt-6">
+          <button
+            onClick={handleTestEmail}
+            disabled={emailLoading}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          >
+            {emailLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Sending Test Email...
+              </>
+            ) : (
+              <>
+                <Mail className="w-5 h-5" />
+                Send Test Email
+              </>
+            )}
+          </button>
+
+          {emailResult && (
+            <div className={`mt-4 p-4 rounded-lg ${
+              emailResult.success
+                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+            }`}>
+              <div className="flex items-start gap-3">
+                {emailResult.success ? (
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                )}
+                <p className={`font-medium ${
+                  emailResult.success
+                    ? 'text-green-800 dark:text-green-300'
+                    : 'text-red-800 dark:text-red-300'
+                }`}>
+                  {emailResult.message}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <p className="mt-4 text-xs text-surface-500 dark:text-surface-400">
+          Check your inbox (and spam folder) for the test certificate email.
         </p>
       </div>
     </div>
