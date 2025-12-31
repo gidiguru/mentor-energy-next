@@ -1,4 +1,5 @@
-import { db, learningModules, moduleSections, sectionPages, lessonRatings, eq, inArray } from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
+import { db, learningModules, moduleSections, sectionPages, lessonRatings, userPageProgress, users, eq, inArray, and } from '@/lib/db';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, Clock, CheckCircle, PlayCircle, FileText, HelpCircle, ChevronRight, Star } from 'lucide-react';
@@ -12,6 +13,7 @@ interface Props {
 export default async function ModuleDetailPage({ params }: Props) {
   const { moduleId } = await params;
   const database = db();
+  const { userId: clerkId } = await auth();
 
   // Fetch module with sections
   const module = await database.query.learningModules.findFirst({
@@ -34,6 +36,54 @@ export default async function ModuleDetailPage({ params }: Props) {
 
   // Get all page IDs for this module
   const allPageIds = module.sections.flatMap(s => s.pages.map(p => p.id));
+
+  // Fetch user progress if logged in
+  let userProgress: Record<string, { isCompleted: boolean; isViewed: boolean }> = {};
+  let hasAnyProgress = false;
+  let lastAccessedPageId: string | null = null;
+  let firstIncompletePageId: string | null = null;
+
+  if (clerkId && allPageIds.length > 0) {
+    // Get user
+    const user = await database.query.users.findFirst({
+      where: eq(users.clerkId, clerkId),
+    });
+
+    if (user) {
+      const progress = await database.query.userPageProgress.findMany({
+        where: and(
+          eq(userPageProgress.userId, user.id),
+          inArray(userPageProgress.pageId, allPageIds)
+        ),
+      });
+
+      for (const p of progress) {
+        userProgress[p.pageId] = {
+          isCompleted: p.isCompleted,
+          isViewed: p.isViewed,
+        };
+        if (p.isCompleted || p.isViewed) {
+          hasAnyProgress = true;
+        }
+      }
+
+      // Find first incomplete page (for continue learning)
+      for (const section of module.sections) {
+        for (const page of section.pages) {
+          const pageProgress = userProgress[page.id];
+          if (!pageProgress?.isCompleted) {
+            if (!firstIncompletePageId) {
+              firstIncompletePageId = page.id;
+              // Also store the section ID for the link
+              lastAccessedPageId = `${section.id}/${page.id}`;
+            }
+            break;
+          }
+        }
+        if (firstIncompletePageId) break;
+      }
+    }
+  }
 
   // Fetch ratings for all pages in this module
   let pageRatings: Record<string, { average: number; count: number }> = {};
@@ -71,6 +121,11 @@ export default async function ModuleDetailPage({ params }: Props) {
       }
     : null;
 
+  // Calculate completion stats
+  const completedCount = Object.values(userProgress).filter(p => p.isCompleted).length;
+  const totalPages = allPageIds.length;
+  const progressPercentage = totalPages > 0 ? Math.round((completedCount / totalPages) * 100) : 0;
+
   const pageTypeIcons: Record<string, typeof PlayCircle> = {
     lesson: FileText,
     quiz: HelpCircle,
@@ -83,6 +138,14 @@ export default async function ModuleDetailPage({ params }: Props) {
     intermediate: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
     advanced: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
   };
+
+  // Determine the CTA link - continue from where left off or start from beginning
+  const firstPage = module.sections[0]?.pages[0];
+  const ctaLink = lastAccessedPageId
+    ? `/learn/${moduleId}/${lastAccessedPageId}`
+    : firstPage
+    ? `/learn/${moduleId}/${module.sections[0].id}/${firstPage.id}`
+    : null;
 
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-surface-900">
@@ -135,7 +198,7 @@ export default async function ModuleDetailPage({ params }: Props) {
                 </span>
                 <span className="flex items-center gap-2">
                   <PlayCircle className="w-5 h-5" />
-                  {module.sections.reduce((acc, s) => acc + s.pages.length, 0)} lessons
+                  {totalPages} lessons
                 </span>
               </div>
             </div>
@@ -157,7 +220,22 @@ export default async function ModuleDetailPage({ params }: Props) {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content - Sections */}
           <div className="lg:col-span-2 space-y-6">
-            <h2 className="text-2xl font-bold text-surface-900 dark:text-white">Course Content</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-surface-900 dark:text-white">Course Content</h2>
+              {hasAnyProgress && (
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-24 h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-green-500 rounded-full transition-all"
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                  </div>
+                  <span className="text-surface-600 dark:text-surface-400">
+                    {completedCount}/{totalPages} completed
+                  </span>
+                </div>
+              )}
+            </div>
 
             {module.sections.length === 0 ? (
               <div className="bg-white dark:bg-surface-800 rounded-xl p-8 text-center border border-surface-200 dark:border-surface-700">
@@ -192,9 +270,11 @@ export default async function ModuleDetailPage({ params }: Props) {
 
                     {/* Section Pages */}
                     <div className="divide-y divide-surface-100 dark:divide-surface-700">
-                      {section.pages.map((page, pageIndex) => {
+                      {section.pages.map((page) => {
                         const PageIcon = pageTypeIcons[page.pageType] || FileText;
-                        const firstPage = sectionIndex === 0 && pageIndex === 0;
+                        const pageStatus = userProgress[page.id];
+                        const isCompleted = pageStatus?.isCompleted;
+                        const isViewed = pageStatus?.isViewed;
 
                         return (
                           <Link
@@ -204,18 +284,30 @@ export default async function ModuleDetailPage({ params }: Props) {
                           >
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                page.pageType === 'quiz'
+                                isCompleted
+                                  ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400'
+                                  : page.pageType === 'quiz'
                                   ? 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400'
                                   : 'bg-primary-100 text-primary-600 dark:bg-primary-900 dark:text-primary-400'
                               }`}>
-                                <PageIcon className="w-4 h-4" />
+                                {isCompleted ? (
+                                  <CheckCircle className="w-4 h-4" />
+                                ) : (
+                                  <PageIcon className="w-4 h-4" />
+                                )}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <h4 className="font-medium text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">
+                                <h4 className={`font-medium group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate ${
+                                  isCompleted
+                                    ? 'text-green-700 dark:text-green-400'
+                                    : 'text-surface-900 dark:text-white'
+                                }`}>
                                   {page.title}
                                 </h4>
                                 <p className="text-xs text-surface-500 dark:text-surface-400">
                                   {page.pageType} • {page.estimatedDuration || '10 min'}
+                                  {isCompleted && ' • Completed'}
+                                  {!isCompleted && isViewed && ' • In progress'}
                                 </p>
                               </div>
                             </div>
@@ -241,6 +333,33 @@ export default async function ModuleDetailPage({ params }: Props) {
 
           {/* Sidebar - Learning Objectives */}
           <div className="space-y-6">
+            {/* Progress Card (if user has started) */}
+            {hasAnyProgress && (
+              <div className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
+                <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">
+                  Your Progress
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-surface-600 dark:text-surface-400">Completed</span>
+                    <span className="font-medium text-surface-900 dark:text-white">{completedCount} of {totalPages} lessons</span>
+                  </div>
+                  <div className="w-full h-3 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-green-500 rounded-full transition-all"
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                  </div>
+                  <p className="text-sm text-surface-500 dark:text-surface-400">
+                    {progressPercentage === 100
+                      ? 'Congratulations! You\'ve completed this course!'
+                      : `${progressPercentage}% complete`
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
+
             {module.learningObjectives && module.learningObjectives.length > 0 && (
               <div className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
                 <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">
@@ -259,13 +378,16 @@ export default async function ModuleDetailPage({ params }: Props) {
               </div>
             )}
 
-            {/* Start Learning CTA */}
-            {module.sections.length > 0 && module.sections[0].pages.length > 0 && (
+            {/* Start/Continue Learning CTA */}
+            {ctaLink && (
               <Link
-                href={`/learn/${moduleId}/${module.sections[0].id}/${module.sections[0].pages[0].id}`}
+                href={ctaLink}
                 className="block w-full bg-primary-600 hover:bg-primary-700 text-white text-center font-semibold py-4 px-6 rounded-xl transition-colors"
               >
-                Start Learning
+                {hasAnyProgress
+                  ? (progressPercentage === 100 ? 'Review Course' : 'Continue Learning')
+                  : 'Start Learning'
+                }
               </Link>
             )}
           </div>
