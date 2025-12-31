@@ -77,7 +77,7 @@ export default function Home() {
                   Go to Dashboard
                 </Link>
               ) : (
-                <SignUpButton mode="modal">
+                <SignUpButton mode="modal" forceRedirectUrl="/auth/complete-signup">
                   <button className="btn btn-primary">Get Started</button>
                 </SignUpButton>
               )}
@@ -179,7 +179,7 @@ export default function Home() {
               Go to Dashboard
             </Link>
           ) : (
-            <SignUpButton mode="modal">
+            <SignUpButton mode="modal" forceRedirectUrl="/auth/complete-signup?role=student">
               <button className="btn btn-primary">Sign Up as Student</button>
             </SignUpButton>
           )}
@@ -188,7 +188,7 @@ export default function Home() {
               Mentor Settings
             </Link>
           ) : (
-            <SignUpButton mode="modal">
+            <SignUpButton mode="modal" forceRedirectUrl="/auth/complete-signup?role=mentor">
               <button className="btn btn-ghost">Become a Mentor</button>
             </SignUpButton>
           )}

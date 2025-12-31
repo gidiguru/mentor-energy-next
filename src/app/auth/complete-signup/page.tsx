@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 
 const disciplines = [
@@ -28,13 +28,17 @@ const roles = ['student', 'mentor'] as const;
 
 export default function CompleteSignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoaded } = useUser();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  // Get role from URL query param (e.g., ?role=mentor)
+  const initialRole = searchParams.get('role') === 'mentor' ? 'mentor' : 'student';
+
   const [discipline, setDiscipline] = useState('');
   const [qualification, setQualification] = useState('');
-  const [role, setRole] = useState<'student' | 'mentor'>('student');
+  const [role, setRole] = useState<'student' | 'mentor'>(initialRole);
   const [university, setUniversity] = useState('');
 
   useEffect(() => {
