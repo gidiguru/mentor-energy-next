@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Database, CheckCircle, AlertCircle, Loader2, Trophy, Mail } from 'lucide-react';
+import { Database, CheckCircle, AlertCircle, Loader2, Trophy, Mail, Award } from 'lucide-react';
 
 export default function SeedPage() {
   const [loading, setLoading] = useState(false);
@@ -27,6 +27,11 @@ export default function SeedPage() {
       envVars: string[];
       resendError?: string;
     };
+  } | null>(null);
+  const [certLoading, setCertLoading] = useState(false);
+  const [certResult, setCertResult] = useState<{
+    success: boolean;
+    message: string;
   } | null>(null);
 
   const handleSeed = async () => {
@@ -125,6 +130,38 @@ export default function SeedPage() {
       });
     } finally {
       setEmailLoading(false);
+    }
+  };
+
+  const handleCreateCertificate = async () => {
+    setCertLoading(true);
+    setCertResult(null);
+
+    try {
+      const response = await fetch('/api/admin/test-certificate', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setCertResult({
+          success: true,
+          message: data.message || 'Demo certificate created!',
+        });
+      } else {
+        setCertResult({
+          success: false,
+          message: data.error || 'Failed to create certificate',
+        });
+      }
+    } catch (error) {
+      setCertResult({
+        success: false,
+        message: 'Network error. Please try again.',
+      });
+    } finally {
+      setCertLoading(false);
     }
   };
 
@@ -372,6 +409,71 @@ export default function SeedPage() {
 
         <p className="mt-4 text-xs text-surface-500 dark:text-surface-400">
           Check your inbox (and spam folder) for the test certificate email.
+        </p>
+      </div>
+
+      {/* Test Certificate Section */}
+      <div className="bg-white dark:bg-surface-800 rounded-xl p-8 border border-surface-200 dark:border-surface-700 max-w-2xl mt-6">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+            <Award className="w-6 h-6 text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
+              Demo Certificate
+            </h2>
+            <p className="text-surface-600 dark:text-surface-400 text-sm">
+              Create a demo certificate to test the certificates dashboard page.
+              This will create a certificate for your admin account.
+            </p>
+          </div>
+        </div>
+
+        <div className="border-t border-surface-200 dark:border-surface-700 pt-6">
+          <button
+            onClick={handleCreateCertificate}
+            disabled={certLoading}
+            className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          >
+            {certLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Creating Certificate...
+              </>
+            ) : (
+              <>
+                <Award className="w-5 h-5" />
+                Create Demo Certificate
+              </>
+            )}
+          </button>
+
+          {certResult && (
+            <div className={`mt-4 p-4 rounded-lg ${
+              certResult.success
+                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+            }`}>
+              <div className="flex items-start gap-3">
+                {certResult.success ? (
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                )}
+                <p className={`font-medium ${
+                  certResult.success
+                    ? 'text-green-800 dark:text-green-300'
+                    : 'text-red-800 dark:text-red-300'
+                }`}>
+                  {certResult.message}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <p className="mt-4 text-xs text-surface-500 dark:text-surface-400">
+          After creating, go to Dashboard → Certificates to view it.
         </p>
       </div>
     </div>
