@@ -20,6 +20,12 @@ export default function SeedPage() {
   const [emailResult, setEmailResult] = useState<{
     success: boolean;
     message: string;
+    debug?: {
+      hasApiKey: boolean;
+      keyLength: number;
+      keyPrefix: string;
+      envVars: string[];
+    };
   } | null>(null);
 
   const handleSeed = async () => {
@@ -108,6 +114,7 @@ export default function SeedPage() {
         setEmailResult({
           success: false,
           message: data.error || 'Failed to send test email',
+          debug: data.debug,
         });
       }
     } catch (error) {
@@ -335,13 +342,24 @@ export default function SeedPage() {
                 ) : (
                   <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
                 )}
-                <p className={`font-medium ${
-                  emailResult.success
-                    ? 'text-green-800 dark:text-green-300'
-                    : 'text-red-800 dark:text-red-300'
-                }`}>
-                  {emailResult.message}
-                </p>
+                <div>
+                  <p className={`font-medium ${
+                    emailResult.success
+                      ? 'text-green-800 dark:text-green-300'
+                      : 'text-red-800 dark:text-red-300'
+                  }`}>
+                    {emailResult.message}
+                  </p>
+                  {emailResult.debug && (
+                    <div className="mt-3 p-3 bg-surface-100 dark:bg-surface-900 rounded text-xs font-mono text-surface-700 dark:text-surface-300">
+                      <p><strong>Debug Info:</strong></p>
+                      <p>API Key Present: {emailResult.debug.hasApiKey ? 'Yes' : 'No'}</p>
+                      <p>Key Length: {emailResult.debug.keyLength}</p>
+                      <p>Key Prefix: {emailResult.debug.keyPrefix}</p>
+                      <p>Env Vars Found: {emailResult.debug.envVars?.length > 0 ? emailResult.debug.envVars.join(', ') : 'None'}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
