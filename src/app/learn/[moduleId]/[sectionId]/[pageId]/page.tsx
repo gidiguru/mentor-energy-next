@@ -349,8 +349,24 @@ function parseVideoUrl(url: string): { type: 'youtube' | 'vimeo' | 'direct'; emb
 function VideoPlayer({ video }: { video: Media }) {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [timedOut, setTimedOut] = useState(false);
 
   const { type, embedUrl } = parseVideoUrl(video.url);
+
+  // Add timeout for loading - if video doesn't load in 10 seconds, show it anyway
+  useEffect(() => {
+    if (type === 'youtube' || type === 'vimeo') return;
+
+    const timeout = setTimeout(() => {
+      if (loading && !error) {
+        console.log('Video loading timed out, showing player anyway');
+        setTimedOut(true);
+        setLoading(false);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timeout);
+  }, [loading, error, type]);
 
   // YouTube or Vimeo embed
   if (type === 'youtube' || type === 'vimeo') {
@@ -384,6 +400,15 @@ function VideoPlayer({ video }: { video: Media }) {
           <p className="text-xs mt-1 text-surface-500 max-w-md text-center px-4">
             This video format may not be supported on your device. Try viewing on desktop or use a different video format (H.264/MP4).
           </p>
+          {/* Provide direct link as fallback */}
+          <a
+            href={embedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 text-xs text-primary-400 underline"
+          >
+            Open video directly
+          </a>
         </div>
         {video.title && (
           <div className="p-4 bg-surface-800 border-t border-surface-700">
@@ -405,11 +430,12 @@ function VideoPlayer({ video }: { video: Media }) {
         src={embedUrl}
         controls
         playsInline
-        preload="metadata"
+        preload="auto"
         className={`w-full aspect-video ${loading ? 'hidden' : ''}`}
         controlsList="nodownload"
         onLoadedData={() => setLoading(false)}
         onCanPlay={() => setLoading(false)}
+        onLoadedMetadata={() => setLoading(false)}
         onError={() => {
           setLoading(false);
           setError(true);
@@ -420,6 +446,13 @@ function VideoPlayer({ video }: { video: Media }) {
       {video.title && !loading && (
         <div className="p-4 bg-surface-800 border-t border-surface-700">
           <p className="text-base font-medium text-white">{video.title}</p>
+        </div>
+      )}
+      {timedOut && !error && (
+        <div className="p-2 bg-yellow-900/50 border-t border-yellow-700">
+          <p className="text-xs text-yellow-400 text-center">
+            Video may take longer to load. If it doesn't play, try a different browser or device.
+          </p>
         </div>
       )}
     </div>
