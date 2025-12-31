@@ -179,18 +179,14 @@ export default function Home() {
               Go to Dashboard
             </Link>
           ) : (
-            <SignUpButton mode="modal" forceRedirectUrl="/auth/complete-signup?role=student">
-              <button className="btn btn-primary">Sign Up as Student</button>
-            </SignUpButton>
-          )}
-          {isSignedIn ? (
-            <Link href="/dashboard" className="btn btn-ghost">
-              Mentor Settings
-            </Link>
-          ) : (
-            <SignUpButton mode="modal" forceRedirectUrl="/auth/complete-signup?role=mentor">
-              <button className="btn btn-ghost">Become a Mentor</button>
-            </SignUpButton>
+            <>
+              <SignUpButton mode="modal" forceRedirectUrl="/auth/complete-signup?role=student">
+                <button className="btn btn-primary">Sign Up as Student</button>
+              </SignUpButton>
+              <SignUpButton mode="modal" forceRedirectUrl="/auth/complete-signup?role=mentor">
+                <button className="btn btn-ghost">Become a Mentor</button>
+              </SignUpButton>
+            </>
           )}
         </div>
       </section>
