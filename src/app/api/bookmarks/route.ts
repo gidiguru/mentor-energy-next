@@ -50,7 +50,23 @@ export async function GET(request: NextRequest) {
       orderBy: (b, { desc }) => [desc(b.createdAt)],
     });
 
-    return NextResponse.json({ bookmarks: userBookmarks });
+    // Transform to expected format for dashboard
+    const formattedBookmarks = userBookmarks.map(b => ({
+      id: b.id,
+      lessonId: b.pageId,
+      lessonTitle: b.page?.title || 'Unknown Lesson',
+      sectionId: b.page?.section?.id || '',
+      sectionTitle: b.page?.section?.title || '',
+      moduleId: b.page?.section?.module?.id || '',
+      moduleSlug: b.page?.section?.module?.moduleId || '',
+      moduleTitle: b.page?.section?.module?.title || 'Unknown Module',
+      lessonLink: b.page?.section?.module?.moduleId && b.page?.section?.id && b.pageId
+        ? `/learn/${b.page.section.module.moduleId}/${b.page.section.id}/${b.pageId}`
+        : null,
+      createdAt: b.createdAt,
+    }));
+
+    return NextResponse.json({ bookmarks: formattedBookmarks });
   } catch (error) {
     console.error('Error fetching bookmarks:', error);
     return NextResponse.json({ error: 'Failed to fetch bookmarks' }, { status: 500 });

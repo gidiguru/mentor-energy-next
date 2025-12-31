@@ -61,6 +61,7 @@ interface Bookmark {
   lessonId: string;
   lessonTitle: string;
   moduleTitle: string;
+  lessonLink: string | null;
   createdAt: string;
 }
 
@@ -433,7 +434,7 @@ export default function DashboardPage() {
                 {bookmarks.slice(0, 3).map((bookmark) => (
                   <Link
                     key={bookmark.id}
-                    href={`/learn/${bookmark.lessonId}`}
+                    href={bookmark.lessonLink || '/learn'}
                     className="flex items-center gap-3 rounded-lg border border-surface-200 dark:border-surface-700 p-3 hover:border-primary-500 transition-colors"
                   >
                     <Bookmark className="h-4 w-4 text-blue-500 flex-shrink-0" />
@@ -441,6 +442,7 @@ export default function DashboardPage() {
                       <p className="font-medium truncate">{bookmark.lessonTitle}</p>
                       <p className="text-sm text-surface-500 truncate">{bookmark.moduleTitle}</p>
                     </div>
+                    <ChevronRight className="w-4 h-4 text-surface-400" />
                   </Link>
                 ))}
               </div>

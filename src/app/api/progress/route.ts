@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { db, users, userPageProgress, userModuleProgress, sectionPages, moduleSections, learningModules, userStreaks, eq, and } from '@/lib/db';
+import { db, users, userPageProgress, userModuleProgress, sectionPages, moduleSections, learningModules, userStreaks, achievements, userAchievements, certificates, lessonComments, eq, and } from '@/lib/db';
 
 // GET /api/progress?moduleId=xxx - Get all page progress for a module
 export async function GET(request: NextRequest) {
@@ -218,6 +218,10 @@ export async function POST(request: NextRequest) {
     // Update streak if marking as complete
     if (completed) {
       await updateStreak(database, user.id);
+      // Check for new achievements in the background
+      checkAndAwardAchievements(database, user.id).catch(err =>
+        console.error('Error checking achievements:', err)
+      );
     }
 
     return NextResponse.json({
@@ -230,6 +234,120 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error saving progress:', error);
     return NextResponse.json({ error: 'Failed to save progress' }, { status: 500 });
+  }
+}
+
+// Helper function to check and award achievements
+async function checkAndAwardAchievements(database: ReturnType<typeof db>, userId: string) {
+  try {
+    // Get user's current achievements
+    const earnedAchievements = await database.query.userAchievements.findMany({
+      where: eq(userAchievements.userId, userId),
+    });
+    const earnedCodes = new Set<string>();
+
+    // Get all achievements
+    const allAchievements = await database.query.achievements.findMany();
+    const achievementMap = new Map(allAchievements.map(a => [a.id, a]));
+
+    for (const earned of earnedAchievements) {
+      const achievement = achievementMap.get(earned.achievementId);
+      if (achievement) {
+        earnedCodes.add(achievement.code);
+      }
+    }
+
+    // Get user stats
+    const [streak, completedLessons, earnedCertificates, commentsCount] = await Promise.all([
+      database.query.userStreaks.findFirst({
+        where: eq(userStreaks.userId, userId),
+      }),
+      database.query.userPageProgress.findMany({
+        where: and(
+          eq(userPageProgress.userId, userId),
+          eq(userPageProgress.isCompleted, true),
+        ),
+      }),
+      database.query.certificates.findMany({
+        where: eq(certificates.userId, userId),
+      }),
+      database.query.lessonComments.findMany({
+        where: eq(lessonComments.userId, userId),
+      }),
+    ]);
+
+    const stats = {
+      currentStreak: streak?.currentStreak || 0,
+      longestStreak: streak?.longestStreak || 0,
+      lessonsCompleted: completedLessons.length,
+      certificatesEarned: earnedCertificates.length,
+      commentsPosted: commentsCount.length,
+    };
+
+    // Check each achievement
+    for (const achievement of allAchievements) {
+      if (earnedCodes.has(achievement.code)) continue;
+
+      let shouldAward = false;
+
+      switch (achievement.code) {
+        case 'first_lesson':
+          shouldAward = stats.lessonsCompleted >= 1;
+          break;
+        case 'lessons_5':
+          shouldAward = stats.lessonsCompleted >= 5;
+          break;
+        case 'lessons_10':
+          shouldAward = stats.lessonsCompleted >= 10;
+          break;
+        case 'lessons_25':
+          shouldAward = stats.lessonsCompleted >= 25;
+          break;
+        case 'lessons_50':
+          shouldAward = stats.lessonsCompleted >= 50;
+          break;
+        case 'lessons_100':
+          shouldAward = stats.lessonsCompleted >= 100;
+          break;
+        case 'streak_3':
+          shouldAward = stats.currentStreak >= 3 || stats.longestStreak >= 3;
+          break;
+        case 'streak_7':
+          shouldAward = stats.currentStreak >= 7 || stats.longestStreak >= 7;
+          break;
+        case 'streak_14':
+          shouldAward = stats.currentStreak >= 14 || stats.longestStreak >= 14;
+          break;
+        case 'streak_30':
+          shouldAward = stats.currentStreak >= 30 || stats.longestStreak >= 30;
+          break;
+        case 'first_certificate':
+          shouldAward = stats.certificatesEarned >= 1;
+          break;
+        case 'certificates_3':
+          shouldAward = stats.certificatesEarned >= 3;
+          break;
+        case 'certificates_5':
+          shouldAward = stats.certificatesEarned >= 5;
+          break;
+        case 'first_comment':
+          shouldAward = stats.commentsPosted >= 1;
+          break;
+        case 'comments_10':
+          shouldAward = stats.commentsPosted >= 10;
+          break;
+      }
+
+      if (shouldAward) {
+        await database.insert(userAchievements).values({
+          userId,
+          achievementId: achievement.id,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error checking achievements:', error);
+    // Don't throw - achievement check shouldn't fail the main request
   }
 }
 
