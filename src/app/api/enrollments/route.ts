@@ -1,8 +1,8 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { db, users, courseEnrollments, learningModules, eq, and } from '@/lib/db';
+import { db, users, courseEnrollments, learningModules, moduleSections, sectionPages, userPageProgress, eq, and, inArray } from '@/lib/db';
 
-// GET /api/enrollments - Get user's enrolled courses
+// GET /api/enrollments - Get user's enrolled courses with progress
 export async function GET() {
   try {
     const { userId: clerkId } = await auth();
@@ -22,29 +22,113 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Get enrolled courses with module details
+    // Get enrolled courses with module details and sections/pages
     const enrollments = await database.query.courseEnrollments.findMany({
       where: eq(courseEnrollments.userId, user.id),
       with: {
-        module: true,
+        module: {
+          with: {
+            sections: {
+              orderBy: (sections, { asc }) => [asc(sections.sequence)],
+              with: {
+                pages: {
+                  orderBy: (pages, { asc }) => [asc(pages.sequence)],
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: (e, { desc }) => [desc(e.enrolledAt)],
     });
 
-    return NextResponse.json({
-      enrollments: enrollments.map(e => ({
+    // Get all page IDs across all enrolled modules
+    const allPageIds: string[] = [];
+    for (const enrollment of enrollments) {
+      for (const section of enrollment.module.sections) {
+        for (const page of section.pages) {
+          allPageIds.push(page.id);
+        }
+      }
+    }
+
+    // Fetch user progress for all pages
+    let userProgressMap: Record<string, { isCompleted: boolean; isViewed: boolean }> = {};
+    if (allPageIds.length > 0) {
+      const progress = await database.query.userPageProgress.findMany({
+        where: and(
+          eq(userPageProgress.userId, user.id),
+          inArray(userPageProgress.pageId, allPageIds)
+        ),
+      });
+
+      for (const p of progress) {
+        userProgressMap[p.pageId] = {
+          isCompleted: p.isCompleted,
+          isViewed: p.isViewed,
+        };
+      }
+    }
+
+    // Build response with progress data
+    const enrollmentsWithProgress = enrollments.map(e => {
+      const module = e.module;
+
+      // Get all pages for this module
+      const modulePages: { id: string; sectionId: string }[] = [];
+      for (const section of module.sections) {
+        for (const page of section.pages) {
+          modulePages.push({ id: page.id, sectionId: section.id });
+        }
+      }
+
+      // Calculate progress
+      const totalLessons = modulePages.length;
+      let completedLessons = 0;
+      let nextLessonLink: string | null = null;
+
+      for (const page of modulePages) {
+        const pageProgress = userProgressMap[page.id];
+        if (pageProgress?.isCompleted) {
+          completedLessons++;
+        } else if (!nextLessonLink) {
+          // First incomplete lesson is the next one
+          nextLessonLink = `/learn/${module.moduleId}/${page.sectionId}/${page.id}`;
+        }
+      }
+
+      // If all completed, link to first lesson for review
+      if (!nextLessonLink && modulePages.length > 0) {
+        const firstPage = modulePages[0];
+        nextLessonLink = `/learn/${module.moduleId}/${firstPage.sectionId}/${firstPage.id}`;
+      }
+
+      const progress = totalLessons > 0
+        ? Math.round((completedLessons / totalLessons) * 100)
+        : 0;
+
+      return {
         id: e.id,
-        moduleId: e.module.id,
-        moduleSlug: e.module.moduleId,
-        title: e.module.title,
-        description: e.module.description,
-        thumbnailUrl: e.module.thumbnailUrl,
-        duration: e.module.duration,
-        difficultyLevel: e.module.difficultyLevel,
-        discipline: e.module.discipline,
+        moduleId: module.id,
+        moduleSlug: module.moduleId,
+        title: module.title,
+        description: module.description,
+        thumbnailUrl: module.thumbnailUrl,
+        duration: module.duration,
+        difficultyLevel: module.difficultyLevel,
+        discipline: module.discipline,
         enrolledAt: e.enrolledAt,
         status: e.status,
-      })),
+        // Progress data
+        progress,
+        totalLessons,
+        completedLessons,
+        nextLessonLink,
+      };
+    });
+
+    return NextResponse.json({
+      enrollments: enrollmentsWithProgress,
     });
   } catch (error) {
     console.error('Error fetching enrollments:', error);
@@ -105,7 +189,10 @@ export async function POST(request: NextRequest) {
     if (existingEnrollment) {
       return NextResponse.json({
         message: 'Already enrolled',
-        enrollment: existingEnrollment,
+        enrollment: {
+          ...existingEnrollment,
+          moduleId: module.id,
+        },
       });
     }
 

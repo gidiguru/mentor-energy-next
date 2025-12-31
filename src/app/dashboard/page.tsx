@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
-import { Flame, Trophy, Medal, BookOpen, Award, TrendingUp, Bookmark, Clock } from 'lucide-react';
+import { Flame, Trophy, Medal, BookOpen, Award, TrendingUp, Bookmark, Clock, ChevronRight, GraduationCap } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -19,11 +19,13 @@ interface UserProfile {
 
 interface Module {
   id: string;
+  moduleSlug: string;
   title: string;
   description: string;
   progress?: number;
   totalLessons?: number;
   completedLessons?: number;
+  nextLessonLink?: string | null;
 }
 
 interface StreakData {
@@ -132,15 +134,16 @@ export default function DashboardPage() {
             progress?: number;
             totalLessons?: number;
             completedLessons?: number;
+            nextLessonLink?: string | null;
           }) => ({
             id: e.moduleId,
-            moduleId: e.moduleSlug,
+            moduleSlug: e.moduleSlug,
             title: e.title,
             description: e.description,
-            thumbnailUrl: e.thumbnailUrl,
             progress: e.progress || 0,
             totalLessons: e.totalLessons || 0,
             completedLessons: e.completedLessons || 0,
+            nextLessonLink: e.nextLessonLink,
           }));
           setModules(enrolledModules);
 
@@ -305,41 +308,63 @@ export default function DashboardPage() {
           {/* Your Modules */}
           <section className="card preset-filled-surface-100-900 p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="h3">Your Modules</h2>
+              <h2 className="h3">Your Courses</h2>
               <Link
-                href="/dashboard/learning/modules"
-                className="text-primary-500 hover:underline text-sm"
+                href="/learn"
+                className="text-primary-500 hover:underline text-sm flex items-center gap-1"
               >
-                View All
+                <GraduationCap className="w-4 h-4" />
+                Learning Center
               </Link>
             </div>
             {modules.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {modules.slice(0, 4).map((module) => (
+              <>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {modules.slice(0, 4).map((module) => (
+                    <Link
+                      key={module.id}
+                      href={module.nextLessonLink || `/learn/${module.moduleSlug}`}
+                      className="block rounded-lg border border-surface-200 dark:border-surface-700 p-4 hover:border-primary-500 transition-colors"
+                    >
+                      <h3 className="font-medium mb-2 line-clamp-1">{module.title}</h3>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-surface-200 dark:bg-surface-700">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            module.progress === 100 ? 'bg-green-500' : 'bg-primary-500'
+                          }`}
+                          style={{ width: `${module.progress || 0}%` }}
+                        />
+                      </div>
+                      <div className="mt-2 flex items-center justify-between">
+                        <p className="text-sm text-surface-500 dark:text-surface-400">
+                          {module.progress === 100 ? (
+                            <span className="text-green-500 font-medium">Completed!</span>
+                          ) : module.progress && module.progress > 0 ? (
+                            `${module.completedLessons}/${module.totalLessons} lessons`
+                          ) : (
+                            'Not started'
+                          )}
+                        </p>
+                        <span className="text-xs text-primary-500 flex items-center gap-1">
+                          {module.progress === 100 ? 'Review' : module.progress && module.progress > 0 ? 'Continue' : 'Start'}
+                          <ChevronRight className="w-3 h-3" />
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                {/* Continue Learning Button */}
+                {modules.some(m => m.progress !== 100 && m.nextLessonLink) && (
                   <Link
-                    key={module.id}
-                    href={`/learn/${module.id}`}
-                    className="block rounded-lg border border-surface-200 dark:border-surface-700 p-4 hover:border-primary-500 transition-colors"
+                    href={modules.find(m => m.progress !== 100 && m.nextLessonLink)?.nextLessonLink || '/learn'}
+                    className="mt-4 w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
                   >
-                    <h3 className="font-medium mb-2 line-clamp-1">{module.title}</h3>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-surface-200 dark:bg-surface-700">
-                      <div
-                        className="h-full rounded-full bg-primary-500 transition-all"
-                        style={{ width: `${module.progress || 0}%` }}
-                      />
-                    </div>
-                    <p className="mt-2 text-sm text-surface-500 dark:text-surface-400">
-                      {module.progress === 100 ? (
-                        <span className="text-green-500">Completed!</span>
-                      ) : module.progress && module.progress > 0 ? (
-                        `${module.progress}% complete`
-                      ) : (
-                        'Not started'
-                      )}
-                    </p>
+                    <BookOpen className="w-5 h-5" />
+                    Continue Learning
+                    <ChevronRight className="w-5 h-5" />
                   </Link>
-                ))}
-              </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-8">
                 <BookOpen className="w-12 h-12 mx-auto text-surface-400 mb-3" />
@@ -350,7 +375,7 @@ export default function DashboardPage() {
                   href="/learn"
                   className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                 >
-                  <BookOpen className="w-4 h-4" />
+                  <GraduationCap className="w-4 h-4" />
                   Browse Courses
                 </Link>
               </div>
