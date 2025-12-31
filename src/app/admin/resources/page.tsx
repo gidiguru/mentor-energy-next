@@ -1,37 +1,136 @@
-import { db, resources } from '@/lib/db';
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, Eye, FileText, Video, File, ExternalLink, Lock, BookOpen } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, FileText, Video, File, ExternalLink, Lock, BookOpen, Loader2 } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
+interface Resource {
+  id: string;
+  title: string;
+  description: string | null;
+  type: string;
+  category: string | null;
+  url: string | null;
+  content: string | null;
+  thumbnailUrl: string | null;
+  isPremium: boolean;
+  isPublished: boolean;
+  viewCount: number;
+  createdAt: string;
+}
 
-export default async function AdminResourcesPage() {
-  const database = db();
+const typeIcons: Record<string, typeof FileText> = {
+  article: FileText,
+  video: Video,
+  document: File,
+  link: ExternalLink,
+};
 
-  const allResources = await database.query.resources.findMany({
-    orderBy: (r, { desc }) => [desc(r.createdAt)],
-  });
+const typeColors: Record<string, string> = {
+  article: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+  video: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+  document: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
+  link: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+};
 
-  const typeIcons: Record<string, typeof FileText> = {
-    article: FileText,
-    video: Video,
-    document: File,
-    link: ExternalLink,
+export default function AdminResourcesPage() {
+  const [allResources, setAllResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    fetchResources();
+  }, []);
+
+  const fetchResources = async () => {
+    try {
+      const response = await fetch('/api/admin/resources');
+      if (response.ok) {
+        const data = await response.json();
+        setAllResources(data);
+      }
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const typeColors: Record<string, string> = {
-    article: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
-    video: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
-    document: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
-    link: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+  const handleDelete = async (id: string) => {
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/admin/resources/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setAllResources(prev => prev.filter(r => r.id !== id));
+        setDeleteId(null);
+      }
+    } catch (error) {
+      console.error('Error deleting resource:', error);
+    } finally {
+      setDeleting(false);
+    }
   };
 
-  // Stats
   const publishedCount = allResources.filter(r => r.isPublished).length;
   const draftCount = allResources.filter(r => !r.isPublished).length;
   const premiumCount = allResources.filter(r => r.isPremium).length;
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl">
+      {/* Delete Confirmation Modal */}
+      {deleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-surface-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
+              Delete Resource
+            </h3>
+            <p className="text-surface-600 dark:text-surface-400 mb-6">
+              Are you sure you want to delete this resource? This action cannot be undone.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteId(null)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg border border-surface-300 dark:border-surface-600 text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(deleteId)}
+                disabled={deleting}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium transition-colors"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -188,6 +287,7 @@ export default async function AdminResourcesPage() {
                           Edit
                         </Link>
                         <button
+                          onClick={() => setDeleteId(resource.id)}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
