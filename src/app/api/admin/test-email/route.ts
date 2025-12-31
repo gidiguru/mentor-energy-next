@@ -49,16 +49,20 @@ export async function POST(request: NextRequest) {
       completedAt: new Date(),
     });
 
-    if (result) {
+    if (result && 'id' in result) {
       return NextResponse.json({
         success: true,
         message: `Test email sent to ${testEmail}`,
         emailId: result.id,
       });
     } else {
+      const errorMsg = result && 'error' in result ? result.error : 'Unknown error';
       return NextResponse.json({
-        error: 'Failed to send email - Resend API error (check function logs)',
-        debug: diagnostics,
+        error: `Resend API error: ${errorMsg}`,
+        debug: {
+          ...diagnostics,
+          resendError: errorMsg,
+        },
       }, { status: 500 });
     }
   } catch (error) {

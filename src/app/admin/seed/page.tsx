@@ -25,6 +25,7 @@ export default function SeedPage() {
       keyLength: number;
       keyPrefix: string;
       envVars: string[];
+      resendError?: string;
     };
   } | null>(null);
 
@@ -351,12 +352,16 @@ export default function SeedPage() {
                     {emailResult.message}
                   </p>
                   {emailResult.debug && (
-                    <div className="mt-3 p-3 bg-surface-100 dark:bg-surface-900 rounded text-xs font-mono text-surface-700 dark:text-surface-300">
+                    <div className="mt-3 p-3 bg-surface-100 dark:bg-surface-900 rounded text-xs font-mono text-surface-700 dark:text-surface-300 space-y-1">
                       <p><strong>Debug Info:</strong></p>
                       <p>API Key Present: {emailResult.debug.hasApiKey ? 'Yes' : 'No'}</p>
                       <p>Key Length: {emailResult.debug.keyLength}</p>
                       <p>Key Prefix: {emailResult.debug.keyPrefix}</p>
-                      <p>Env Vars Found: {emailResult.debug.envVars?.length > 0 ? emailResult.debug.envVars.join(', ') : 'None'}</p>
+                      {emailResult.debug.resendError && (
+                        <p className="text-red-600 dark:text-red-400 mt-2">
+                          <strong>Resend Error:</strong> {emailResult.debug.resendError}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>

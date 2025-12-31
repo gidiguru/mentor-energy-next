@@ -154,13 +154,14 @@ export async function sendCertificateEmail({
 
     if (error) {
       console.error('Error sending certificate email:', error);
-      return null;
+      // Return error details for debugging
+      return { error: error.message || JSON.stringify(error) };
     }
 
     console.log(`Certificate email sent to ${to} for ${moduleTitle}`);
     return data;
   } catch (error) {
     console.error('Error sending certificate email:', error);
-    return null;
+    return { error: error instanceof Error ? error.message : String(error) };
   }
 }
