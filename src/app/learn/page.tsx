@@ -82,7 +82,10 @@ export default function LearnPage() {
       });
 
       if (res.ok) {
-        setEnrollments(prev => new Set([...prev, moduleId]));
+        const data = await res.json();
+        // Use the moduleId from the response to ensure consistency
+        const enrolledModuleId = data.enrollment?.moduleId || moduleId;
+        setEnrollments(prev => new Set([...prev, enrolledModuleId]));
       }
     } catch (error) {
       console.error('Error enrolling:', error);
