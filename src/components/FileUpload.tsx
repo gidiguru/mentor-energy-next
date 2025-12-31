@@ -250,15 +250,9 @@ export default function FileUpload({
         console.log('Using presigned URL upload for file size:', file.size);
         await uploadWithPresignedUrl(file);
       } else if (file.size > PRESIGNED_THRESHOLD && isMobile) {
-        // Mobile with large file - try presigned first, fall back to chunked message
-        console.log('Mobile large file upload, trying presigned URL:', file.size);
-        try {
-          await uploadWithPresignedUrl(file);
-        } catch (presignedErr) {
-          console.error('Presigned upload failed on mobile, this may be a CORS issue:', presignedErr);
-          // For mobile large files, show a helpful message
-          throw new Error('Large video uploads from mobile may fail. Try uploading from a desktop browser, or use a shorter video clip under 4MB.');
-        }
+        // Mobile with large file - use presigned URL (direct to R2)
+        console.log('Mobile large file upload, using presigned URL:', file.size);
+        await uploadWithPresignedUrl(file);
       } else {
         console.log('Using form data upload for file size:', file.size);
         await uploadWithFormData(file);
@@ -311,7 +305,7 @@ export default function FileUpload({
     }
 
     // Step 2: Upload directly to R2 using presigned URL
-    console.log('Uploading to presigned URL...');
+    console.log('Uploading to presigned URL...', { mimeType, isMobile, fileSize: file.size });
     let uploadResponse;
     try {
       uploadResponse = await fetch(presignedData.presignedUrl, {
@@ -320,9 +314,15 @@ export default function FileUpload({
           'Content-Type': mimeType,
         },
         body: file,
+        mode: 'cors',
+        credentials: 'omit', // Don't send cookies - can cause CORS issues
       });
     } catch (fetchErr) {
-      console.error('Fetch to presigned URL failed (likely CORS):', fetchErr);
+      console.error('Fetch to presigned URL failed:', fetchErr);
+      // On mobile, provide more context
+      if (isMobile) {
+        throw new Error('Upload failed. Please check your internet connection and try again.');
+      }
       throw new Error('Direct upload failed. This may be a network or permissions issue.');
     }
 
