@@ -3,8 +3,31 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Loader2, Video, FileText, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Video, FileText, HelpCircle, Plus, Trash2, File, Image, Music, ExternalLink } from 'lucide-react';
 import FileUpload from '@/components/FileUpload';
+
+interface LessonResource {
+  id: string;
+  type: 'video' | 'audio' | 'image' | 'document';
+  url: string;
+  title: string | null;
+  alt: string | null;
+  sequence: number;
+}
+
+const resourceTypeIcons = {
+  video: Video,
+  audio: Music,
+  image: Image,
+  document: File,
+};
+
+const resourceTypeLabels = {
+  video: 'Video',
+  audio: 'Audio',
+  image: 'Image',
+  document: 'Document',
+};
 
 export default function EditPageEditor() {
   const router = useRouter();
@@ -16,6 +39,13 @@ export default function EditPageEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Lesson resources
+  const [resources, setResources] = useState<LessonResource[]>([]);
+  const [loadingResources, setLoadingResources] = useState(true);
+  const [showAddResource, setShowAddResource] = useState(false);
+  const [newResourceTitle, setNewResourceTitle] = useState('');
+  const [deletingResource, setDeletingResource] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -48,7 +78,22 @@ export default function EditPageEditor() {
       }
     }
 
+    async function fetchResources() {
+      try {
+        const response = await fetch(`/api/admin/modules/${moduleId}/sections/${sectionId}/pages/${pageId}/resources`);
+        if (response.ok) {
+          const data = await response.json();
+          setResources(data);
+        }
+      } catch (err) {
+        console.error('Failed to load resources:', err);
+      } finally {
+        setLoadingResources(false);
+      }
+    }
+
     fetchPage();
+    fetchResources();
   }, [moduleId, sectionId, pageId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -58,6 +103,54 @@ export default function EditPageEditor() {
 
   const handleVideoUpload = (file: { url: string }) => {
     setFormData(prev => ({ ...prev, videoUrl: file.url }));
+  };
+
+  const handleResourceUpload = async (file: { url: string; name: string; type: string }) => {
+    try {
+      // Determine resource type from MIME type
+      let resourceType: 'video' | 'audio' | 'image' | 'document' = 'document';
+      if (file.type.startsWith('video/')) resourceType = 'video';
+      else if (file.type.startsWith('audio/')) resourceType = 'audio';
+      else if (file.type.startsWith('image/')) resourceType = 'image';
+
+      const response = await fetch(`/api/admin/modules/${moduleId}/sections/${sectionId}/pages/${pageId}/resources`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: resourceType,
+          url: file.url,
+          title: newResourceTitle || file.name,
+          metadata: { originalName: file.name, mimeType: file.type },
+        }),
+      });
+
+      if (response.ok) {
+        const newResource = await response.json();
+        setResources(prev => [...prev, newResource]);
+        setShowAddResource(false);
+        setNewResourceTitle('');
+      }
+    } catch (err) {
+      console.error('Failed to add resource:', err);
+    }
+  };
+
+  const handleDeleteResource = async (resourceId: string) => {
+    setDeletingResource(resourceId);
+    try {
+      const response = await fetch(
+        `/api/admin/modules/${moduleId}/sections/${sectionId}/pages/${pageId}/resources?mediaId=${resourceId}`,
+        { method: 'DELETE' }
+      );
+
+      if (response.ok) {
+        setResources(prev => prev.filter(r => r.id !== resourceId));
+      }
+    } catch (err) {
+      console.error('Failed to delete resource:', err);
+    } finally {
+      setDeletingResource(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -235,6 +328,125 @@ export default function EditPageEditor() {
                 >
                   Remove video
                 </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Lesson Resources */}
+        {formData.pageType === 'lesson' && (
+          <div className="bg-white dark:bg-surface-800 rounded-xl p-4 md:p-6 border border-surface-200 dark:border-surface-700">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <h2 className="text-lg md:text-xl font-semibold text-surface-900 dark:text-white flex items-center gap-2">
+                <File className="w-5 h-5" />
+                Lesson Resources
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowAddResource(!showAddResource)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50 font-medium text-sm transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add Resource
+              </button>
+            </div>
+
+            <p className="text-sm text-surface-500 mb-4">
+              Upload PowerPoints, PDFs, documents, or other files for students to download.
+            </p>
+
+            {/* Add Resource Form */}
+            {showAddResource && (
+              <div className="mb-6 p-4 rounded-lg bg-surface-50 dark:bg-surface-700/50 border border-surface-200 dark:border-surface-600">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                    Resource Title (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newResourceTitle}
+                    onChange={(e) => setNewResourceTitle(e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="e.g., Course Slides - Week 1"
+                  />
+                </div>
+                <FileUpload
+                  label="Upload File"
+                  hint="Upload PDF, PowerPoint, Word, Excel, or other documents (max 100MB)"
+                  accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.txt,.csv,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/*"
+                  maxSize={100 * 1024 * 1024}
+                  onUpload={handleResourceUpload}
+                  onClear={() => {}}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddResource(false);
+                    setNewResourceTitle('');
+                  }}
+                  className="mt-3 text-sm text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            {/* Resources List */}
+            {loadingResources ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+              </div>
+            ) : resources.length === 0 ? (
+              <div className="text-center py-8 text-surface-500">
+                <File className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No resources added yet</p>
+                <p className="text-sm">Click &quot;Add Resource&quot; to upload files</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {resources.map((resource) => {
+                  const Icon = resourceTypeIcons[resource.type] || File;
+                  return (
+                    <div
+                      key={resource.id}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-surface-50 dark:bg-surface-700/50 border border-surface-200 dark:border-surface-600"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-surface-900 dark:text-white truncate">
+                          {resource.title || 'Untitled Resource'}
+                        </p>
+                        <p className="text-xs text-surface-500 capitalize">
+                          {resourceTypeLabels[resource.type]}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-600 text-surface-600 dark:text-surface-400 transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteResource(resource.id)}
+                          disabled={deletingResource === resource.id}
+                          className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors disabled:opacity-50"
+                        >
+                          {deletingResource === resource.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

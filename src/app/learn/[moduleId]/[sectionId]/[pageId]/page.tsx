@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle, Loader2, Download, File, FileText, Image, Music } from 'lucide-react';
 import LessonComments from '@/components/LessonComments';
 import LessonRating from '@/components/LessonRating';
 import LessonTools from '@/components/LessonTools';
@@ -356,6 +356,47 @@ export default function LessonPage() {
                     <article className="prose prose-sm md:prose-base dark:prose-invert max-w-none">
                       <div dangerouslySetInnerHTML={{ __html: formatMarkdown(page.content) }} />
                     </article>
+                  </div>
+                )}
+
+                {/* Downloadable Resources */}
+                {page.media && page.media.filter(m => m.type !== 'video').length > 0 && (
+                  <div className="card preset-filled-surface-100-900 p-6">
+                    <h3 className="h4 mb-4 flex items-center gap-2">
+                      <Download className="w-5 h-5" />
+                      Downloadable Resources
+                    </h3>
+                    <div className="space-y-3">
+                      {page.media.filter(m => m.type !== 'video').map((resource) => {
+                        const Icon = resource.type === 'document' ? FileText
+                          : resource.type === 'image' ? Image
+                          : resource.type === 'audio' ? Music
+                          : File;
+                        return (
+                          <a
+                            key={resource.id}
+                            href={resource.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                            className="flex items-center gap-3 p-3 rounded-lg bg-surface-50 dark:bg-surface-700/50 border border-surface-200 dark:border-surface-600 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors group"
+                          >
+                            <div className="w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                              <Icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-surface-900 dark:text-white truncate">
+                                {resource.title || 'Download Resource'}
+                              </p>
+                              <p className="text-xs text-surface-500 capitalize">
+                                {resource.type}
+                              </p>
+                            </div>
+                            <Download className="w-5 h-5 text-surface-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
+                          </a>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
