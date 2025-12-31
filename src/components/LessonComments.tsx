@@ -48,7 +48,7 @@ export default function LessonComments({ pageId, currentUserId }: LessonComments
           const data = await response.json();
           setComments(data.comments);
           // Auto-expand all replies initially
-          const parentIds = new Set(data.comments.filter((c: Comment) => c.parentId).map((c: Comment) => c.parentId as string));
+          const parentIds = new Set<string>(data.comments.filter((c: Comment) => c.parentId).map((c: Comment) => c.parentId as string));
           setExpandedReplies(parentIds);
         }
       } catch (err) {
