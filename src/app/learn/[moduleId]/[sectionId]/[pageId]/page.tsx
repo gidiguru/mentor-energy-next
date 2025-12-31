@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 interface Media {
   id: string;
@@ -47,6 +47,13 @@ interface LessonData {
   };
 }
 
+interface ProgressData {
+  completedPages: Record<string, boolean>;
+  totalPages: number;
+  completedCount: number;
+  progressPercentage: number;
+}
+
 export default function LessonPage() {
   const params = useParams();
   const router = useRouter();
@@ -54,11 +61,14 @@ export default function LessonPage() {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [progress, setProgress] = useState<ProgressData | null>(null);
 
   const moduleId = params.moduleId as string;
   const sectionId = params.sectionId as string;
   const pageId = params.pageId as string;
 
+  // Fetch lesson data
   useEffect(() => {
     async function fetchLesson() {
       try {
@@ -77,9 +87,66 @@ export default function LessonPage() {
     fetchLesson();
   }, [moduleId, sectionId, pageId]);
 
-  const markComplete = () => {
-    setCompleted(true);
-    // TODO: Save progress to database
+  // Fetch progress data
+  useEffect(() => {
+    async function fetchProgress() {
+      try {
+        const response = await fetch(`/api/progress?moduleId=${moduleId}`);
+        if (response.ok) {
+          const progressData = await response.json();
+          setProgress(progressData);
+          // Check if current page is already completed
+          if (progressData.completedPages && data?.page?.id) {
+            setCompleted(!!progressData.completedPages[data.page.id]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching progress:', error);
+      }
+    }
+
+    if (moduleId) {
+      fetchProgress();
+    }
+  }, [moduleId, data?.page?.id]);
+
+  // Update completed state when page changes
+  useEffect(() => {
+    if (progress?.completedPages && data?.page?.id) {
+      setCompleted(!!progress.completedPages[data.page.id]);
+    }
+  }, [progress, data?.page?.id]);
+
+  const markComplete = async () => {
+    if (!data?.page?.id || saving || completed) return;
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pageId: data.page.id,
+          moduleId: moduleId,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setCompleted(true);
+        // Update local progress state
+        setProgress(prev => prev ? {
+          ...prev,
+          completedPages: { ...prev.completedPages, [data.page.id]: true },
+          completedCount: result.completedCount,
+          progressPercentage: result.progressPercentage,
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error saving progress:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const goToNext = () => {
@@ -142,6 +209,21 @@ export default function LessonPage() {
             <h2 className="font-semibold text-surface-900 dark:text-white mt-2 line-clamp-2">
               {module.title}
             </h2>
+            {/* Progress Bar */}
+            {progress && (
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-xs text-surface-500 mb-1">
+                  <span>{progress.completedCount} of {progress.totalPages} complete</span>
+                  <span>{progress.progressPercentage}%</span>
+                </div>
+                <div className="h-2 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 rounded-full transition-all duration-300"
+                    style={{ width: `${progress.progressPercentage}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Course Content */}
@@ -154,6 +236,7 @@ export default function LessonPage() {
                 <ul className="space-y-1">
                   {s.pages.map((p) => {
                     const isActive = p.id === pageId;
+                    const isPageCompleted = progress?.completedPages?.[p.id];
                     const Icon = p.pageType === 'quiz' ? HelpCircle : BookOpen;
 
                     return (
@@ -166,7 +249,11 @@ export default function LessonPage() {
                               : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-700'
                           }`}
                         >
-                          <Icon className="w-4 h-4 flex-shrink-0" />
+                          {isPageCompleted ? (
+                            <CheckCircle className="w-4 h-4 flex-shrink-0 text-green-500" />
+                          ) : (
+                            <Icon className="w-4 h-4 flex-shrink-0" />
+                          )}
                           <span className="line-clamp-1">{p.title}</span>
                         </Link>
                       </li>
@@ -289,14 +376,21 @@ export default function LessonPage() {
 
             <button
               onClick={markComplete}
+              disabled={saving || completed}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 completed
                   ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                  : saving
+                  ? 'bg-surface-200 text-surface-500 dark:bg-surface-600 dark:text-surface-400 cursor-wait'
                   : 'bg-surface-100 text-surface-700 dark:bg-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-600'
               }`}
             >
-              <CheckCircle className={`w-4 h-4 ${completed ? 'fill-current' : ''}`} />
-              {completed ? 'Completed' : 'Mark Complete'}
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <CheckCircle className={`w-4 h-4 ${completed ? 'fill-current' : ''}`} />
+              )}
+              {saving ? 'Saving...' : completed ? 'Completed' : 'Mark Complete'}
             </button>
 
             <button
