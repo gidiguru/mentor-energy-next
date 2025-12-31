@@ -40,6 +40,19 @@ export async function GET(
       return NextResponse.json({ error: 'Certificate not found' }, { status: 404 });
     }
 
+    // Fetch logo from public URL
+    let logoBase64: string | null = null;
+    try {
+      const logoUrl = 'https://mentor.energy/logos/mentorenergy_logo_alone_black.png';
+      const logoResponse = await fetch(logoUrl);
+      if (logoResponse.ok) {
+        const logoBuffer = await logoResponse.arrayBuffer();
+        logoBase64 = Buffer.from(logoBuffer).toString('base64');
+      }
+    } catch (e) {
+      console.error('Could not load logo:', e);
+    }
+
     // Generate PDF
     const pdf = new jsPDF({
       orientation: 'landscape',
@@ -64,28 +77,19 @@ export async function GET(
     pdf.setLineWidth(0.5);
     pdf.rect(15, 15, pageWidth - 30, pageHeight - 30);
 
-    // Logo - Diamond shape (similar to m.e logo)
-    const logoX = pageWidth / 2 - 35;
-    const logoY = 28;
-    const logoSize = 6;
-
-    // Draw diamond logo (4 small diamonds arranged)
-    pdf.setFillColor(220, 38, 38);
-    // Top diamond
-    pdf.triangle(logoX, logoY - logoSize, logoX - logoSize/2, logoY - logoSize/2, logoX + logoSize/2, logoY - logoSize/2, 'F');
-    pdf.triangle(logoX, logoY, logoX - logoSize/2, logoY - logoSize/2, logoX + logoSize/2, logoY - logoSize/2, 'F');
-    // Bottom left diamond
-    pdf.triangle(logoX - logoSize/2, logoY + logoSize/2, logoX - logoSize, logoY, logoX, logoY, 'F');
-    pdf.triangle(logoX - logoSize/2, logoY + logoSize/2, logoX - logoSize, logoY + logoSize, logoX, logoY + logoSize, 'F');
-    // Bottom right diamond
-    pdf.triangle(logoX + logoSize/2, logoY + logoSize/2, logoX, logoY, logoX + logoSize, logoY, 'F');
-    pdf.triangle(logoX + logoSize/2, logoY + logoSize/2, logoX, logoY + logoSize, logoX + logoSize, logoY + logoSize, 'F');
-
-    // Brand text "mentor.energy"
-    pdf.setTextColor(220, 38, 38);
-    pdf.setFontSize(16);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('mentor.energy', logoX + 12, logoY + 2);
+    // Add logo image at the top center
+    if (logoBase64) {
+      const logoWidth = 50; // mm
+      const logoHeight = 15; // mm (adjust based on aspect ratio)
+      const logoX = (pageWidth - logoWidth) / 2;
+      pdf.addImage(`data:image/png;base64,${logoBase64}`, 'PNG', logoX, 22, logoWidth, logoHeight);
+    } else {
+      // Fallback text if logo can't be loaded
+      pdf.setTextColor(220, 38, 38);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('mentor.energy', pageWidth / 2, 30, { align: 'center' });
+    }
 
     // Certificate title
     pdf.setTextColor(30, 30, 30);
@@ -155,15 +159,22 @@ export async function GET(
     });
     pdf.text(`Issued: ${completedDate}`, pageWidth - 30, detailsY, { align: 'right' });
 
+    // Signature - italic style above the line
+    pdf.setTextColor(30, 30, 30);
+    pdf.setFontSize(16);
+    pdf.setFont('helvetica', 'bolditalic');
+    pdf.text('mentor.energy', pageWidth / 2, 170, { align: 'center' });
+
     // Signature line
     pdf.setDrawColor(180, 180, 180);
     pdf.setLineWidth(0.3);
     pdf.line(pageWidth / 2 - 40, 175, pageWidth / 2 + 40, 175);
 
-    pdf.setTextColor(220, 38, 38);
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('mentor.energy', pageWidth / 2, 181, { align: 'center' });
+    // Label under signature line
+    pdf.setTextColor(120, 120, 120);
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Authorized Signature', pageWidth / 2, 180, { align: 'center' });
 
     // Verification URL
     pdf.setTextColor(150, 150, 150);
