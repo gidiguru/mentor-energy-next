@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle, Loader2 } from 'lucide-react';
 import LessonComments from '@/components/LessonComments';
 import LessonRating from '@/components/LessonRating';
+import LessonTools from '@/components/LessonTools';
 
 interface Media {
   id: string;
@@ -308,11 +309,12 @@ export default function LessonPage() {
 
             <div className="flex items-center gap-2">
               {page.estimatedDuration && (
-                <span className="text-sm text-surface-500 dark:text-surface-400 flex items-center gap-1">
+                <span className="hidden sm:flex text-sm text-surface-500 dark:text-surface-400 items-center gap-1">
                   <Clock className="w-4 h-4" />
                   {page.estimatedDuration}
                 </span>
               )}
+              <LessonTools pageId={page.id} currentUserId={progress?.userId} />
             </div>
           </div>
         </header>

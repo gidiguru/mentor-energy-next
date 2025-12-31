@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { db, users, userPageProgress, userModuleProgress, sectionPages, moduleSections, learningModules, eq, and } from '@/lib/db';
+import { db, users, userPageProgress, userModuleProgress, sectionPages, moduleSections, learningModules, userStreaks, eq, and } from '@/lib/db';
 
 // GET /api/progress?moduleId=xxx - Get all page progress for a module
 export async function GET(request: NextRequest) {
@@ -215,6 +215,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Update streak if marking as complete
+    if (completed) {
+      await updateStreak(database, user.id);
+    }
+
     return NextResponse.json({
       success: true,
       completedCount,
@@ -225,5 +230,64 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error saving progress:', error);
     return NextResponse.json({ error: 'Failed to save progress' }, { status: 500 });
+  }
+}
+
+// Helper function to update user streak
+async function updateStreak(database: ReturnType<typeof db>, userId: string) {
+  try {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    let streak = await database.query.userStreaks.findFirst({
+      where: eq(userStreaks.userId, userId),
+    });
+
+    if (!streak) {
+      // First activity ever
+      await database.insert(userStreaks).values({
+        userId,
+        currentStreak: 1,
+        longestStreak: 1,
+        lastActivityDate: now,
+      });
+      return;
+    }
+
+    const lastActivity = streak.lastActivityDate ? new Date(streak.lastActivityDate) : null;
+    const lastActivityDate = lastActivity
+      ? new Date(lastActivity.getFullYear(), lastActivity.getMonth(), lastActivity.getDate())
+      : null;
+
+    // Already logged today
+    if (lastActivityDate && lastActivityDate.getTime() === today.getTime()) {
+      return;
+    }
+
+    let newStreak = 1;
+
+    if (lastActivityDate) {
+      const daysSinceLastActivity = Math.floor((today.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysSinceLastActivity === 1) {
+        // Consecutive day - continue streak
+        newStreak = streak.currentStreak + 1;
+      }
+      // If > 1 day, streak resets to 1
+    }
+
+    const newLongestStreak = Math.max(streak.longestStreak, newStreak);
+
+    await database.update(userStreaks)
+      .set({
+        currentStreak: newStreak,
+        longestStreak: newLongestStreak,
+        lastActivityDate: now,
+        updatedAt: now,
+      })
+      .where(eq(userStreaks.id, streak.id));
+  } catch (error) {
+    console.error('Error updating streak:', error);
+    // Don't throw - streak update shouldn't fail the main request
   }
 }

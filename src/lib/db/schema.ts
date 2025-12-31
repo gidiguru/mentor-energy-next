@@ -494,6 +494,156 @@ export const lessonRatingsRelations = relations(lessonRatings, ({ one }) => ({
 }));
 
 // ============================================================================
+// CERTIFICATES
+// ============================================================================
+
+export const certificates = pgTable('certificates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  moduleId: uuid('module_id').notNull().references(() => learningModules.id, { onDelete: 'cascade' }),
+  certificateNumber: varchar('certificate_number', { length: 50 }).notNull().unique(),
+  completedAt: timestamp('completed_at', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_certificates_user').on(table.userId),
+  index('idx_certificates_module').on(table.moduleId),
+  unique('unique_user_module_certificate').on(table.userId, table.moduleId),
+]);
+
+export const certificatesRelations = relations(certificates, ({ one }) => ({
+  user: one(users, {
+    fields: [certificates.userId],
+    references: [users.id],
+  }),
+  module: one(learningModules, {
+    fields: [certificates.moduleId],
+    references: [learningModules.id],
+  }),
+}));
+
+// ============================================================================
+// BOOKMARKS
+// ============================================================================
+
+export const bookmarks = pgTable('bookmarks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  pageId: uuid('page_id').notNull().references(() => sectionPages.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_bookmarks_user').on(table.userId),
+  index('idx_bookmarks_page').on(table.pageId),
+  unique('unique_user_page_bookmark').on(table.userId, table.pageId),
+]);
+
+export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
+  user: one(users, {
+    fields: [bookmarks.userId],
+    references: [users.id],
+  }),
+  page: one(sectionPages, {
+    fields: [bookmarks.pageId],
+    references: [sectionPages.id],
+  }),
+}));
+
+// ============================================================================
+// LESSON NOTES
+// ============================================================================
+
+export const lessonNotes = pgTable('lesson_notes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  pageId: uuid('page_id').notNull().references(() => sectionPages.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_notes_user').on(table.userId),
+  index('idx_notes_page').on(table.pageId),
+  unique('unique_user_page_note').on(table.userId, table.pageId),
+]);
+
+export const lessonNotesRelations = relations(lessonNotes, ({ one }) => ({
+  user: one(users, {
+    fields: [lessonNotes.userId],
+    references: [users.id],
+  }),
+  page: one(sectionPages, {
+    fields: [lessonNotes.pageId],
+    references: [sectionPages.id],
+  }),
+}));
+
+// ============================================================================
+// USER STREAKS
+// ============================================================================
+
+export const userStreaks = pgTable('user_streaks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  currentStreak: integer('current_streak').default(0).notNull(),
+  longestStreak: integer('longest_streak').default(0).notNull(),
+  lastActivityDate: timestamp('last_activity_date', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_streaks_user').on(table.userId),
+]);
+
+export const userStreaksRelations = relations(userStreaks, ({ one }) => ({
+  user: one(users, {
+    fields: [userStreaks.userId],
+    references: [users.id],
+  }),
+}));
+
+// ============================================================================
+// ACHIEVEMENTS
+// ============================================================================
+
+export const achievements = pgTable('achievements', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: varchar('code', { length: 50 }).notNull().unique(), // e.g., 'first_lesson', 'streak_7'
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  icon: varchar('icon', { length: 50 }), // Icon name or emoji
+  category: varchar('category', { length: 50 }), // 'completion', 'streak', 'engagement'
+  points: integer('points').default(10).notNull(),
+  requirement: jsonb('requirement'), // JSON defining the criteria
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_achievements_code').on(table.code),
+  index('idx_achievements_category').on(table.category),
+]);
+
+export const userAchievements = pgTable('user_achievements', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  achievementId: uuid('achievement_id').notNull().references(() => achievements.id, { onDelete: 'cascade' }),
+  earnedAt: timestamp('earned_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_user_achievements_user').on(table.userId),
+  index('idx_user_achievements_achievement').on(table.achievementId),
+  unique('unique_user_achievement').on(table.userId, table.achievementId),
+]);
+
+export const achievementsRelations = relations(achievements, ({ many }) => ({
+  userAchievements: many(userAchievements),
+}));
+
+export const userAchievementsRelations = relations(userAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [userAchievements.userId],
+    references: [users.id],
+  }),
+  achievement: one(achievements, {
+    fields: [userAchievements.achievementId],
+    references: [achievements.id],
+  }),
+}));
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -541,3 +691,21 @@ export type NewLessonComment = typeof lessonComments.$inferInsert;
 
 export type LessonRating = typeof lessonRatings.$inferSelect;
 export type NewLessonRating = typeof lessonRatings.$inferInsert;
+
+export type Certificate = typeof certificates.$inferSelect;
+export type NewCertificate = typeof certificates.$inferInsert;
+
+export type Bookmark = typeof bookmarks.$inferSelect;
+export type NewBookmark = typeof bookmarks.$inferInsert;
+
+export type LessonNote = typeof lessonNotes.$inferSelect;
+export type NewLessonNote = typeof lessonNotes.$inferInsert;
+
+export type UserStreak = typeof userStreaks.$inferSelect;
+export type NewUserStreak = typeof userStreaks.$inferInsert;
+
+export type Achievement = typeof achievements.$inferSelect;
+export type NewAchievement = typeof achievements.$inferInsert;
+
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type NewUserAchievement = typeof userAchievements.$inferInsert;
