@@ -320,14 +320,22 @@ export default function LessonPage() {
 
 // Helper to detect and parse video URLs
 function parseVideoUrl(url: string): { type: 'youtube' | 'vimeo' | 'direct'; embedUrl: string } {
-  // YouTube patterns
-  const youtubeMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  // YouTube patterns - handle various formats:
+  // https://www.youtube.com/watch?v=VIDEO_ID
+  // https://youtube.com/watch?v=VIDEO_ID
+  // https://www.youtube.com/embed/VIDEO_ID
+  // https://youtu.be/VIDEO_ID
+  // https://www.youtube.com/v/VIDEO_ID
+  const youtubeMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   if (youtubeMatch) {
     return { type: 'youtube', embedUrl: `https://www.youtube.com/embed/${youtubeMatch[1]}` };
   }
 
-  // Vimeo patterns
-  const vimeoMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+  // Vimeo patterns - handle various formats:
+  // https://vimeo.com/VIDEO_ID
+  // https://www.vimeo.com/VIDEO_ID
+  // https://player.vimeo.com/video/VIDEO_ID
+  const vimeoMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/);
   if (vimeoMatch) {
     return { type: 'vimeo', embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}` };
   }
