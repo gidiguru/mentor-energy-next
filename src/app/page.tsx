@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useUser } from '@clerk/nextjs';
 import { AIChatPreview } from '@/components';
 
 const stats = [
@@ -52,6 +55,12 @@ const testimonials = [
 ];
 
 export default function Home() {
+  const { isSignedIn } = useUser();
+
+  const getStartedHref = isSignedIn ? '/dashboard' : '/signup';
+  const signUpHref = isSignedIn ? '/dashboard' : '/signup';
+  const becomeMentorHref = isSignedIn ? '/dashboard' : '/signup?role=mentor';
+
   return (
     <div className="animate-fade-in overflow-x-hidden">
       {/* Hero Section */}
@@ -67,8 +76,8 @@ export default function Home() {
               Bridge the gap between education and industry.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
-              <Link href="/signup" className="btn btn-primary">
-                Get Started
+              <Link href={getStartedHref} className="btn btn-primary">
+                {isSignedIn ? 'Go to Dashboard' : 'Get Started'}
               </Link>
               <Link href="/mentors" className="btn btn-ghost">
                 Browse Mentors
@@ -163,11 +172,11 @@ export default function Home() {
           career in Nigeria&apos;s energy sector.
         </p>
         <div className="flex flex-col justify-center gap-4 sm:flex-row">
-          <Link href="/signup" className="btn btn-primary">
-            Sign Up as Student
+          <Link href={signUpHref} className="btn btn-primary">
+            {isSignedIn ? 'Go to Dashboard' : 'Sign Up as Student'}
           </Link>
-          <Link href="/signup" className="btn btn-ghost">
-            Become a Mentor
+          <Link href={becomeMentorHref} className="btn btn-ghost">
+            {isSignedIn ? 'Mentor Settings' : 'Become a Mentor'}
           </Link>
         </div>
       </section>
