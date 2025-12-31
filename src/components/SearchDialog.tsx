@@ -27,7 +27,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Focus input when dialog opens
   useEffect(() => {
