@@ -50,76 +50,82 @@ export async function GET(
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
 
-    // Background gradient effect (using rectangles)
-    pdf.setFillColor(15, 23, 42); // Dark slate
+    // White background
+    pdf.setFillColor(255, 255, 255);
     pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
     // Decorative border
     pdf.setDrawColor(220, 38, 38); // Red border
-    pdf.setLineWidth(3);
+    pdf.setLineWidth(2);
     pdf.rect(10, 10, pageWidth - 20, pageHeight - 20);
 
-    // Inner border
-    pdf.setDrawColor(185, 28, 28);
-    pdf.setLineWidth(1);
+    // Inner border (subtle gray)
+    pdf.setDrawColor(230, 230, 230);
+    pdf.setLineWidth(0.5);
     pdf.rect(15, 15, pageWidth - 30, pageHeight - 30);
 
-    // Corner decorations
-    const cornerSize = 15;
-    pdf.setFillColor(220, 38, 38);
-    // Top left
-    pdf.triangle(10, 10, 10 + cornerSize, 10, 10, 10 + cornerSize, 'F');
-    // Top right
-    pdf.triangle(pageWidth - 10, 10, pageWidth - 10 - cornerSize, 10, pageWidth - 10, 10 + cornerSize, 'F');
-    // Bottom left
-    pdf.triangle(10, pageHeight - 10, 10 + cornerSize, pageHeight - 10, 10, pageHeight - 10 - cornerSize, 'F');
-    // Bottom right
-    pdf.triangle(pageWidth - 10, pageHeight - 10, pageWidth - 10 - cornerSize, pageHeight - 10, pageWidth - 10, pageHeight - 10 - cornerSize, 'F');
+    // Logo - Diamond shape (similar to m.e logo)
+    const logoX = pageWidth / 2 - 35;
+    const logoY = 28;
+    const logoSize = 6;
 
-    // Logo/Brand text
+    // Draw diamond logo (4 small diamonds arranged)
+    pdf.setFillColor(220, 38, 38);
+    // Top diamond
+    pdf.triangle(logoX, logoY - logoSize, logoX - logoSize/2, logoY - logoSize/2, logoX + logoSize/2, logoY - logoSize/2, 'F');
+    pdf.triangle(logoX, logoY, logoX - logoSize/2, logoY - logoSize/2, logoX + logoSize/2, logoY - logoSize/2, 'F');
+    // Bottom left diamond
+    pdf.triangle(logoX - logoSize/2, logoY + logoSize/2, logoX - logoSize, logoY, logoX, logoY, 'F');
+    pdf.triangle(logoX - logoSize/2, logoY + logoSize/2, logoX - logoSize, logoY + logoSize, logoX, logoY + logoSize, 'F');
+    // Bottom right diamond
+    pdf.triangle(logoX + logoSize/2, logoY + logoSize/2, logoX, logoY, logoX + logoSize, logoY, 'F');
+    pdf.triangle(logoX + logoSize/2, logoY + logoSize/2, logoX, logoY + logoSize, logoX + logoSize, logoY + logoSize, 'F');
+
+    // Brand text "mentor.energy"
     pdf.setTextColor(220, 38, 38);
-    pdf.setFontSize(14);
+    pdf.setFontSize(16);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('MENTOR ENERGY', pageWidth / 2, 30, { align: 'center' });
+    pdf.text('mentor.energy', logoX + 12, logoY + 2);
 
     // Certificate title
-    pdf.setTextColor(255, 255, 255);
+    pdf.setTextColor(30, 30, 30);
     pdf.setFontSize(36);
     pdf.setFont('helvetica', 'bold');
     pdf.text('CERTIFICATE', pageWidth / 2, 55, { align: 'center' });
 
-    pdf.setFontSize(18);
+    pdf.setTextColor(100, 100, 100);
+    pdf.setFontSize(16);
     pdf.setFont('helvetica', 'normal');
     pdf.text('OF COMPLETION', pageWidth / 2, 65, { align: 'center' });
 
     // Decorative line
     pdf.setDrawColor(220, 38, 38);
-    pdf.setLineWidth(0.5);
-    pdf.line(pageWidth / 2 - 60, 72, pageWidth / 2 + 60, 72);
+    pdf.setLineWidth(0.8);
+    pdf.line(pageWidth / 2 - 50, 72, pageWidth / 2 + 50, 72);
 
     // "This is to certify that"
-    pdf.setTextColor(200, 200, 200);
+    pdf.setTextColor(100, 100, 100);
     pdf.setFontSize(12);
-    pdf.text('This is to certify that', pageWidth / 2, 85, { align: 'center' });
+    pdf.text('This is to certify that', pageWidth / 2, 88, { align: 'center' });
 
     // Recipient name
     const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Student';
-    pdf.setTextColor(255, 255, 255);
+    pdf.setTextColor(30, 30, 30);
     pdf.setFontSize(28);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(fullName, pageWidth / 2, 100, { align: 'center' });
+    pdf.text(fullName, pageWidth / 2, 105, { align: 'center' });
 
     // Decorative line under name
     const nameWidth = pdf.getTextWidth(fullName);
     pdf.setDrawColor(220, 38, 38);
     pdf.setLineWidth(0.5);
-    pdf.line(pageWidth / 2 - nameWidth / 2 - 10, 105, pageWidth / 2 + nameWidth / 2 + 10, 105);
+    pdf.line(pageWidth / 2 - nameWidth / 2 - 10, 110, pageWidth / 2 + nameWidth / 2 + 10, 110);
 
     // "has successfully completed"
-    pdf.setTextColor(200, 200, 200);
+    pdf.setTextColor(100, 100, 100);
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'normal');
-    pdf.text('has successfully completed the course', pageWidth / 2, 118, { align: 'center' });
+    pdf.text('has successfully completed the course', pageWidth / 2, 122, { align: 'center' });
 
     // Course title
     const moduleTitle = certificate.module?.title || 'Course';
@@ -130,13 +136,13 @@ export async function GET(
     // Handle long titles
     const maxTitleWidth = pageWidth - 80;
     const titleLines = pdf.splitTextToSize(moduleTitle, maxTitleWidth);
-    pdf.text(titleLines, pageWidth / 2, 132, { align: 'center' });
+    pdf.text(titleLines, pageWidth / 2, 136, { align: 'center' });
 
     // Certificate details section
-    const detailsY = 155;
+    const detailsY = 160;
 
     // Certificate number
-    pdf.setTextColor(150, 150, 150);
+    pdf.setTextColor(120, 120, 120);
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
     pdf.text(`Certificate No: ${certificate.certificateNumber}`, 30, detailsY);
@@ -150,16 +156,16 @@ export async function GET(
     pdf.text(`Issued: ${completedDate}`, pageWidth - 30, detailsY, { align: 'right' });
 
     // Signature line
-    pdf.setDrawColor(150, 150, 150);
+    pdf.setDrawColor(180, 180, 180);
     pdf.setLineWidth(0.3);
-    pdf.line(pageWidth / 2 - 40, 172, pageWidth / 2 + 40, 172);
+    pdf.line(pageWidth / 2 - 40, 175, pageWidth / 2 + 40, 175);
 
-    pdf.setTextColor(150, 150, 150);
+    pdf.setTextColor(100, 100, 100);
     pdf.setFontSize(10);
-    pdf.text('Mentor Energy Team', pageWidth / 2, 178, { align: 'center' });
+    pdf.text('mentor.energy Team', pageWidth / 2, 181, { align: 'center' });
 
     // Verification URL
-    pdf.setTextColor(100, 100, 100);
+    pdf.setTextColor(150, 150, 150);
     pdf.setFontSize(8);
     pdf.text(`Verify at: mentor.energy/verify/${certificate.certificateNumber}`, pageWidth / 2, pageHeight - 18, { align: 'center' });
 
