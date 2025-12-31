@@ -153,7 +153,7 @@ export default function LearnPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold mb-4">Learning Center</h1>
           <p className="text-xl text-primary-100 max-w-2xl">
-            Master petroleum engineering with our comprehensive curriculum designed by industry experts.
+            Master the energy industry with our comprehensive curriculum designed by industry experts.
           </p>
           {user && enrolledCount > 0 && (
             <p className="mt-4 text-primary-200">
