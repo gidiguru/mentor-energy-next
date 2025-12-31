@@ -41,6 +41,7 @@ export async function GET(request: NextRequest, { params }: Props) {
         pageType: page.pageType,
         estimatedDuration: page.estimatedDuration,
         videoUrl: videoMedia?.url || null,
+        labConfig: page.labConfig || null,
       },
     });
   } catch (error) {
@@ -64,7 +65,7 @@ export async function PUT(request: NextRequest, { params }: Props) {
 
   try {
     const body = await request.json();
-    const { title, content, pageType, estimatedDuration, videoUrl } = body;
+    const { title, content, pageType, estimatedDuration, videoUrl, labConfig } = body;
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -92,6 +93,7 @@ export async function PUT(request: NextRequest, { params }: Props) {
         content: content || null,
         pageType: pageType || 'lesson',
         estimatedDuration: estimatedDuration || null,
+        labConfig: pageType === 'lab' ? labConfig : null,
         updatedAt: new Date(),
       })
       .where(eq(sectionPages.id, pageId))

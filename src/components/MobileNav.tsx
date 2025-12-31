@@ -17,6 +17,7 @@ const baseNavItems = [
   { href: '/', label: 'Home' },
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/learn', label: 'Learning Center' },
+  { href: '/labs', label: 'Virtual Labs' },
   { href: '/mentors', label: 'Find Mentors' },
   { href: '/resources', label: 'Resources' },
   { href: '/profile', label: 'Profile' },

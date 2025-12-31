@@ -93,6 +93,7 @@ export async function GET(request: Request, { params }: Props) {
         sequence: page.sequence,
         estimatedDuration: page.estimatedDuration,
         quizQuestions: page.quizQuestions,
+        labConfig: page.labConfig || null,
         media: page.media?.map(m => ({
           id: m.id,
           type: m.type,

@@ -20,7 +20,7 @@ import { relations } from 'drizzle-orm';
 
 export const userRoleEnum = pgEnum('user_role', ['student', 'mentor', 'admin']);
 export const moduleStatusEnum = pgEnum('module_status', ['draft', 'review', 'published']);
-export const pageTypeEnum = pgEnum('page_type', ['lesson', 'quiz', 'assignment', 'discussion']);
+export const pageTypeEnum = pgEnum('page_type', ['lesson', 'quiz', 'assignment', 'discussion', 'lab']);
 export const mediaTypeEnum = pgEnum('media_type', ['video', 'audio', 'image', 'document']);
 export const sessionStatusEnum = pgEnum('session_status', ['scheduled', 'completed', 'cancelled', 'no_show']);
 export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'premium', 'enterprise']);
@@ -142,6 +142,8 @@ export const sectionPages = pgTable('section_pages', {
   // Quiz-specific fields
   quizQuestions: jsonb('quiz_questions'), // Array of question objects
   passingScore: integer('passing_score'), // Percentage required to pass
+  // Lab-specific fields
+  labConfig: jsonb('lab_config'), // Lab configuration: { labType, labUrl, instructions, objectives, tools, scenarios, timeLimit }
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [

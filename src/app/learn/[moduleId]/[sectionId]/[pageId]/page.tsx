@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle, Loader2, Download, File, FileText, Image, Music, Lock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle, Loader2, Download, File, FileText, Image, Music, Lock, FlaskConical } from 'lucide-react';
 import LessonComments from '@/components/LessonComments';
 import LessonRating from '@/components/LessonRating';
 import LessonTools from '@/components/LessonTools';
 import QuizComponent from '@/components/QuizComponent';
+import LabComponent, { LabConfig } from '@/components/LabComponent';
 import PrerequisitesBanner from '@/components/PrerequisitesBanner';
 
 interface Media {
@@ -25,6 +26,7 @@ interface Page {
   sequence: number;
   estimatedDuration: string | null;
   quizQuestions: unknown;
+  labConfig: LabConfig | null;
   media: Media[];
 }
 
@@ -301,7 +303,7 @@ export default function LessonPage() {
                   {s.pages.map((p) => {
                     const isActive = p.id === pageId;
                     const isPageCompleted = progress?.completedPages?.[p.id];
-                    const Icon = p.pageType === 'quiz' ? HelpCircle : BookOpen;
+                    const Icon = p.pageType === 'quiz' ? HelpCircle : p.pageType === 'lab' ? FlaskConical : BookOpen;
 
                     return (
                       <li key={p.id}>
@@ -378,10 +380,25 @@ export default function LessonPage() {
               <QuizComponent
                 pageId={page.id}
                 title={page.title}
-                onComplete={(passed, score) => {
+                onComplete={(passed) => {
                   if (passed) {
                     setCompleted(true);
                     // Update local progress state
+                    setProgress(prev => prev ? {
+                      ...prev,
+                      completedPages: { ...prev.completedPages, [page.id]: true },
+                    } : null);
+                  }
+                }}
+              />
+            ) : page.pageType === 'lab' && page.labConfig ? (
+              <LabComponent
+                pageId={page.id}
+                title={page.title}
+                labConfig={page.labConfig}
+                onComplete={(labCompleted) => {
+                  if (labCompleted) {
+                    toggleComplete(true);
                     setProgress(prev => prev ? {
                       ...prev,
                       completedPages: { ...prev.completedPages, [page.id]: true },
