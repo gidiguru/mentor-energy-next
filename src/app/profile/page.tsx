@@ -113,9 +113,8 @@ export default function ProfilePage() {
 
   const userEmail = profile?.email || user?.emailAddresses[0]?.emailAddress || '';
   const profilePicture = user?.imageUrl;
-  const displayName = firstName && lastName
-    ? `${firstName} ${lastName}`
-    : firstName || user?.firstName || 'User';
+  const displayFirstName = firstName || user?.firstName || '';
+  const displayLastName = lastName || user?.lastName || '';
 
   return (
     <div className="container mx-auto max-w-2xl p-4 py-8">
@@ -133,7 +132,9 @@ export default function ProfilePage() {
           )}
         </div>
         <div>
-          <h1 className="h2">{displayName}</h1>
+          <h1 className="h2">
+            {displayFirstName} {displayLastName}
+          </h1>
           <p className="text-surface-500">{profile?.role === 'mentor' ? 'Mentor' : 'Student'}</p>
         </div>
       </div>
