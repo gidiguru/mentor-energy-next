@@ -17,6 +17,7 @@ interface NavItem {
 
 const baseNavItems: NavItem[] = [
   { path: '/dashboard', label: 'Overview', icon: '🏠' },
+  { path: '/dashboard/analytics', label: 'Analytics', icon: '📊' },
   { path: '/learn', label: 'Learning Center', icon: '🎓' },
   {
     path: '/dashboard/learning',

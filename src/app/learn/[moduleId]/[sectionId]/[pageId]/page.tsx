@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircl
 import LessonComments from '@/components/LessonComments';
 import LessonRating from '@/components/LessonRating';
 import LessonTools from '@/components/LessonTools';
+import QuizComponent from '@/components/QuizComponent';
 
 interface Media {
   id: string;
@@ -323,22 +324,20 @@ export default function LessonPage() {
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto px-4 py-8">
             {page.pageType === 'quiz' ? (
-              <div className="bg-white dark:bg-surface-800 rounded-xl p-8 border border-surface-200 dark:border-surface-700">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <HelpCircle className="w-8 h-8 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-surface-900 dark:text-white mb-2">
-                    {page.title}
-                  </h2>
-                  <p className="text-surface-600 dark:text-surface-400 mb-6">
-                    Test your knowledge with this quiz.
-                  </p>
-                  <p className="text-sm text-surface-500 dark:text-surface-400">
-                    Quiz functionality coming soon!
-                  </p>
-                </div>
-              </div>
+              <QuizComponent
+                pageId={page.id}
+                title={page.title}
+                onComplete={(passed, score) => {
+                  if (passed) {
+                    setCompleted(true);
+                    // Update local progress state
+                    setProgress(prev => prev ? {
+                      ...prev,
+                      completedPages: { ...prev.completedPages, [page.id]: true },
+                    } : null);
+                  }
+                }}
+              />
             ) : (
               <div className="space-y-6">
                 {/* Video Content */}
