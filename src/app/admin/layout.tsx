@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, BookOpen, FileText, Database, ArrowLeft, Image, Users } from 'lucide-react';
+import { LayoutDashboard, BookOpen, FileText, Database, ArrowLeft, Image, Users, BarChart3 } from 'lucide-react';
 import AdminMobileNav from '@/components/AdminMobileNav';
 import { db, users, eq } from '@/lib/db';
 
@@ -30,6 +30,7 @@ export default async function AdminLayout({
 
   const navItems = [
     { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
     { href: '/admin/users', icon: Users, label: 'Users' },
     { href: '/admin/modules', icon: BookOpen, label: 'Modules' },
     { href: '/admin/resources', icon: FileText, label: 'Resources' },

@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, LayoutDashboard, BookOpen, FileText, Database, ArrowLeft, Image } from 'lucide-react';
+import { Menu, X, LayoutDashboard, BookOpen, FileText, Database, ArrowLeft, Image, Users, BarChart3 } from 'lucide-react';
 
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
+  { href: '/admin/users', icon: Users, label: 'Users' },
   { href: '/admin/modules', icon: BookOpen, label: 'Modules' },
   { href: '/admin/resources', icon: FileText, label: 'Resources' },
   { href: '/admin/media', icon: Image, label: 'Media Library' },
