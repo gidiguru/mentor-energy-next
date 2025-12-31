@@ -224,12 +224,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Auto-generate certificate when module is completed
+    let certificate = null;
+    if (isModuleCompleted) {
+      certificate = await autoGenerateCertificate(database, user.id, module.id);
+    }
+
     return NextResponse.json({
       success: true,
       completedCount,
       totalPages,
       progressPercentage,
       isModuleCompleted,
+      certificate,
     });
   } catch (error) {
     console.error('Error saving progress:', error);
@@ -407,5 +414,42 @@ async function updateStreak(database: ReturnType<typeof db>, userId: string) {
   } catch (error) {
     console.error('Error updating streak:', error);
     // Don't throw - streak update shouldn't fail the main request
+  }
+}
+
+// Helper function to auto-generate certificate when module is completed
+async function autoGenerateCertificate(database: ReturnType<typeof db>, userId: string, moduleId: string) {
+  try {
+    // Check if certificate already exists
+    const existingCert = await database.query.certificates.findFirst({
+      where: and(
+        eq(certificates.userId, userId),
+        eq(certificates.moduleId, moduleId),
+      ),
+    });
+
+    if (existingCert) {
+      // Certificate already exists, return it
+      return existingCert;
+    }
+
+    // Generate certificate number
+    const certificateNumber = `CERT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    // Create certificate
+    const [newCertificate] = await database.insert(certificates).values({
+      userId,
+      moduleId,
+      certificateNumber,
+      completedAt: new Date(),
+    }).returning();
+
+    console.log(`Auto-generated certificate ${certificateNumber} for user ${userId}, module ${moduleId}`);
+
+    return newCertificate;
+  } catch (error) {
+    console.error('Error auto-generating certificate:', error);
+    // Don't throw - certificate generation shouldn't fail the main request
+    return null;
   }
 }
