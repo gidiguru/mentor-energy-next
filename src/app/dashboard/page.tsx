@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
-import { Flame, Trophy, Medal, BookOpen, Award, TrendingUp, Bookmark, Clock, ChevronRight, GraduationCap } from 'lucide-react';
+import { Flame, Trophy, Medal, BookOpen, Award, TrendingUp, Bookmark, Clock, ChevronRight, GraduationCap, BarChart3 } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -301,6 +301,16 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* View Detailed Analytics Button */}
+      <Link
+        href="/dashboard/analytics"
+        className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+      >
+        <BarChart3 className="w-5 h-5" />
+        View Detailed Analytics
+        <ChevronRight className="w-5 h-5" />
+      </Link>
 
       {/* Main Dashboard Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
