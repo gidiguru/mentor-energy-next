@@ -17,13 +17,14 @@ interface NavItem {
 
 const baseNavItems: NavItem[] = [
   { path: '/dashboard', label: 'Overview', icon: '🏠' },
+  { path: '/learn', label: 'Learning Center', icon: '🎓' },
   {
     path: '/dashboard/learning',
-    label: 'Learning',
+    label: 'My Learning',
     icon: '📚',
     hasSubItems: true,
     subItems: [
-      { path: '/dashboard/learning/modules', label: 'Modules', icon: '📖' },
+      { path: '/dashboard/learning/modules', label: 'My Courses', icon: '📖' },
       { path: '/dashboard/learning/virtual-labs', label: 'Virtual Labs', icon: '🔬' },
       { path: '/dashboard/learning/field-trips', label: 'Field Trips', icon: '🌍' },
     ],

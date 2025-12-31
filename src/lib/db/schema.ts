@@ -494,6 +494,34 @@ export const lessonRatingsRelations = relations(lessonRatings, ({ one }) => ({
 }));
 
 // ============================================================================
+// COURSE ENROLLMENTS
+// ============================================================================
+
+export const courseEnrollments = pgTable('course_enrollments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  moduleId: uuid('module_id').notNull().references(() => learningModules.id, { onDelete: 'cascade' }),
+  enrolledAt: timestamp('enrolled_at', { withTimezone: true }).defaultNow().notNull(),
+  status: varchar('status', { length: 20 }).default('active').notNull(), // active, completed, dropped
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_enrollments_user').on(table.userId),
+  index('idx_enrollments_module').on(table.moduleId),
+  unique('unique_user_module_enrollment').on(table.userId, table.moduleId),
+]);
+
+export const courseEnrollmentsRelations = relations(courseEnrollments, ({ one }) => ({
+  user: one(users, {
+    fields: [courseEnrollments.userId],
+    references: [users.id],
+  }),
+  module: one(learningModules, {
+    fields: [courseEnrollments.moduleId],
+    references: [learningModules.id],
+  }),
+}));
+
+// ============================================================================
 // CERTIFICATES
 // ============================================================================
 
@@ -709,3 +737,6 @@ export type NewAchievement = typeof achievements.$inferInsert;
 
 export type UserAchievement = typeof userAchievements.$inferSelect;
 export type NewUserAchievement = typeof userAchievements.$inferInsert;
+
+export type CourseEnrollment = typeof courseEnrollments.$inferSelect;
+export type NewCourseEnrollment = typeof courseEnrollments.$inferInsert;

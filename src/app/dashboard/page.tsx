@@ -100,14 +100,14 @@ export default function DashboardPage() {
         // Fetch all data in parallel
         const [
           profileRes,
-          modulesRes,
+          enrollmentsRes,
           streakRes,
           achievementsRes,
           leaderboardRes,
           bookmarksRes,
         ] = await Promise.all([
           fetch('/api/user/profile'),
-          fetch('/api/modules'),
+          fetch('/api/enrollments'),
           fetch('/api/streaks'),
           fetch('/api/achievements'),
           fetch('/api/leaderboard?type=points&limit=5'),
@@ -120,11 +120,31 @@ export default function DashboardPage() {
           setProfile(data.profile);
         }
 
-        // Process modules with progress
-        if (modulesRes.ok) {
-          const data = await modulesRes.json();
-          const modulesWithProgress = data.modules || [];
-          setModules(modulesWithProgress);
+        // Process enrolled courses with progress
+        if (enrollmentsRes.ok) {
+          const data = await enrollmentsRes.json();
+          const enrolledModules = (data.enrollments || []).map((e: {
+            moduleId: string;
+            moduleSlug: string;
+            title: string;
+            description: string;
+            thumbnailUrl: string | null;
+            progress?: number;
+            totalLessons?: number;
+            completedLessons?: number;
+          }) => ({
+            id: e.moduleId,
+            moduleId: e.moduleSlug,
+            title: e.title,
+            description: e.description,
+            thumbnailUrl: e.thumbnailUrl,
+            progress: e.progress || 0,
+            totalLessons: e.totalLessons || 0,
+            completedLessons: e.completedLessons || 0,
+          }));
+          setModules(enrolledModules);
+
+          const modulesWithProgress = enrolledModules;
 
           // Calculate overall stats
           let totalLessons = 0;
@@ -321,9 +341,19 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-surface-500 dark:text-surface-400">
-                No modules available yet. Check back soon!
-              </p>
+              <div className="text-center py-8">
+                <BookOpen className="w-12 h-12 mx-auto text-surface-400 mb-3" />
+                <p className="text-surface-500 dark:text-surface-400 mb-4">
+                  You haven&apos;t enrolled in any courses yet.
+                </p>
+                <Link
+                  href="/learn"
+                  className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Browse Courses
+                </Link>
+              </div>
             )}
           </section>
 
