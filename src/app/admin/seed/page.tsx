@@ -1,14 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { Database, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Database, CheckCircle, AlertCircle, Loader2, Trophy } from 'lucide-react';
 
 export default function SeedPage() {
   const [loading, setLoading] = useState(false);
+  const [achievementsLoading, setAchievementsLoading] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
     data?: { modules: number; sections: number; pages: number; resources: number };
+  } | null>(null);
+  const [achievementsResult, setAchievementsResult] = useState<{
+    success: boolean;
+    message: string;
+    count?: number;
   } | null>(null);
 
   const handleSeed = async () => {
@@ -41,6 +47,39 @@ export default function SeedPage() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSeedAchievements = async () => {
+    setAchievementsLoading(true);
+    setAchievementsResult(null);
+
+    try {
+      const response = await fetch('/api/admin/seed-achievements', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setAchievementsResult({
+          success: true,
+          message: data.message,
+          count: data.total,
+        });
+      } else {
+        setAchievementsResult({
+          success: false,
+          message: data.error || 'Failed to seed achievements',
+        });
+      }
+    } catch (error) {
+      setAchievementsResult({
+        success: false,
+        message: 'Network error. Please try again.',
+      });
+    } finally {
+      setAchievementsLoading(false);
     }
   };
 
@@ -131,6 +170,83 @@ export default function SeedPage() {
 
         <p className="mt-4 text-xs text-surface-500 dark:text-surface-400">
           Note: Running this multiple times may create duplicate content.
+        </p>
+      </div>
+
+      {/* Achievements Seeding Section */}
+      <div className="bg-white dark:bg-surface-800 rounded-xl p-8 border border-surface-200 dark:border-surface-700 max-w-2xl mt-6">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="w-12 h-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
+            <Trophy className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
+              Achievements
+            </h2>
+            <p className="text-surface-600 dark:text-surface-400 text-sm">
+              Seed the gamification achievements for user progress tracking:
+            </p>
+            <ul className="mt-3 space-y-1 text-sm text-surface-600 dark:text-surface-400">
+              <li>• 6 completion achievements (lesson milestones)</li>
+              <li>• 4 streak achievements (daily learning streaks)</li>
+              <li>• 3 certificate achievements (earning certificates)</li>
+              <li>• 2 engagement achievements (commenting)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="border-t border-surface-200 dark:border-surface-700 pt-6">
+          <button
+            onClick={handleSeedAchievements}
+            disabled={achievementsLoading}
+            className="w-full flex items-center justify-center gap-2 bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          >
+            {achievementsLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Seeding Achievements...
+              </>
+            ) : (
+              <>
+                <Trophy className="w-5 h-5" />
+                Seed Achievements
+              </>
+            )}
+          </button>
+
+          {achievementsResult && (
+            <div className={`mt-4 p-4 rounded-lg ${
+              achievementsResult.success
+                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+            }`}>
+              <div className="flex items-start gap-3">
+                {achievementsResult.success ? (
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                )}
+                <div>
+                  <p className={`font-medium ${
+                    achievementsResult.success
+                      ? 'text-green-800 dark:text-green-300'
+                      : 'text-red-800 dark:text-red-300'
+                  }`}>
+                    {achievementsResult.message}
+                  </p>
+                  {achievementsResult.count !== undefined && (
+                    <p className="mt-1 text-sm text-green-700 dark:text-green-400">
+                      Total achievements in database: {achievementsResult.count}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <p className="mt-4 text-xs text-surface-500 dark:text-surface-400">
+          Note: This is safe to run multiple times - only new achievements will be added.
         </p>
       </div>
     </div>
