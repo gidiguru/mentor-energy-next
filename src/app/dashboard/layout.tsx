@@ -177,49 +177,6 @@ export default function DashboardLayout({
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Mobile Header */}
-        {isMobile && (
-          <header className="sticky top-0 z-40 border-b border-surface-200-800 preset-filled-surface-50-950 p-4">
-            <button
-              onClick={() => setIsNavOpen(!isNavOpen)}
-              className="btn btn-primary flex w-full items-center justify-center gap-2"
-            >
-              <Menu className="h-5 w-5" />
-              <span>Menu</span>
-              {isNavOpen ? (
-                <ChevronDown className="ml-auto h-5 w-5" />
-              ) : (
-                <ChevronRight className="ml-auto h-5 w-5" />
-              )}
-            </button>
-
-            {isNavOpen && (
-              <>
-                {/* Backdrop */}
-                <div
-                  className="fixed inset-0 z-40 bg-black/50"
-                  onClick={() => setIsNavOpen(false)}
-                />
-
-                {/* Mobile Nav */}
-                <nav className="fixed inset-x-4 top-20 z-50 max-h-[80vh] overflow-y-auto rounded-xl border-2 border-primary-500 preset-filled-surface-50-950 shadow-2xl">
-                  <div className="flex flex-col p-2">
-                    {navItems.map(renderNavItem)}
-
-                    <button
-                      onClick={handleSignOut}
-                      className="mt-2 flex items-center gap-3 rounded-lg px-3 py-3 text-red-500 transition-colors hover:bg-red-500/10"
-                    >
-                      <LogOut className="h-5 w-5" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                </nav>
-              </>
-            )}
-          </header>
-        )}
-
         {/* Page Content */}
         <main className="flex-1 overflow-auto p-4">{children}</main>
       </div>
