@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
-import { BookOpen, Clock, BarChart3, ChevronRight, Check, Loader2 } from 'lucide-react';
+import { BookOpen, Clock, BarChart3, ChevronRight, Check, Loader2, PlayCircle } from 'lucide-react';
 
 interface Module {
   id: string;
@@ -17,15 +17,19 @@ interface Module {
   learningObjectives: string[] | null;
 }
 
-interface Enrollment {
+interface EnrollmentData {
   moduleId: string;
   moduleSlug: string;
+  progress: number;
+  totalLessons: number;
+  completedLessons: number;
+  nextLessonLink: string | null;
 }
 
 export default function LearnPage() {
   const { user, isLoaded } = useUser();
   const [modules, setModules] = useState<Module[]>([]);
-  const [enrollments, setEnrollments] = useState<Set<string>>(new Set());
+  const [enrollmentMap, setEnrollmentMap] = useState<Map<string, EnrollmentData>>(new Map());
   const [loading, setLoading] = useState(true);
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
 
@@ -39,15 +43,23 @@ export default function LearnPage() {
           setModules(data.modules || []);
         }
 
-        // Fetch user's enrollments if logged in
+        // Fetch user's enrollments with progress if logged in
         if (user) {
           const enrollRes = await fetch('/api/enrollments');
           if (enrollRes.ok) {
             const data = await enrollRes.json();
-            const enrolledIds = new Set<string>(
-              (data.enrollments || []).map((e: Enrollment) => e.moduleId)
-            );
-            setEnrollments(enrolledIds);
+            const map = new Map<string, EnrollmentData>();
+            for (const e of data.enrollments || []) {
+              map.set(e.moduleId, {
+                moduleId: e.moduleId,
+                moduleSlug: e.moduleSlug,
+                progress: e.progress || 0,
+                totalLessons: e.totalLessons || 0,
+                completedLessons: e.completedLessons || 0,
+                nextLessonLink: e.nextLessonLink,
+              });
+            }
+            setEnrollmentMap(map);
           }
         }
       } catch (error) {
@@ -62,7 +74,7 @@ export default function LearnPage() {
     }
   }, [user, isLoaded]);
 
-  const handleEnroll = async (moduleId: string, e: React.MouseEvent) => {
+  const handleEnroll = async (moduleId: string, moduleSlug: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -83,9 +95,20 @@ export default function LearnPage() {
 
       if (res.ok) {
         const data = await res.json();
-        // Use the moduleId from the response to ensure consistency
+        // Add to enrollment map with initial progress
         const enrolledModuleId = data.enrollment?.moduleId || moduleId;
-        setEnrollments(prev => new Set([...prev, enrolledModuleId]));
+        setEnrollmentMap(prev => {
+          const newMap = new Map(prev);
+          newMap.set(enrolledModuleId, {
+            moduleId: enrolledModuleId,
+            moduleSlug: data.enrollment?.moduleSlug || moduleSlug,
+            progress: 0,
+            totalLessons: 0,
+            completedLessons: 0,
+            nextLessonLink: null,
+          });
+          return newMap;
+        });
       }
     } catch (error) {
       console.error('Error enrolling:', error);
@@ -108,6 +131,8 @@ export default function LearnPage() {
     );
   }
 
+  const enrolledCount = enrollmentMap.size;
+
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-surface-900">
       {/* Header */}
@@ -117,9 +142,9 @@ export default function LearnPage() {
           <p className="text-xl text-primary-100 max-w-2xl">
             Master petroleum engineering with our comprehensive curriculum designed by industry experts.
           </p>
-          {user && enrollments.size > 0 && (
+          {user && enrolledCount > 0 && (
             <p className="mt-4 text-primary-200">
-              You are enrolled in {enrollments.size} course{enrollments.size !== 1 ? 's' : ''}
+              You are enrolled in {enrolledCount} course{enrolledCount !== 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -140,8 +165,25 @@ export default function LearnPage() {
         ) : (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {modules.map((module) => {
-              const isEnrolled = enrollments.has(module.id);
+              const enrollment = enrollmentMap.get(module.id);
+              const isEnrolled = !!enrollment;
               const isEnrolling = enrollingId === module.id;
+              const progress = enrollment?.progress || 0;
+              const isCompleted = progress === 100;
+              const hasStarted = progress > 0;
+
+              // Determine button text and link
+              let buttonText = 'Start Learning';
+              let buttonLink = `/learn/${module.moduleId}`;
+
+              if (isCompleted) {
+                buttonText = 'Review Course';
+              } else if (hasStarted) {
+                buttonText = 'Continue Learning';
+                if (enrollment?.nextLessonLink) {
+                  buttonLink = enrollment.nextLessonLink;
+                }
+              }
 
               return (
                 <div
@@ -150,18 +192,33 @@ export default function LearnPage() {
                 >
                   {/* Thumbnail */}
                   {module.thumbnailUrl && (
-                    <div className="aspect-video bg-surface-200 dark:bg-surface-700 overflow-hidden">
+                    <div className="aspect-video bg-surface-200 dark:bg-surface-700 overflow-hidden relative">
                       <img
                         src={module.thumbnailUrl}
                         alt={module.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                      {/* Progress overlay for enrolled courses */}
+                      {isEnrolled && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                          <div className="flex items-center justify-between text-white text-sm mb-1">
+                            <span>{enrollment.completedLessons}/{enrollment.totalLessons} lessons</span>
+                            <span>{progress}%</span>
+                          </div>
+                          <div className="h-1.5 bg-white/30 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${isCompleted ? 'bg-green-500' : 'bg-primary-400'}`}
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   <div className="p-6">
                     {/* Badges */}
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
                       {module.difficultyLevel && (
                         <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${difficultyColors[module.difficultyLevel] || 'bg-surface-100 text-surface-800'}`}>
                           {module.difficultyLevel}
@@ -173,9 +230,29 @@ export default function LearnPage() {
                         </span>
                       )}
                       {isEnrolled && (
-                        <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 flex items-center gap-1">
-                          <Check className="w-3 h-3" />
-                          Enrolled
+                        <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
+                          isCompleted
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                            : hasStarted
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                            : 'bg-surface-100 text-surface-800 dark:bg-surface-700 dark:text-surface-300'
+                        }`}>
+                          {isCompleted ? (
+                            <>
+                              <Check className="w-3 h-3" />
+                              Completed
+                            </>
+                          ) : hasStarted ? (
+                            <>
+                              <PlayCircle className="w-3 h-3" />
+                              In Progress
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-3 h-3" />
+                              Enrolled
+                            </>
+                          )}
                         </span>
                       )}
                     </div>
@@ -207,15 +284,19 @@ export default function LearnPage() {
                     {/* Action Button */}
                     {isEnrolled ? (
                       <Link
-                        href={`/learn/${module.moduleId}`}
-                        className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
+                        href={buttonLink}
+                        className={`w-full flex items-center justify-center gap-2 font-medium py-2.5 px-4 rounded-lg transition-colors ${
+                          isCompleted
+                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                            : 'bg-primary-600 hover:bg-primary-700 text-white'
+                        }`}
                       >
-                        Continue Learning
+                        {buttonText}
                         <ChevronRight className="w-4 h-4" />
                       </Link>
                     ) : (
                       <button
-                        onClick={(e) => handleEnroll(module.id, e)}
+                        onClick={(e) => handleEnroll(module.id, module.moduleId, e)}
                         disabled={isEnrolling}
                         className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
                       >
