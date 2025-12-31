@@ -160,9 +160,10 @@ export async function GET(
     pdf.setLineWidth(0.3);
     pdf.line(pageWidth / 2 - 40, 175, pageWidth / 2 + 40, 175);
 
-    pdf.setTextColor(100, 100, 100);
-    pdf.setFontSize(10);
-    pdf.text('mentor.energy Team', pageWidth / 2, 181, { align: 'center' });
+    pdf.setTextColor(220, 38, 38);
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('mentor.energy', pageWidth / 2, 181, { align: 'center' });
 
     // Verification URL
     pdf.setTextColor(150, 150, 150);
