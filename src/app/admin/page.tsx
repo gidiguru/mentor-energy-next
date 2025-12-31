@@ -33,7 +33,7 @@ export default async function AdminDashboard() {
       label: 'Registered Users',
       value: usersResult.length,
       icon: Users,
-      href: '#',
+      href: '/admin/users',
       color: 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400',
     },
   ];
@@ -97,6 +97,13 @@ export default async function AdminDashboard() {
           >
             <Image className="w-5 h-5 text-primary-600" />
             <span className="font-medium text-surface-900 dark:text-white">Media Library</span>
+          </Link>
+          <Link
+            href="/admin/users"
+            className="flex items-center gap-3 p-4 rounded-lg bg-surface-50 dark:bg-surface-700 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors"
+          >
+            <Users className="w-5 h-5 text-primary-600" />
+            <span className="font-medium text-surface-900 dark:text-white">Manage Users</span>
           </Link>
           <Link
             href="/admin/seed"
