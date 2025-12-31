@@ -252,23 +252,17 @@ export default function LessonPage() {
 
                 {/* Description Card */}
                 {page.content && (
-                  <div className="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden">
-                    <div className="p-4 border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-700/50">
-                      <h3 className="font-semibold text-surface-900 dark:text-white">
-                        About this lesson
-                      </h3>
-                    </div>
-                    <div className="p-4 md:p-6">
-                      <article className="prose prose-sm md:prose-base dark:prose-invert max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: formatMarkdown(page.content) }} />
-                      </article>
-                    </div>
+                  <div className="card preset-filled-surface-100-900 p-6">
+                    <h3 className="h4 mb-4">About this lesson</h3>
+                    <article className="prose prose-sm md:prose-base dark:prose-invert max-w-none">
+                      <div dangerouslySetInnerHTML={{ __html: formatMarkdown(page.content) }} />
+                    </article>
                   </div>
                 )}
 
                 {/* Empty state */}
                 {!page.content && !page.media?.length && (
-                  <div className="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6 text-center">
+                  <div className="card preset-filled-surface-100-900 p-6 text-center">
                     <p className="text-surface-500">No content available for this lesson.</p>
                   </div>
                 )}
