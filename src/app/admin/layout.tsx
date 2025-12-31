@@ -5,6 +5,8 @@ import { LayoutDashboard, BookOpen, FileText, Database, ArrowLeft, Image, Users 
 import AdminMobileNav from '@/components/AdminMobileNav';
 import { db, users, eq } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLayout({
   children,
 }: {

@@ -3,6 +3,8 @@ import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 import { ThemeProvider, ConditionalLayout } from '@/components';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'mentor.energy - Build Your Future in Nigeria\'s Energy Sector',
   description:
