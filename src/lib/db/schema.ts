@@ -231,6 +231,91 @@ export const userPageProgress = pgTable('user_page_progress', {
 ]);
 
 // ============================================================================
+// MENTOR APPLICATIONS
+// ============================================================================
+
+export const mentorApplicationStatusEnum = pgEnum('mentor_application_status', ['pending', 'approved', 'rejected']);
+
+export const mentorApplications = pgTable('mentor_applications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  bio: text('bio').notNull(),
+  expertise: text('expertise').array().notNull(),
+  yearsExperience: integer('years_experience').notNull(),
+  currentRole: varchar('current_role', { length: 255 }).notNull(),
+  company: varchar('company', { length: 255 }),
+  linkedinUrl: varchar('linkedin_url', { length: 500 }),
+  motivation: text('motivation'), // Why they want to be a mentor
+  availability: varchar('availability', { length: 100 }), // e.g., "5 hours/week"
+  status: mentorApplicationStatusEnum('status').default('pending').notNull(),
+  reviewedBy: uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  reviewNotes: text('review_notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_mentor_applications_user').on(table.userId),
+  index('idx_mentor_applications_status').on(table.status),
+]);
+
+// ============================================================================
+// MENTOR CONNECTIONS
+// ============================================================================
+
+export const connectionStatusEnum = pgEnum('connection_status', ['pending', 'accepted', 'declined', 'ended']);
+
+export const mentorConnections = pgTable('mentor_connections', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  mentorId: uuid('mentor_id').notNull().references(() => mentors.id, { onDelete: 'cascade' }),
+  studentId: uuid('student_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: connectionStatusEnum('status').default('pending').notNull(),
+  message: text('message'), // Initial message from student
+  mentorResponse: text('mentor_response'), // Mentor's response
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_connections_mentor').on(table.mentorId),
+  index('idx_connections_student').on(table.studentId),
+  index('idx_connections_status').on(table.status),
+  unique('unique_mentor_student_connection').on(table.mentorId, table.studentId),
+]);
+
+// ============================================================================
+// MENTOR AVAILABILITY
+// ============================================================================
+
+export const mentorAvailability = pgTable('mentor_availability', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  mentorId: uuid('mentor_id').notNull().references(() => mentors.id, { onDelete: 'cascade' }),
+  dayOfWeek: integer('day_of_week').notNull(), // 0 = Sunday, 6 = Saturday
+  startTime: varchar('start_time', { length: 10 }).notNull(), // e.g., "09:00"
+  endTime: varchar('end_time', { length: 10 }).notNull(), // e.g., "17:00"
+  timezone: varchar('timezone', { length: 100 }).default('Africa/Lagos').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_availability_mentor').on(table.mentorId),
+  index('idx_availability_day').on(table.dayOfWeek),
+]);
+
+// ============================================================================
+// MENTOR MESSAGES
+// ============================================================================
+
+export const mentorMessages = pgTable('mentor_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  connectionId: uuid('connection_id').notNull().references(() => mentorConnections.id, { onDelete: 'cascade' }),
+  senderId: uuid('sender_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  isRead: boolean('is_read').default(false).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_mentor_messages_connection').on(table.connectionId),
+  index('idx_mentor_messages_sender').on(table.senderId),
+  index('idx_mentor_messages_created').on(table.createdAt),
+]);
+
+// ============================================================================
 // MENTORSHIP SESSIONS
 // ============================================================================
 
@@ -373,6 +458,50 @@ export const mentorsRelations = relations(mentors, ({ one, many }) => ({
     references: [users.id],
   }),
   sessions: many(mentorshipSessions),
+  connections: many(mentorConnections),
+  availability: many(mentorAvailability),
+}));
+
+export const mentorApplicationsRelations = relations(mentorApplications, ({ one }) => ({
+  user: one(users, {
+    fields: [mentorApplications.userId],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [mentorApplications.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
+export const mentorConnectionsRelations = relations(mentorConnections, ({ one, many }) => ({
+  mentor: one(mentors, {
+    fields: [mentorConnections.mentorId],
+    references: [mentors.id],
+  }),
+  student: one(users, {
+    fields: [mentorConnections.studentId],
+    references: [users.id],
+  }),
+  messages: many(mentorMessages),
+  sessions: many(mentorshipSessions),
+}));
+
+export const mentorAvailabilityRelations = relations(mentorAvailability, ({ one }) => ({
+  mentor: one(mentors, {
+    fields: [mentorAvailability.mentorId],
+    references: [mentors.id],
+  }),
+}));
+
+export const mentorMessagesRelations = relations(mentorMessages, ({ one }) => ({
+  connection: one(mentorConnections, {
+    fields: [mentorMessages.connectionId],
+    references: [mentorConnections.id],
+  }),
+  sender: one(users, {
+    fields: [mentorMessages.senderId],
+    references: [users.id],
+  }),
 }));
 
 export const learningModulesRelations = relations(learningModules, ({ many }) => ({
@@ -742,3 +871,15 @@ export type NewUserAchievement = typeof userAchievements.$inferInsert;
 
 export type CourseEnrollment = typeof courseEnrollments.$inferSelect;
 export type NewCourseEnrollment = typeof courseEnrollments.$inferInsert;
+
+export type MentorApplication = typeof mentorApplications.$inferSelect;
+export type NewMentorApplication = typeof mentorApplications.$inferInsert;
+
+export type MentorConnection = typeof mentorConnections.$inferSelect;
+export type NewMentorConnection = typeof mentorConnections.$inferInsert;
+
+export type MentorAvailability = typeof mentorAvailability.$inferSelect;
+export type NewMentorAvailability = typeof mentorAvailability.$inferInsert;
+
+export type MentorMessage = typeof mentorMessages.$inferSelect;
+export type NewMentorMessage = typeof mentorMessages.$inferInsert;
