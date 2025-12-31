@@ -171,9 +171,35 @@ export default function NewPageEditor() {
               onUpload={handleVideoUpload}
             />
 
-            <p className="mt-4 text-sm text-surface-500">
-              Or paste a YouTube/Vimeo URL in the content below
-            </p>
+            <div className="mt-6 pt-6 border-t border-surface-200 dark:border-surface-700">
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                Or paste a video URL
+              </label>
+              <input
+                type="url"
+                name="videoUrl"
+                value={formData.videoUrl}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base"
+                placeholder="https://example.com/video.mp4 or YouTube/Vimeo URL"
+                style={{ fontSize: '16px' }}
+              />
+              <p className="mt-2 text-xs text-surface-500">
+                Supports direct video links (.mp4, .webm) or YouTube/Vimeo URLs
+              </p>
+            </div>
+
+            {formData.videoUrl && (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, videoUrl: '' }))}
+                  className="text-sm text-red-600 hover:text-red-700"
+                >
+                  Remove video
+                </button>
+              </div>
+            )}
           </div>
         )}
 
