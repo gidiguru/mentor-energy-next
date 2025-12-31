@@ -81,10 +81,36 @@ export default function FileUpload({
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadFile(file);
+    const files = e.target.files;
+
+    // Debug: log file selection on mobile
+    if (isMobile) {
+      console.log('File selected:', files?.length, files?.[0]?.name, files?.[0]?.type, files?.[0]?.size);
     }
+
+    if (!files || files.length === 0) {
+      // User cancelled the picker
+      return;
+    }
+
+    const file = files[0];
+
+    // iOS sometimes returns files with size 0 initially - wait a tick for it to be ready
+    if (file.size === 0 && isMobile) {
+      setTimeout(() => {
+        // Re-read the file
+        const delayedFile = e.target.files?.[0];
+        if (delayedFile && delayedFile.size > 0) {
+          uploadFile(delayedFile);
+        } else if (delayedFile) {
+          // Still 0, try to upload anyway - the browser may handle it
+          uploadFile(delayedFile);
+        }
+      }, 100);
+      return;
+    }
+
+    uploadFile(file);
   };
 
   // Threshold for using presigned URLs (4MB - under Netlify's limit)
@@ -180,9 +206,26 @@ export default function FileUpload({
   const uploadFile = async (file: File) => {
     setError(null);
 
+    // Debug logging for mobile
+    console.log('uploadFile called:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      isMobile,
+    });
+
+    // Check if file is valid
+    if (!file.name) {
+      setError('Invalid file selected. Please try again.');
+      return;
+    }
+
     // Validate file type (especially important on mobile where we allow */*)
+    const mimeType = getFileMimeType(file);
+    console.log('Detected MIME type:', mimeType);
+
     if (!isFileTypeAllowed(file)) {
-      setError(`File type not supported: ${file.type || 'unknown'}. Please select an image, video, or document.`);
+      setError(`File type not supported: ${file.type || mimeType || 'unknown'}. Please select an image, video, or document.`);
       return;
     }
 
@@ -192,17 +235,26 @@ export default function FileUpload({
       return;
     }
 
+    // Check for zero-size files (iOS issue)
+    if (file.size === 0) {
+      setError('File appears to be empty. Please try selecting the file again.');
+      return;
+    }
+
     setIsUploading(true);
 
     try {
       // Use presigned URL for large files (videos, etc.)
       if (file.size > PRESIGNED_THRESHOLD) {
+        console.log('Using presigned URL upload for file size:', file.size);
         await uploadWithPresignedUrl(file);
       } else {
+        console.log('Using form data upload for file size:', file.size);
         await uploadWithFormData(file);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      console.error('Upload error:', err);
+      setError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -352,9 +404,8 @@ export default function FileUpload({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
           className={`
-            relative rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors
+            relative rounded-lg border-2 border-dashed p-8 text-center transition-colors
             ${isDragging
               ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
               : 'border-surface-300 dark:border-surface-600 hover:border-primary-400 dark:hover:border-primary-500'
@@ -362,29 +413,33 @@ export default function FileUpload({
             ${isUploading ? 'pointer-events-none opacity-60' : ''}
           `}
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={mobileAccept}
-            onChange={handleFileSelect}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            style={{ fontSize: '16px' }} // Prevents iOS zoom on focus
-          />
+          {/* Use label instead of div onClick for better iOS compatibility */}
+          <label className="block cursor-pointer">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={mobileAccept}
+              onChange={handleFileSelect}
+              className="sr-only"
+              // iOS-specific attributes for better file picker behavior
+              capture={isMobile ? undefined : undefined}
+            />
 
-          {isUploading ? (
-            <div className="flex flex-col items-center">
-              <Loader2 className="w-10 h-10 text-primary-500 animate-spin mb-3" />
-              <p className="text-surface-600 dark:text-surface-400">Uploading...</p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center">
-              <Upload className="w-10 h-10 text-surface-400 mb-3" />
-              <p className="text-surface-700 dark:text-surface-300 font-medium">{hint}</p>
-              <p className="text-sm text-surface-500 mt-1">
-                Max size: {Math.round(maxSize / (1024 * 1024))}MB
-              </p>
-            </div>
-          )}
+            {isUploading ? (
+              <div className="flex flex-col items-center">
+                <Loader2 className="w-10 h-10 text-primary-500 animate-spin mb-3" />
+                <p className="text-surface-600 dark:text-surface-400">Uploading...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <Upload className="w-10 h-10 text-surface-400 mb-3" />
+                <p className="text-surface-700 dark:text-surface-300 font-medium">{hint}</p>
+                <p className="text-sm text-surface-500 mt-1">
+                  Max size: {Math.round(maxSize / (1024 * 1024))}MB
+                </p>
+              </div>
+            )}
+          </label>
         </div>
       )}
 
