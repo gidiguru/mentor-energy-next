@@ -165,3 +165,1126 @@ export async function sendCertificateEmail({
     return { error: error instanceof Error ? error.message : String(error) };
   }
 }
+
+// ============================================================================
+// WELCOME EMAIL
+// ============================================================================
+
+interface WelcomeEmailParams {
+  to: string;
+  userName: string;
+}
+
+export async function sendWelcomeEmail({ to, userName }: WelcomeEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping welcome email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `Welcome to mentor.energy, ${userName}! 🎉`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Welcome to mentor.energy!</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        Welcome to mentor.energy! We're thrilled to have you join our community of learners building their future in Nigeria's energy sector.
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        Here's what you can do to get started:
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 15px; background-color: #fef2f2; border-radius: 8px; margin-bottom: 10px;">
+                            <strong style="color: #dc2626;">📚 Browse Courses</strong>
+                            <p style="color: #374151; margin: 5px 0 0 0; font-size: 14px;">Explore our curated learning modules on petroleum engineering, geology, and more.</p>
+                          </td>
+                        </tr>
+                        <tr><td style="height: 10px;"></td></tr>
+                        <tr>
+                          <td style="padding: 15px; background-color: #fef2f2; border-radius: 8px;">
+                            <strong style="color: #dc2626;">👥 Find a Mentor</strong>
+                            <p style="color: #374151; margin: 5px 0 0 0; font-size: 14px;">Connect with industry professionals who can guide your career.</p>
+                          </td>
+                        </tr>
+                        <tr><td style="height: 10px;"></td></tr>
+                        <tr>
+                          <td style="padding: 15px; background-color: #fef2f2; border-radius: 8px;">
+                            <strong style="color: #dc2626;">🤖 Ask Our AI</strong>
+                            <p style="color: #374151; margin: 5px 0 0 0; font-size: 14px;">Get instant answers to your energy sector questions.</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/learn" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Start Learning
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Questions? Reply to this email or visit our resources section.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending welcome email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Welcome email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// COURSE ENROLLMENT EMAIL
+// ============================================================================
+
+interface EnrollmentEmailParams {
+  to: string;
+  userName: string;
+  courseTitle: string;
+  courseDescription?: string;
+  moduleId: string;
+}
+
+export async function sendEnrollmentEmail({
+  to,
+  userName,
+  courseTitle,
+  courseDescription,
+  moduleId,
+}: EnrollmentEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping enrollment email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `You're enrolled in ${courseTitle}! 📖`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">📖 Course Enrollment Confirmed</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        Great choice! You've successfully enrolled in a new course.
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fef2f2; border-left: 4px solid #dc2626; border-radius: 0 8px 8px 0; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <h2 style="color: #dc2626; font-size: 20px; margin: 0 0 10px 0;">${courseTitle}</h2>
+                            ${courseDescription ? `<p style="color: #374151; font-size: 14px; margin: 0; line-height: 1.5;">${courseDescription}</p>` : ''}
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        Start your learning journey today. Remember, consistency is key - try to complete at least one lesson per day to build your streak!
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/learn/${moduleId}" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Start Course
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        You'll earn a certificate when you complete this course!
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending enrollment email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Enrollment email sent to ${to} for ${courseTitle}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending enrollment email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// ACHIEVEMENT UNLOCKED EMAIL
+// ============================================================================
+
+interface AchievementEmailParams {
+  to: string;
+  userName: string;
+  achievementName: string;
+  achievementDescription?: string;
+  achievementIcon?: string;
+  points: number;
+}
+
+export async function sendAchievementEmail({
+  to,
+  userName,
+  achievementName,
+  achievementDescription,
+  achievementIcon,
+  points,
+}: AchievementEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping achievement email');
+    return null;
+  }
+
+  const icon = achievementIcon || '🏆';
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `Achievement Unlocked: ${achievementName}! ${icon}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px; text-align: center;">
+                      <div style="font-size: 64px; margin-bottom: 10px;">${icon}</div>
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Achievement Unlocked!</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px; text-align: center;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Congratulations, <strong>${userName}</strong>!
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fffbeb; border: 2px solid #f59e0b; border-radius: 12px; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 30px; text-align: center;">
+                            <h2 style="color: #d97706; font-size: 24px; margin: 0 0 10px 0;">${achievementName}</h2>
+                            ${achievementDescription ? `<p style="color: #374151; font-size: 14px; margin: 0 0 15px 0;">${achievementDescription}</p>` : ''}
+                            <p style="color: #f59e0b; font-size: 18px; font-weight: bold; margin: 0;">+${points} points</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        Keep up the great work! Your dedication is paying off.
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/dashboard" style="display: inline-block; background-color: #f59e0b; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              View All Achievements
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Share your achievement with your network!
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending achievement email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Achievement email sent to ${to} for ${achievementName}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending achievement email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// STREAK MILESTONE EMAIL
+// ============================================================================
+
+interface StreakEmailParams {
+  to: string;
+  userName: string;
+  streakDays: number;
+}
+
+export async function sendStreakMilestoneEmail({
+  to,
+  userName,
+  streakDays,
+}: StreakEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping streak email');
+    return null;
+  }
+
+  const milestoneMessages: Record<number, string> = {
+    7: "A full week of learning! You're building great habits.",
+    14: "Two weeks strong! Your consistency is impressive.",
+    30: "A whole month! You're in the top tier of dedicated learners.",
+    60: "60 days! Your commitment to learning is extraordinary.",
+    100: "100 days! You're a learning legend!",
+  };
+
+  const message = milestoneMessages[streakDays] || `${streakDays} days of continuous learning!`;
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `🔥 ${streakDays}-Day Streak! Keep it up!`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); padding: 40px; text-align: center;">
+                      <div style="font-size: 64px; margin-bottom: 10px;">🔥</div>
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">${streakDays}-Day Streak!</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px; text-align: center;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Amazing work, <strong>${userName}</strong>!
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        ${message}
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fff7ed; border-radius: 12px; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 30px; text-align: center;">
+                            <p style="color: #ea580c; font-size: 48px; font-weight: bold; margin: 0;">${streakDays}</p>
+                            <p style="color: #c2410c; font-size: 16px; margin: 5px 0 0 0;">consecutive days</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        Don't break the chain! Log in today to keep your streak alive.
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/learn" style="display: inline-block; background-color: #ea580c; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Continue Learning
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Next milestone: ${streakDays < 7 ? 7 : streakDays < 14 ? 14 : streakDays < 30 ? 30 : streakDays < 60 ? 60 : 100} days
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending streak email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Streak milestone email sent to ${to} for ${streakDays} days`);
+    return data;
+  } catch (error) {
+    console.error('Error sending streak email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// MENTORSHIP SESSION REMINDER EMAIL
+// ============================================================================
+
+interface SessionReminderEmailParams {
+  to: string;
+  userName: string;
+  mentorName: string;
+  sessionDate: Date;
+  sessionTopic?: string;
+  meetingUrl?: string;
+  reminderType: '24h' | '1h';
+}
+
+export async function sendSessionReminderEmail({
+  to,
+  userName,
+  mentorName,
+  sessionDate,
+  sessionTopic,
+  meetingUrl,
+  reminderType,
+}: SessionReminderEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping session reminder email');
+    return null;
+  }
+
+  const timeLabel = reminderType === '24h' ? 'tomorrow' : 'in 1 hour';
+  const formattedDate = sessionDate.toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `⏰ Reminder: Mentorship session ${timeLabel} with ${mentorName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); padding: 40px; text-align: center;">
+                      <div style="font-size: 48px; margin-bottom: 10px;">⏰</div>
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Session Reminder</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        Just a friendly reminder that your mentorship session is ${timeLabel}!
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f3ff; border-left: 4px solid #7c3aed; border-radius: 0 8px 8px 0; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #5b21b6; font-size: 14px; text-transform: uppercase; margin: 0 0 10px 0;">Session Details</p>
+                            <p style="color: #374151; font-size: 16px; margin: 0 0 8px 0;"><strong>Mentor:</strong> ${mentorName}</p>
+                            <p style="color: #374151; font-size: 16px; margin: 0 0 8px 0;"><strong>When:</strong> ${formattedDate}</p>
+                            ${sessionTopic ? `<p style="color: #374151; font-size: 16px; margin: 0;"><strong>Topic:</strong> ${sessionTopic}</p>` : ''}
+                          </td>
+                        </tr>
+                      </table>
+                      ${meetingUrl ? `
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="${meetingUrl}" style="display: inline-block; background-color: #7c3aed; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Join Meeting
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      ` : ''}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Need to reschedule? Please contact your mentor as soon as possible.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending session reminder email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Session reminder email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending session reminder email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// SESSION FOLLOW-UP EMAIL
+// ============================================================================
+
+interface SessionFollowUpEmailParams {
+  to: string;
+  userName: string;
+  mentorName: string;
+  sessionTopic?: string;
+}
+
+export async function sendSessionFollowUpEmail({
+  to,
+  userName,
+  mentorName,
+  sessionTopic,
+}: SessionFollowUpEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping session follow-up email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `How was your session with ${mentorName}? 💬`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Session Complete! 🎉</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        We hope your mentorship session with <strong>${mentorName}</strong>${sessionTopic ? ` on "${sessionTopic}"` : ''} was valuable!
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        Your feedback helps us improve and helps other learners find great mentors. Would you take a moment to rate your session?
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/dashboard" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Rate Your Session
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 30px 0 0 0;">
+                        Here are some tips to make the most of your session:
+                      </p>
+                      <ul style="color: #374151; font-size: 14px; line-height: 1.8;">
+                        <li>Review and organize your notes</li>
+                        <li>Set action items based on the discussion</li>
+                        <li>Connect with your mentor on LinkedIn</li>
+                        <li>Schedule a follow-up session if needed</li>
+                      </ul>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Want another session? Book directly from the mentors page.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending session follow-up email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Session follow-up email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending session follow-up email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// WEEKLY PROGRESS DIGEST EMAIL
+// ============================================================================
+
+interface WeeklyDigestEmailParams {
+  to: string;
+  userName: string;
+  lessonsCompleted: number;
+  currentStreak: number;
+  certificatesEarned: number;
+  totalProgress: number; // percentage
+  topCourse?: string;
+}
+
+export async function sendWeeklyDigestEmail({
+  to,
+  userName,
+  lessonsCompleted,
+  currentStreak,
+  certificatesEarned,
+  totalProgress,
+  topCourse,
+}: WeeklyDigestEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping weekly digest email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `📊 Your Weekly Learning Summary`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">📊 Weekly Progress Report</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 30px 0;">
+                        Hi <strong>${userName}</strong>, here's your learning summary for this week:
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="width: 50%; padding: 15px; background-color: #fef2f2; border-radius: 8px; text-align: center;">
+                            <p style="color: #dc2626; font-size: 32px; font-weight: bold; margin: 0;">${lessonsCompleted}</p>
+                            <p style="color: #374151; font-size: 14px; margin: 5px 0 0 0;">Lessons Completed</p>
+                          </td>
+                          <td style="width: 10px;"></td>
+                          <td style="width: 50%; padding: 15px; background-color: #fff7ed; border-radius: 8px; text-align: center;">
+                            <p style="color: #ea580c; font-size: 32px; font-weight: bold; margin: 0;">${currentStreak}🔥</p>
+                            <p style="color: #374151; font-size: 14px; margin: 5px 0 0 0;">Day Streak</p>
+                          </td>
+                        </tr>
+                        <tr><td colspan="3" style="height: 10px;"></td></tr>
+                        <tr>
+                          <td style="width: 50%; padding: 15px; background-color: #f0fdf4; border-radius: 8px; text-align: center;">
+                            <p style="color: #059669; font-size: 32px; font-weight: bold; margin: 0;">${certificatesEarned}</p>
+                            <p style="color: #374151; font-size: 14px; margin: 5px 0 0 0;">Certificates</p>
+                          </td>
+                          <td style="width: 10px;"></td>
+                          <td style="width: 50%; padding: 15px; background-color: #f5f3ff; border-radius: 8px; text-align: center;">
+                            <p style="color: #7c3aed; font-size: 32px; font-weight: bold; margin: 0;">${totalProgress}%</p>
+                            <p style="color: #374151; font-size: 14px; margin: 5px 0 0 0;">Overall Progress</p>
+                          </td>
+                        </tr>
+                      </table>
+                      ${topCourse ? `
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        Keep going with <strong>${topCourse}</strong> - you're making great progress!
+                      </p>
+                      ` : ''}
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/learn" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Continue Learning
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Set a goal for next week and crush it! 💪
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending weekly digest email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Weekly digest email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending weekly digest email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// INACTIVITY REMINDER EMAIL
+// ============================================================================
+
+interface InactivityEmailParams {
+  to: string;
+  userName: string;
+  daysSinceActive: number;
+  lastCourse?: string;
+}
+
+export async function sendInactivityEmail({
+  to,
+  userName,
+  daysSinceActive,
+  lastCourse,
+}: InactivityEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping inactivity email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `We miss you, ${userName}! 👋`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 40px; text-align: center;">
+                      <div style="font-size: 48px; margin-bottom: 10px;">👋</div>
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">We Miss You!</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        It's been ${daysSinceActive} days since your last visit to mentor.energy. Your learning journey is waiting for you!
+                      </p>
+                      ${lastCourse ? `
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        You were making great progress on <strong>${lastCourse}</strong>. Why not pick up where you left off?
+                      </p>
+                      ` : ''}
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eff6ff; border-radius: 8px; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px; text-align: center;">
+                            <p style="color: #1d4ed8; font-size: 16px; margin: 0;">
+                              💡 Just 15 minutes a day can make a huge difference in your career!
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/learn" style="display: inline-block; background-color: #3b82f6; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Resume Learning
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Your progress is saved and waiting for you!
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending inactivity email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Inactivity email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending inactivity email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// NEW COURSE AVAILABLE EMAIL
+// ============================================================================
+
+interface NewCourseEmailParams {
+  to: string;
+  userName: string;
+  courseTitle: string;
+  courseDescription?: string;
+  moduleId: string;
+}
+
+export async function sendNewCourseEmail({
+  to,
+  userName,
+  courseTitle,
+  courseDescription,
+  moduleId,
+}: NewCourseEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping new course email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `🆕 New Course Available: ${courseTitle}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 40px; text-align: center;">
+                      <div style="font-size: 48px; margin-bottom: 10px;">🆕</div>
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">New Course Available!</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        We've just published a new course that we think you'll love!
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fef2f2; border: 2px solid #dc2626; border-radius: 8px; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 30px; text-align: center;">
+                            <h2 style="color: #dc2626; font-size: 24px; margin: 0 0 15px 0;">${courseTitle}</h2>
+                            ${courseDescription ? `<p style="color: #374151; font-size: 14px; margin: 0; line-height: 1.5;">${courseDescription}</p>` : ''}
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/learn/${moduleId}" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Enroll Now
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Be one of the first to complete this course and earn your certificate!
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending new course email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`New course email sent to ${to} for ${courseTitle}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending new course email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// COMMENT REPLY NOTIFICATION EMAIL
+// ============================================================================
+
+interface CommentReplyEmailParams {
+  to: string;
+  userName: string;
+  replierName: string;
+  lessonTitle: string;
+  originalComment: string;
+  replyContent: string;
+  lessonUrl: string;
+}
+
+export async function sendCommentReplyEmail({
+  to,
+  userName,
+  replierName,
+  lessonTitle,
+  originalComment,
+  replyContent,
+  lessonUrl,
+}: CommentReplyEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping comment reply email');
+    return null;
+  }
+
+  // Truncate long comments
+  const truncate = (text: string, maxLength: number) =>
+    text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `💬 ${replierName} replied to your comment`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">💬 New Reply</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        <strong>${replierName}</strong> replied to your comment on <strong>${lessonTitle}</strong>:
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 20px 0;">
+                        <tr>
+                          <td style="padding: 15px; background-color: #f3f4f6; border-radius: 8px; border-left: 3px solid #9ca3af;">
+                            <p style="color: #6b7280; font-size: 12px; margin: 0 0 5px 0;">Your comment:</p>
+                            <p style="color: #374151; font-size: 14px; margin: 0; font-style: italic;">"${truncate(originalComment, 150)}"</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 15px; background-color: #fef2f2; border-radius: 8px; border-left: 3px solid #dc2626;">
+                            <p style="color: #dc2626; font-size: 12px; margin: 0 0 5px 0;">${replierName}'s reply:</p>
+                            <p style="color: #374151; font-size: 14px; margin: 0;">"${truncate(replyContent, 200)}"</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="${lessonUrl}" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              View Conversation
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Join the discussion and share your thoughts!
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending comment reply email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Comment reply email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending comment reply email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}

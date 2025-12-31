@@ -1,6 +1,7 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { db, users, eq } from '@/lib/db';
+import { sendWelcomeEmail } from '@/lib/email';
 
 export async function GET() {
   const { userId } = await auth();
@@ -91,6 +92,12 @@ export async function POST(request: Request) {
           role: (role as 'student' | 'mentor' | 'admin') || 'student',
         })
         .returning();
+
+      // Send welcome email to new user (don't await - send in background)
+      const userName = [firstName, lastName].filter(Boolean).join(' ') || 'there';
+      sendWelcomeEmail({ to: email, userName }).catch(err =>
+        console.error('Error sending welcome email:', err)
+      );
 
       return NextResponse.json({ profile: created });
     }

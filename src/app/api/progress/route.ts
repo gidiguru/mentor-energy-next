@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, userPageProgress, userModuleProgress, sectionPages, moduleSections, learningModules, userStreaks, achievements, userAchievements, certificates, lessonComments, eq, and } from '@/lib/db';
-import { sendCertificateEmail } from '@/lib/email';
+import { sendCertificateEmail, sendAchievementEmail, sendStreakMilestoneEmail } from '@/lib/email';
 
 // GET /api/progress?moduleId=xxx - Get all page progress for a module
 export async function GET(request: NextRequest) {
@@ -218,9 +218,10 @@ export async function POST(request: NextRequest) {
 
     // Update streak if marking as complete
     if (completed) {
-      await updateStreak(database, user.id);
+      const userInfo = { email: user.email, firstName: user.firstName, lastName: user.lastName };
+      await updateStreak(database, user.id, userInfo);
       // Check for new achievements in the background
-      checkAndAwardAchievements(database, user.id).catch(err =>
+      checkAndAwardAchievements(database, user.id, { id: user.id, ...userInfo }).catch(err =>
         console.error('Error checking achievements:', err)
       );
     }
@@ -250,7 +251,14 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper function to check and award achievements
-async function checkAndAwardAchievements(database: ReturnType<typeof db>, userId: string) {
+interface AchievementUserInfo {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+async function checkAndAwardAchievements(database: ReturnType<typeof db>, userId: string, userInfo?: AchievementUserInfo) {
   try {
     // Get user's current achievements
     const earnedAchievements = await database.query.userAchievements.findMany({
@@ -355,6 +363,19 @@ async function checkAndAwardAchievements(database: ReturnType<typeof db>, userId
           userId,
           achievementId: achievement.id,
         });
+
+        // Send achievement email if user info is provided
+        if (userInfo) {
+          const userName = [userInfo.firstName, userInfo.lastName].filter(Boolean).join(' ') || 'Learner';
+          sendAchievementEmail({
+            to: userInfo.email,
+            userName,
+            achievementName: achievement.name,
+            achievementDescription: achievement.description || undefined,
+            achievementIcon: achievement.icon || undefined,
+            points: achievement.points,
+          }).catch(err => console.error('Error sending achievement email:', err));
+        }
       }
     }
   } catch (error) {
@@ -364,7 +385,13 @@ async function checkAndAwardAchievements(database: ReturnType<typeof db>, userId
 }
 
 // Helper function to update user streak
-async function updateStreak(database: ReturnType<typeof db>, userId: string) {
+interface StreakUserInfo {
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+async function updateStreak(database: ReturnType<typeof db>, userId: string, userInfo?: StreakUserInfo) {
   try {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -416,6 +443,17 @@ async function updateStreak(database: ReturnType<typeof db>, userId: string) {
         updatedAt: now,
       })
       .where(eq(userStreaks.id, streak.id));
+
+    // Send streak milestone email for specific milestones
+    const milestones = [7, 14, 30, 60, 100];
+    if (userInfo && milestones.includes(newStreak)) {
+      const userName = [userInfo.firstName, userInfo.lastName].filter(Boolean).join(' ') || 'Learner';
+      sendStreakMilestoneEmail({
+        to: userInfo.email,
+        userName,
+        streakDays: newStreak,
+      }).catch(err => console.error('Error sending streak milestone email:', err));
+    }
   } catch (error) {
     console.error('Error updating streak:', error);
     // Don't throw - streak update shouldn't fail the main request

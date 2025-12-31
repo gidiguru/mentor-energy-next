@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { db, users, lessonComments, eq, and, desc } from '@/lib/db';
+import { db, users, lessonComments, sectionPages, eq, and, desc } from '@/lib/db';
+import { sendCommentReplyEmail } from '@/lib/email';
 
 // GET /api/comments?pageId=xxx - Get all comments for a page
 export async function GET(request: NextRequest) {
@@ -78,6 +79,40 @@ export async function POST(request: NextRequest) {
       content: content.trim(),
       parentId: parentId || null,
     }).returning();
+
+    // Send email notification if this is a reply to another comment
+    if (parentId) {
+      // Get the parent comment with its author
+      const parentComment = await database.query.lessonComments.findFirst({
+        where: eq(lessonComments.id, parentId),
+        with: {
+          user: true,
+        },
+      });
+
+      if (parentComment && parentComment.user && parentComment.userId !== user.id) {
+        // Get the page/lesson info for the URL
+        const page = await database.query.sectionPages.findFirst({
+          where: eq(sectionPages.id, pageId),
+        });
+
+        const replierName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Someone';
+        const parentUserName = [parentComment.user.firstName, parentComment.user.lastName].filter(Boolean).join(' ') || 'Learner';
+
+        // Construct lesson URL (this is a simplified version - may need moduleId and sectionId)
+        const lessonUrl = `https://mentor.energy/learn`;
+
+        sendCommentReplyEmail({
+          to: parentComment.user.email,
+          userName: parentUserName,
+          replierName,
+          lessonTitle: page?.title || 'a lesson',
+          originalComment: parentComment.content,
+          replyContent: content.trim(),
+          lessonUrl,
+        }).catch(err => console.error('Error sending comment reply email:', err));
+      }
+    }
 
     // Return comment with user info
     return NextResponse.json({

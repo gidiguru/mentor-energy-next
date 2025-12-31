@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, courseEnrollments, learningModules, moduleSections, sectionPages, userPageProgress, eq, and, inArray } from '@/lib/db';
+import { sendEnrollmentEmail } from '@/lib/email';
 
 // GET /api/enrollments - Get user's enrolled courses with progress
 export async function GET() {
@@ -204,6 +205,16 @@ export async function POST(request: NextRequest) {
         moduleId: module.id,
       })
       .returning();
+
+    // Send enrollment confirmation email (don't await - send in background)
+    const userName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Learner';
+    sendEnrollmentEmail({
+      to: user.email,
+      userName,
+      courseTitle: module.title,
+      courseDescription: module.description || undefined,
+      moduleId: module.moduleId,
+    }).catch(err => console.error('Error sending enrollment email:', err));
 
     return NextResponse.json({
       message: 'Enrolled successfully',
