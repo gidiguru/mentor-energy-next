@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, eq } from '@/lib/db';
-import { sendCertificateEmail } from '@/lib/email';
+import { sendCertificateEmail, getEmailDiagnostics } from '@/lib/email';
 
 // POST /api/admin/test-email - Send a test certificate email (admin only)
 export async function POST(request: NextRequest) {
@@ -24,6 +24,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const testEmail = body.email || user.email;
 
+    // Get diagnostics for debugging
+    const diagnostics = getEmailDiagnostics();
+    console.log('Email diagnostics:', diagnostics);
+
+    if (!diagnostics.hasApiKey) {
+      return NextResponse.json({
+        error: 'RESEND_API_KEY not configured',
+        debug: {
+          hasApiKey: diagnostics.hasApiKey,
+          keyLength: diagnostics.keyLength,
+          keyPrefix: diagnostics.keyPrefix,
+          envVars: diagnostics.availableEnvVars,
+        },
+      }, { status: 500 });
+    }
+
     // Send test certificate email
     const result = await sendCertificateEmail({
       to: testEmail,
@@ -41,11 +57,15 @@ export async function POST(request: NextRequest) {
       });
     } else {
       return NextResponse.json({
-        error: 'Failed to send email - check RESEND_API_KEY configuration',
+        error: 'Failed to send email - Resend API error (check function logs)',
+        debug: diagnostics,
       }, { status: 500 });
     }
   } catch (error) {
     console.error('Error sending test email:', error);
-    return NextResponse.json({ error: 'Failed to send test email' }, { status: 500 });
+    return NextResponse.json({
+      error: 'Failed to send test email',
+      details: error instanceof Error ? error.message : String(error),
+    }, { status: 500 });
   }
 }

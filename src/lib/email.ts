@@ -13,6 +13,22 @@ function getResendClient(): Resend | null {
   return resend;
 }
 
+// Diagnostic function to help debug environment variable issues
+export function getEmailDiagnostics() {
+  const apiKey = process.env.RESEND_API_KEY;
+  const relevantEnvVars = Object.keys(process.env)
+    .filter(key => key.includes('RESEND') || key.includes('EMAIL'))
+    .map(key => key); // Only show var names, not values for security
+
+  return {
+    hasApiKey: !!apiKey,
+    keyLength: apiKey?.length || 0,
+    keyPrefix: apiKey?.substring(0, 5) || 'none', // First 5 chars safe to show (re_xxx)
+    availableEnvVars: relevantEnvVars,
+    nodeEnv: process.env.NODE_ENV,
+  };
+}
+
 interface CertificateEmailParams {
   to: string;
   userName: string;
