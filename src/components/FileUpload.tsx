@@ -244,10 +244,21 @@ export default function FileUpload({
     setIsUploading(true);
 
     try {
-      // Use presigned URL for large files (videos, etc.)
-      if (file.size > PRESIGNED_THRESHOLD) {
+      // On mobile, always try server upload first (avoids R2 CORS issues)
+      // For large files, try presigned URL but fall back to server upload
+      if (file.size > PRESIGNED_THRESHOLD && !isMobile) {
         console.log('Using presigned URL upload for file size:', file.size);
         await uploadWithPresignedUrl(file);
+      } else if (file.size > PRESIGNED_THRESHOLD && isMobile) {
+        // Mobile with large file - try presigned first, fall back to chunked message
+        console.log('Mobile large file upload, trying presigned URL:', file.size);
+        try {
+          await uploadWithPresignedUrl(file);
+        } catch (presignedErr) {
+          console.error('Presigned upload failed on mobile, this may be a CORS issue:', presignedErr);
+          // For mobile large files, show a helpful message
+          throw new Error('Large video uploads from mobile may fail. Try uploading from a desktop browser, or use a shorter video clip under 4MB.');
+        }
       } else {
         console.log('Using form data upload for file size:', file.size);
         await uploadWithFormData(file);
@@ -300,16 +311,24 @@ export default function FileUpload({
     }
 
     // Step 2: Upload directly to R2 using presigned URL
-    const uploadResponse = await fetch(presignedData.presignedUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': mimeType,
-      },
-      body: file,
-    });
+    console.log('Uploading to presigned URL...');
+    let uploadResponse;
+    try {
+      uploadResponse = await fetch(presignedData.presignedUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': mimeType,
+        },
+        body: file,
+      });
+    } catch (fetchErr) {
+      console.error('Fetch to presigned URL failed (likely CORS):', fetchErr);
+      throw new Error('Direct upload failed. This may be a network or permissions issue.');
+    }
 
     if (!uploadResponse.ok) {
-      throw new Error('Failed to upload file to storage');
+      console.error('Presigned URL upload response not ok:', uploadResponse.status, uploadResponse.statusText);
+      throw new Error(`Upload failed: ${uploadResponse.statusText || 'Server error'}`);
     }
 
     // Step 3: Return the public URL
