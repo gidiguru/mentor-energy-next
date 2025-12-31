@@ -7,6 +7,7 @@ import {
   MAX_FILE_SIZES,
   ALLOWED_FILE_TYPES,
   isR2Configured,
+  getOrDetectMimeType,
 } from '@/lib/r2';
 
 export async function POST(request: NextRequest) {
@@ -32,11 +33,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
+    // Detect MIME type (mobile uploads may have empty file.type)
+    const mimeType = getOrDetectMimeType(file.type, file.name);
+
     // Validate file type
-    const category = getFileCategory(file.type);
+    const category = getFileCategory(mimeType);
     if (!category) {
       return NextResponse.json(
-        { error: `File type not allowed: ${file.type}` },
+        { error: `File type not allowed: ${mimeType}` },
         { status: 400 }
       );
     }
@@ -57,7 +61,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // Upload to R2
-    const url = await uploadToR2(buffer, filePath, file.type);
+    const url = await uploadToR2(buffer, filePath, mimeType);
 
     if (!url) {
       return NextResponse.json(
@@ -71,7 +75,7 @@ export async function POST(request: NextRequest) {
       url,
       path: filePath,
       name: file.name,
-      type: file.type,
+      type: mimeType,
       size: file.size,
       category,
     });
@@ -101,17 +105,20 @@ export async function PUT(request: NextRequest) {
   try {
     const { fileName, contentType } = await request.json();
 
-    if (!fileName || !contentType) {
+    if (!fileName) {
       return NextResponse.json(
-        { error: 'fileName and contentType are required' },
+        { error: 'fileName is required' },
         { status: 400 }
       );
     }
 
-    const category = getFileCategory(contentType);
+    // Detect MIME type (mobile uploads may have empty contentType)
+    const mimeType = getOrDetectMimeType(contentType, fileName);
+
+    const category = getFileCategory(mimeType);
     if (!category) {
       return NextResponse.json(
-        { error: `File type not allowed: ${contentType}` },
+        { error: `File type not allowed: ${mimeType}` },
         { status: 400 }
       );
     }
@@ -120,7 +127,7 @@ export async function PUT(request: NextRequest) {
 
     // Import dynamically to avoid issues if not configured
     const { getPresignedUploadUrl } = await import('@/lib/r2');
-    const presignedUrl = await getPresignedUploadUrl(filePath, contentType);
+    const presignedUrl = await getPresignedUploadUrl(filePath, mimeType);
 
     if (!presignedUrl) {
       return NextResponse.json(

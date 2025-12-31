@@ -45,6 +45,58 @@ export const ALLOWED_FILE_TYPES = {
   audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/mp4', 'audio/x-m4a', 'audio/aac'],
 };
 
+// Map file extensions to MIME types (for mobile where type may be empty)
+const EXTENSION_TO_MIME: Record<string, string> = {
+  // Video
+  mp4: 'video/mp4',
+  mov: 'video/quicktime',
+  webm: 'video/webm',
+  m4v: 'video/x-m4v',
+  '3gp': 'video/3gpp',
+  avi: 'video/x-msvideo',
+  mkv: 'video/x-matroska',
+  mpeg: 'video/mpeg',
+  mpg: 'video/mpeg',
+  // Image
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  heic: 'image/heic',
+  heif: 'image/heif',
+  svg: 'image/svg+xml',
+  // Audio
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  ogg: 'audio/ogg',
+  m4a: 'audio/mp4',
+  aac: 'audio/aac',
+  // Document
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+};
+
+// Get MIME type from file extension (for mobile uploads where type may be missing)
+export function getMimeTypeFromExtension(fileName: string): string | null {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  if (ext && EXTENSION_TO_MIME[ext]) {
+    return EXTENSION_TO_MIME[ext];
+  }
+  return null;
+}
+
+// Get or detect MIME type - uses provided type or falls back to extension detection
+export function getOrDetectMimeType(providedType: string | undefined, fileName: string): string {
+  // If we have a valid MIME type, use it
+  if (providedType && providedType !== '' && providedType !== 'application/octet-stream') {
+    return providedType;
+  }
+  // Fallback to extension detection
+  return getMimeTypeFromExtension(fileName) || 'application/octet-stream';
+}
+
 export const MAX_FILE_SIZES = {
   image: 10 * 1024 * 1024,      // 10MB
   video: 500 * 1024 * 1024,     // 500MB

@@ -90,6 +90,47 @@ export default function FileUpload({
   // Threshold for using presigned URLs (4MB - under Netlify's limit)
   const PRESIGNED_THRESHOLD = 4 * 1024 * 1024;
 
+  // Map file extensions to MIME types (for mobile where type may be empty)
+  const extensionToMime: Record<string, string> = {
+    // Video
+    mp4: 'video/mp4',
+    mov: 'video/quicktime',
+    webm: 'video/webm',
+    m4v: 'video/x-m4v',
+    '3gp': 'video/3gpp',
+    avi: 'video/x-msvideo',
+    mkv: 'video/x-matroska',
+    // Image
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/gif',
+    webp: 'image/webp',
+    heic: 'image/heic',
+    heif: 'image/heif',
+    // Audio
+    mp3: 'audio/mpeg',
+    wav: 'audio/wav',
+    ogg: 'audio/ogg',
+    m4a: 'audio/mp4',
+    aac: 'audio/aac',
+    // Document
+    pdf: 'application/pdf',
+  };
+
+  // Get MIME type from file, falling back to extension detection
+  const getFileMimeType = (file: File): string => {
+    if (file.type && file.type !== '' && file.type !== 'application/octet-stream') {
+      return file.type;
+    }
+    // Fallback: detect from extension
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (ext && extensionToMime[ext]) {
+      return extensionToMime[ext];
+    }
+    return 'application/octet-stream';
+  };
+
   // Allowed file types for validation
   const allowedTypes: Record<string, string[]> = {
     'image/*': ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/heic', 'image/heif'],
@@ -187,13 +228,16 @@ export default function FileUpload({
   };
 
   const uploadWithPresignedUrl = async (file: File) => {
+    // Detect MIME type (mobile may have empty file.type)
+    const mimeType = getFileMimeType(file);
+
     // Step 1: Get presigned URL from server
     const presignedResponse = await fetch('/api/upload', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         fileName: file.name,
-        contentType: file.type,
+        contentType: mimeType,
       }),
     });
 
@@ -207,7 +251,7 @@ export default function FileUpload({
     const uploadResponse = await fetch(presignedData.presignedUrl, {
       method: 'PUT',
       headers: {
-        'Content-Type': file.type,
+        'Content-Type': mimeType,
       },
       body: file,
     });
@@ -221,7 +265,7 @@ export default function FileUpload({
       url: presignedData.publicUrl,
       path: presignedData.path,
       name: file.name,
-      type: file.type,
+      type: mimeType,
       size: file.size,
       category: presignedData.category,
     };
