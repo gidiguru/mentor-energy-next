@@ -13,12 +13,10 @@ interface ConditionalLayoutProps {
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
 
-  // Hide main header/footer on admin, dashboard, and learn lesson pages (they have their own layouts)
+  // Hide main header/footer on admin and learn lesson pages (they have their own layouts)
   const isAdminPage = pathname?.startsWith('/admin');
-  const isDashboardPage = pathname?.startsWith('/dashboard');
   const isLearnPage = pathname?.startsWith('/learn/') && pathname.split('/').length > 2;
   const hideMainLayout = isAdminPage || isLearnPage;
-  const hideFooter = isDashboardPage;
 
   if (hideMainLayout) {
     return <>{children}</>;
@@ -32,7 +30,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="flex-1">{children}</main>
-        {!hideFooter && <Footer />}
+        <Footer />
       </div>
     </>
   );
