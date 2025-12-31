@@ -175,7 +175,7 @@ export default function LessonPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-50 dark:bg-surface-900 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-4rem)] bg-surface-50 dark:bg-surface-900 flex items-center justify-center">
         <div className="animate-pulse text-surface-500">Loading lesson...</div>
       </div>
     );
@@ -183,7 +183,7 @@ export default function LessonPage() {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-surface-50 dark:bg-surface-900 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-4rem)] bg-surface-50 dark:bg-surface-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-surface-900 dark:text-white mb-4">Lesson not found</h1>
           <Link href="/learn" className="text-primary-600 hover:text-primary-700">
@@ -197,9 +197,9 @@ export default function LessonPage() {
   const { module, section, page, navigation } = data;
 
   return (
-    <div className="min-h-screen bg-surface-50 dark:bg-surface-900 flex">
+    <div className="min-h-[calc(100vh-4rem)] bg-surface-50 dark:bg-surface-900 flex">
       {/* Sidebar - Course Outline */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-80 bg-white dark:bg-surface-800 border-r border-surface-200 dark:border-surface-700 transform transition-transform lg:translate-x-0 lg:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed top-16 bottom-0 left-0 z-40 w-80 bg-white dark:bg-surface-800 border-r border-surface-200 dark:border-surface-700 transform transition-transform lg:translate-x-0 lg:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full flex flex-col">
           {/* Sidebar Header */}
           <div className="p-4 border-b border-surface-200 dark:border-surface-700">
