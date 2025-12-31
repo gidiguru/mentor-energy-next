@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle, Loader2 } from 'lucide-react';
 import LessonComments from '@/components/LessonComments';
+import LessonRating from '@/components/LessonRating';
 
 interface Media {
   id: string;
@@ -365,6 +366,14 @@ export default function LessonPage() {
                 )}
               </div>
             )}
+
+            {/* Rating Section */}
+            <div className="mt-8">
+              <h3 className="text-sm font-medium text-surface-600 dark:text-surface-400 mb-2">
+                Rate this lesson
+              </h3>
+              <LessonRating pageId={page.id} currentUserId={progress?.userId} />
+            </div>
 
             {/* Comments Section */}
             <div className="mt-8">

@@ -330,6 +330,23 @@ export const lessonComments = pgTable('lesson_comments', {
 ]);
 
 // ============================================================================
+// LESSON RATINGS
+// ============================================================================
+
+export const lessonRatings = pgTable('lesson_ratings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  pageId: uuid('page_id').notNull().references(() => sectionPages.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  rating: integer('rating').notNull(), // 1-5 stars
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('idx_ratings_page').on(table.pageId),
+  index('idx_ratings_user').on(table.userId),
+  unique('unique_user_page_rating').on(table.userId, table.pageId),
+]);
+
+// ============================================================================
 // RELATIONS
 // ============================================================================
 
@@ -345,6 +362,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   chatSessions: many(aiChatSessions),
   resources: many(resources),
   comments: many(lessonComments),
+  ratings: many(lessonRatings),
 }));
 
 export const mentorsRelations = relations(mentors, ({ one, many }) => ({
@@ -377,6 +395,7 @@ export const sectionPagesRelations = relations(sectionPages, ({ one, many }) => 
   media: many(mediaContent),
   progress: many(userPageProgress),
   comments: many(lessonComments),
+  ratings: many(lessonRatings),
 }));
 
 export const mediaContentRelations = relations(mediaContent, ({ one }) => ({
@@ -463,6 +482,17 @@ export const lessonCommentsRelations = relations(lessonComments, ({ one }) => ({
   }),
 }));
 
+export const lessonRatingsRelations = relations(lessonRatings, ({ one }) => ({
+  page: one(sectionPages, {
+    fields: [lessonRatings.pageId],
+    references: [sectionPages.id],
+  }),
+  user: one(users, {
+    fields: [lessonRatings.userId],
+    references: [users.id],
+  }),
+}));
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -508,3 +538,6 @@ export type NewResource = typeof resources.$inferInsert;
 
 export type LessonComment = typeof lessonComments.$inferSelect;
 export type NewLessonComment = typeof lessonComments.$inferInsert;
+
+export type LessonRating = typeof lessonRatings.$inferSelect;
+export type NewLessonRating = typeof lessonRatings.$inferInsert;
