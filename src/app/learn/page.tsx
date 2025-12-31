@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
-import { BookOpen, Clock, BarChart3, ChevronRight, Check, Loader2, PlayCircle } from 'lucide-react';
+import { BookOpen, Clock, BarChart3, ChevronRight, Check, Loader2, PlayCircle, Search, X } from 'lucide-react';
 
 interface Module {
   id: string;
@@ -32,6 +32,7 @@ export default function LearnPage() {
   const [enrollmentMap, setEnrollmentMap] = useState<Map<string, EnrollmentData>>(new Map());
   const [loading, setLoading] = useState(true);
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     async function loadData() {
@@ -133,10 +134,22 @@ export default function LearnPage() {
 
   const enrolledCount = enrollmentMap.size;
 
+  // Filter modules based on search query
+  const filteredModules = modules.filter((module) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      module.title.toLowerCase().includes(query) ||
+      module.description?.toLowerCase().includes(query) ||
+      module.discipline?.toLowerCase().includes(query) ||
+      module.difficultyLevel?.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-surface-900">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-12 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold mb-4">Learning Center</h1>
           <p className="text-xl text-primary-100 max-w-2xl">
@@ -147,11 +160,51 @@ export default function LearnPage() {
               You are enrolled in {enrolledCount} course{enrolledCount !== 1 ? 's' : ''}
             </p>
           )}
+
+          {/* Search Bar */}
+          <div className="mt-8 max-w-xl">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400" />
+              <input
+                type="text"
+                placeholder="Search courses by title, topic, or difficulty..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-10 py-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X className="w-4 h-4 text-white/60" />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Modules Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Search results info */}
+        {searchQuery && (
+          <div className="mb-6 flex items-center justify-between">
+            <p className="text-surface-600 dark:text-surface-400">
+              {filteredModules.length === 0
+                ? 'No courses found'
+                : `Found ${filteredModules.length} course${filteredModules.length !== 1 ? 's' : ''}`}
+              {' '}for &quot;{searchQuery}&quot;
+            </p>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-primary-500 hover:text-primary-600 text-sm font-medium"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
+
         {modules.length === 0 ? (
           <div className="text-center py-16">
             <BookOpen className="w-16 h-16 mx-auto text-surface-400 mb-4" />
@@ -162,9 +215,25 @@ export default function LearnPage() {
               Check back soon for new learning content!
             </p>
           </div>
+        ) : filteredModules.length === 0 ? (
+          <div className="text-center py-16">
+            <Search className="w-16 h-16 mx-auto text-surface-400 mb-4" />
+            <h2 className="text-xl font-semibold text-surface-700 dark:text-surface-300 mb-2">
+              No courses match your search
+            </h2>
+            <p className="text-surface-500 mb-4">
+              Try adjusting your search terms or browse all courses
+            </p>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-primary-500 hover:text-primary-600 font-medium"
+            >
+              View all courses
+            </button>
+          </div>
         ) : (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {modules.map((module) => {
+            {filteredModules.map((module) => {
               const enrollment = enrollmentMap.get(module.id);
               const isEnrolled = !!enrollment;
               const isEnrolling = enrollingId === module.id;
