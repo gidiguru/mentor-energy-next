@@ -53,6 +53,18 @@ interface AvailabilitySlot {
   isActive: boolean;
 }
 
+interface PotentialMentee {
+  id: string;
+  name: string;
+  email: string;
+  profilePicture: string | null;
+  discipline: string | null;
+  qualification: string | null;
+  university: string | null;
+  bio: string | null;
+  matchScore: number;
+}
+
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export default function MentoringDashboard() {
@@ -70,7 +82,8 @@ export default function MentoringDashboard() {
     asMentor: [],
   });
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
-  const [activeTab, setActiveTab] = useState<'connections' | 'sessions' | 'availability'>('connections');
+  const [potentialMentees, setPotentialMentees] = useState<PotentialMentee[]>([]);
+  const [activeTab, setActiveTab] = useState<'connections' | 'sessions' | 'availability' | 'find-mentees'>('connections');
   const [updatingConnection, setUpdatingConnection] = useState<string | null>(null);
   const [ratingSession, setRatingSession] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState<number>(0);
@@ -121,6 +134,16 @@ export default function MentoringDashboard() {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMentees = async () => {
+    try {
+      const res = await fetch('/api/mentor/find-mentees');
+      const data = await res.json();
+      setPotentialMentees(data.mentees || []);
+    } catch (error) {
+      console.error('Error fetching mentees:', error);
     }
   };
 
@@ -333,6 +356,23 @@ export default function MentoringDashboard() {
               }`}
             >
               Availability
+            </button>
+          )}
+          {isMentor && (
+            <button
+              onClick={() => {
+                setActiveTab('find-mentees');
+                if (potentialMentees.length === 0) {
+                  fetchMentees();
+                }
+              }}
+              className={`pb-3 px-1 font-medium border-b-2 transition-colors ${
+                activeTab === 'find-mentees'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
+              }`}
+            >
+              Find Mentees
             </button>
           )}
         </div>
@@ -767,6 +807,82 @@ export default function MentoringDashboard() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Find Mentees Tab (Mentor Only) */}
+        {activeTab === 'find-mentees' && isMentor && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
+                Find Students to Mentor
+              </h2>
+              <p className="text-sm text-surface-600 dark:text-surface-400 mb-6">
+                Discover students whose interests match your expertise
+              </p>
+            </div>
+
+            {potentialMentees.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700">
+                <Users className="w-12 h-12 text-surface-400 mx-auto mb-4" />
+                <p className="text-surface-600 dark:text-surface-400">No potential mentees found</p>
+                <p className="text-sm text-surface-500 mt-1">Check back later as more students join</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {potentialMentees.map((mentee) => (
+                  <div key={mentee.id} className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
+                    <div className="flex items-start gap-4 mb-4">
+                      {mentee.profilePicture ? (
+                        <Image
+                          src={mentee.profilePicture}
+                          alt={mentee.name}
+                          width={48}
+                          height={48}
+                          className="rounded-full"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-lg text-primary-600">
+                          {mentee.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-surface-900 dark:text-white truncate">
+                          {mentee.name}
+                        </h3>
+                        {mentee.discipline && (
+                          <p className="text-sm text-primary-600 dark:text-primary-400">{mentee.discipline}</p>
+                        )}
+                        {mentee.university && (
+                          <p className="text-xs text-surface-500 truncate">{mentee.university}</p>
+                        )}
+                      </div>
+                      {mentee.matchScore > 0 && (
+                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded-full">
+                          Match
+                        </span>
+                      )}
+                    </div>
+                    {mentee.bio && (
+                      <p className="text-sm text-surface-600 dark:text-surface-400 line-clamp-2 mb-4">
+                        {mentee.bio}
+                      </p>
+                    )}
+                    {mentee.qualification && (
+                      <p className="text-xs text-surface-500 mb-4">
+                        {mentee.qualification}
+                      </p>
+                    )}
+                    <button
+                      className="w-full py-2 px-4 rounded-lg bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center gap-2"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Reach Out
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>

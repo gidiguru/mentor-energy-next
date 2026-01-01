@@ -17,14 +17,18 @@ export async function GET() {
     // Get user
     const user = await database.query.users.findFirst({
       where: eq(users.clerkId, clerkId),
-      with: {
-        mentor: true,
-      },
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+
+    // Check if user is a mentor (check both role and mentors table)
+    const mentorRecord = await database.query.mentors.findFirst({
+      where: eq(mentors.userId, user.id),
+    });
+
+    const isMentor = user.role === 'mentor' || !!mentorRecord;
 
     // Get connections as student
     const studentConnections = await database
@@ -64,7 +68,7 @@ export async function GET() {
       studentBio: string | null;
     }[] = [];
 
-    if (user.mentor) {
+    if (mentorRecord) {
       mentorConnectionsList = await database
         .select({
           id: mentorConnections.id,
@@ -81,7 +85,7 @@ export async function GET() {
         })
         .from(mentorConnections)
         .innerJoin(users, eq(mentorConnections.studentId, users.id))
-        .where(eq(mentorConnections.mentorId, user.mentor.id));
+        .where(eq(mentorConnections.mentorId, mentorRecord.id));
     }
 
     return NextResponse.json({
@@ -116,7 +120,7 @@ export async function GET() {
           bio: c.studentBio,
         },
       })),
-      isMentor: !!user.mentor,
+      isMentor,
     });
   } catch (error) {
     console.error('Error fetching connections:', error);
