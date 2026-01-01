@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Users, Calendar, MessageSquare, Clock, CheckCircle, XCircle,
-  Loader2, UserPlus, Video, ArrowRight, Star
+  Loader2, UserPlus, Video, ArrowRight, Star, Plus, Trash2, Settings
 } from 'lucide-react';
 
 interface Connection {
@@ -38,9 +38,22 @@ interface Session {
   status: string;
   topic: string | null;
   meetingUrl: string | null;
+  rating?: number;
+  mentorFeedback?: string | null;
   mentor?: { id: string; name: string; profilePicture: string | null; currentRole: string | null };
   student?: { id: string; name: string; profilePicture: string | null; discipline: string | null };
 }
+
+interface AvailabilitySlot {
+  id: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  timezone: string;
+  isActive: boolean;
+}
+
+const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export default function MentoringDashboard() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -56,8 +69,16 @@ export default function MentoringDashboard() {
     asStudent: [],
     asMentor: [],
   });
-  const [activeTab, setActiveTab] = useState<'connections' | 'sessions'>('connections');
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
+  const [activeTab, setActiveTab] = useState<'connections' | 'sessions' | 'availability'>('connections');
   const [updatingConnection, setUpdatingConnection] = useState<string | null>(null);
+  const [ratingSession, setRatingSession] = useState<string | null>(null);
+  const [selectedRating, setSelectedRating] = useState<number>(0);
+
+  // Availability form state
+  const [showAddSlot, setShowAddSlot] = useState(false);
+  const [newSlot, setNewSlot] = useState({ dayOfWeek: 1, startTime: '09:00', endTime: '17:00' });
+  const [savingSlot, setSavingSlot] = useState(false);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -89,6 +110,13 @@ export default function MentoringDashboard() {
         asMentor: sessData.asMentor || [],
       });
       setIsMentor(connData.isMentor || false);
+
+      // Fetch availability if mentor
+      if (connData.isMentor) {
+        const availRes = await fetch('/api/mentor/availability');
+        const availData = await availRes.json();
+        setAvailability(availData.availability || []);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -112,6 +140,61 @@ export default function MentoringDashboard() {
       console.error('Error updating connection:', error);
     } finally {
       setUpdatingConnection(null);
+    }
+  };
+
+  const handleAddAvailability = async () => {
+    setSavingSlot(true);
+    try {
+      const res = await fetch('/api/mentor/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSlot),
+      });
+
+      if (res.ok) {
+        await fetchData();
+        setShowAddSlot(false);
+        setNewSlot({ dayOfWeek: 1, startTime: '09:00', endTime: '17:00' });
+      }
+    } catch (error) {
+      console.error('Error adding availability:', error);
+    } finally {
+      setSavingSlot(false);
+    }
+  };
+
+  const handleDeleteAvailability = async (slotId: string) => {
+    try {
+      const res = await fetch(`/api/mentor/availability/${slotId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setAvailability(prev => prev.filter(s => s.id !== slotId));
+      }
+    } catch (error) {
+      console.error('Error deleting availability:', error);
+    }
+  };
+
+  const handleRateSession = async (sessionId: string) => {
+    if (selectedRating < 1 || selectedRating > 5) return;
+
+    try {
+      const res = await fetch(`/api/mentor/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: selectedRating }),
+      });
+
+      if (res.ok) {
+        await fetchData();
+        setRatingSession(null);
+        setSelectedRating(0);
+      }
+    } catch (error) {
+      console.error('Error rating session:', error);
     }
   };
 
@@ -140,6 +223,9 @@ export default function MentoringDashboard() {
   const upcomingSessions = [...sessions.asStudent, ...sessions.asMentor]
     .filter(s => s.status === 'scheduled' && new Date(s.scheduledAt) > new Date())
     .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+  const completedSessions = [...sessions.asStudent, ...sessions.asMentor]
+    .filter(s => s.status === 'completed')
+    .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
 
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-surface-900 py-8">
@@ -237,6 +323,18 @@ export default function MentoringDashboard() {
           >
             Sessions
           </button>
+          {isMentor && (
+            <button
+              onClick={() => setActiveTab('availability')}
+              className={`pb-3 px-1 font-medium border-b-2 transition-colors ${
+                activeTab === 'availability'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
+              }`}
+            >
+              Availability
+            </button>
+          )}
         </div>
 
         {/* Content */}
@@ -429,6 +527,248 @@ export default function MentoringDashboard() {
                 </div>
               )}
             </div>
+
+            {/* Completed Sessions */}
+            {completedSessions.length > 0 && (
+              <div>
+                <h2 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">
+                  Completed Sessions
+                </h2>
+                <div className="space-y-4">
+                  {completedSessions.map((session) => {
+                    const person = session.mentor || session.student;
+                    const isStudentSession = !!session.mentor;
+                    const canRate = isStudentSession && !session.rating;
+
+                    return (
+                      <div key={session.id} className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-lg text-green-600">
+                              <CheckCircle className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-surface-900 dark:text-white">
+                                {session.topic || 'Mentoring Session'}
+                              </h3>
+                              <p className="text-sm text-surface-500">
+                                with {person?.name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-surface-900 dark:text-white">
+                              {formatDate(session.scheduledAt)}
+                            </p>
+                            {session.rating && (
+                              <div className="flex items-center gap-1 justify-end mt-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`w-4 h-4 ${
+                                      star <= session.rating!
+                                        ? 'text-yellow-500 fill-yellow-500'
+                                        : 'text-surface-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Rating UI for students */}
+                        {canRate && (
+                          <div className="mt-4 pt-4 border-t border-surface-200 dark:border-surface-700">
+                            {ratingSession === session.id ? (
+                              <div className="flex items-center gap-4">
+                                <span className="text-sm text-surface-600 dark:text-surface-400">Rate this session:</span>
+                                <div className="flex gap-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                      key={star}
+                                      onClick={() => setSelectedRating(star)}
+                                      className="p-1"
+                                    >
+                                      <Star
+                                        className={`w-6 h-6 transition-colors ${
+                                          star <= selectedRating
+                                            ? 'text-yellow-500 fill-yellow-500'
+                                            : 'text-surface-300 hover:text-yellow-400'
+                                        }`}
+                                      />
+                                    </button>
+                                  ))}
+                                </div>
+                                <button
+                                  onClick={() => handleRateSession(session.id)}
+                                  disabled={selectedRating === 0}
+                                  className="px-4 py-1.5 bg-primary-600 hover:bg-primary-700 disabled:bg-surface-300 text-white rounded-lg text-sm"
+                                >
+                                  Submit
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setRatingSession(null);
+                                    setSelectedRating(0);
+                                  }}
+                                  className="text-sm text-surface-500 hover:text-surface-700"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setRatingSession(session.id)}
+                                className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700"
+                              >
+                                <Star className="w-4 h-4" />
+                                Rate this session
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Availability Tab (Mentor Only) */}
+        {activeTab === 'availability' && isMentor && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
+                  Your Availability
+                </h2>
+                <p className="text-sm text-surface-600 dark:text-surface-400">
+                  Set when students can book sessions with you
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddSlot(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+              >
+                <Plus className="w-4 h-4" />
+                Add Time Slot
+              </button>
+            </div>
+
+            {/* Add Slot Form */}
+            {showAddSlot && (
+              <div className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
+                <h3 className="font-semibold text-surface-900 dark:text-white mb-4">Add Availability Slot</h3>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Day
+                    </label>
+                    <select
+                      value={newSlot.dayOfWeek}
+                      onChange={(e) => setNewSlot({ ...newSlot, dayOfWeek: parseInt(e.target.value) })}
+                      className="w-full px-3 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white"
+                    >
+                      {DAYS_OF_WEEK.map((day, index) => (
+                        <option key={day} value={index}>{day}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Start Time
+                    </label>
+                    <input
+                      type="time"
+                      value={newSlot.startTime}
+                      onChange={(e) => setNewSlot({ ...newSlot, startTime: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      End Time
+                    </label>
+                    <input
+                      type="time"
+                      value={newSlot.endTime}
+                      onChange={(e) => setNewSlot({ ...newSlot, endTime: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={handleAddAvailability}
+                    disabled={savingSlot}
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-surface-400 text-white rounded-lg flex items-center gap-2"
+                  >
+                    {savingSlot && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Save Slot
+                  </button>
+                  <button
+                    onClick={() => setShowAddSlot(false)}
+                    className="px-4 py-2 border border-surface-300 dark:border-surface-600 rounded-lg text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Availability List */}
+            {availability.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700">
+                <Settings className="w-12 h-12 text-surface-400 mx-auto mb-4" />
+                <p className="text-surface-600 dark:text-surface-400">No availability set</p>
+                <p className="text-sm text-surface-500 mt-1">Add time slots when you&apos;re available for mentoring</p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900">
+                      <th className="px-6 py-3 text-left text-sm font-medium text-surface-600 dark:text-surface-400">Day</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-surface-600 dark:text-surface-400">Time</th>
+                      <th className="px-6 py-3 text-left text-sm font-medium text-surface-600 dark:text-surface-400">Status</th>
+                      <th className="px-6 py-3 text-right text-sm font-medium text-surface-600 dark:text-surface-400">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {availability.map((slot) => (
+                      <tr key={slot.id} className="border-b border-surface-200 dark:border-surface-700 last:border-0">
+                        <td className="px-6 py-4 text-surface-900 dark:text-white font-medium">
+                          {DAYS_OF_WEEK[slot.dayOfWeek]}
+                        </td>
+                        <td className="px-6 py-4 text-surface-600 dark:text-surface-400">
+                          {slot.startTime} - {slot.endTime}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            slot.isActive
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-400'
+                          }`}>
+                            {slot.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => handleDeleteAvailability(slot.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
