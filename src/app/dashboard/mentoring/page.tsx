@@ -557,10 +557,13 @@ export default function MentoringDashboard() {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <button className="flex-1 py-2 px-2 sm:px-4 rounded-lg border border-surface-300 dark:border-surface-600 hover:bg-surface-100 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 flex items-center justify-center gap-1 sm:gap-2 text-sm">
+                          <Link
+                            href={`/chat/${conn.id}`}
+                            className="flex-1 py-2 px-2 sm:px-4 rounded-lg border border-surface-300 dark:border-surface-600 hover:bg-surface-100 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 flex items-center justify-center gap-1 sm:gap-2 text-sm"
+                          >
                             <MessageSquare className="w-4 h-4" />
                             <span className="hidden xs:inline">Message</span>
-                          </button>
+                          </Link>
                           {!isMentor && conn.mentor && (
                             <button
                               onClick={() => openBookingModal(conn.mentor!.id, conn.mentor!.name)}
