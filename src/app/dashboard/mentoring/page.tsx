@@ -334,6 +334,19 @@ export default function MentoringDashboard() {
           </p>
         </div>
 
+        {/* Debug info */}
+        <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg text-xs text-yellow-800 dark:text-yellow-200">
+          <p><strong>Mode:</strong> {isMentor ? 'Mentor' : 'Student/Mentee'}</p>
+          <p><strong>Connections as student:</strong> {connections.asStudent.length}</p>
+          <p><strong>Connections as mentor:</strong> {connections.asMentor.length}</p>
+          {connections.asStudent.length > 0 && (
+            <p><strong>My mentors:</strong> {connections.asStudent.map(c => c.mentor?.name).join(', ')}</p>
+          )}
+          {connections.asMentor.length > 0 && (
+            <p><strong>My mentees:</strong> {connections.asMentor.map(c => c.student?.name).join(', ')}</p>
+          )}
+        </div>
+
         {/* Stats Cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           <div className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">

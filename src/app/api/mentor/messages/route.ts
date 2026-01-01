@@ -2,6 +2,10 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentors, mentorConnections, mentorMessages, eq, and, or, desc } from '@/lib/db';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET - Get messages for a connection
 export async function GET(request: NextRequest) {
   const { userId: clerkId } = await auth();
