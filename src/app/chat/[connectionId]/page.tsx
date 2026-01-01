@@ -288,6 +288,19 @@ export default function ChatPage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="container mx-auto max-w-2xl space-y-4">
+          {/* Debug info */}
+          <div className="text-xs bg-yellow-100 dark:bg-yellow-900 p-2 rounded text-yellow-800 dark:text-yellow-200 space-y-1">
+            <p><strong>Your ID:</strong> {currentUserId || 'not loaded'}</p>
+            <p><strong>Other participant:</strong> {otherParticipant?.name} (ID: {otherParticipant?.id})</p>
+            {messages.length > 0 && (
+              <>
+                <p><strong>Message senders:</strong></p>
+                {messages.slice(0, 3).map((m, i) => (
+                  <p key={i} className="ml-2">- &quot;{m.content.slice(0, 20)}...&quot; by {m.sender.name} (ID: {m.sender.id})</p>
+                ))}
+              </>
+            )}
+          </div>
           {messages.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-surface-500 dark:text-surface-400">
