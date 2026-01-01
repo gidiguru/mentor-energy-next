@@ -1,7 +1,7 @@
 'use client';
 
-import { useSignUp } from '@clerk/nextjs';
-import { Suspense, useState } from 'react';
+import { useSignUp, useUser } from '@clerk/nextjs';
+import { Suspense, useState, useEffect } from 'react';
 import { Mail, Users, Loader2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getErrorMessage } from '@/lib/clerk-errors';
@@ -11,6 +11,7 @@ type AuthMethod = 'choice' | 'social' | 'email';
 function SignUpPageContent() {
   const [authMethod, setAuthMethod] = useState<AuthMethod>('choice');
   const { signUp, isLoaded } = useSignUp();
+  const { isSignedIn, isLoaded: userLoaded } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -29,6 +30,22 @@ function SignUpPageContent() {
   const [loading, setLoading] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState('');
+
+  // Redirect if already signed in
+  useEffect(() => {
+    if (userLoaded && isSignedIn) {
+      router.push('/dashboard');
+    }
+  }, [userLoaded, isSignedIn, router]);
+
+  // Show loading while checking auth state
+  if (!userLoaded || isSignedIn) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+      </div>
+    );
+  }
 
   const handleSocialSignUp = async (provider: 'oauth_google' | 'oauth_linkedin_oidc') => {
     if (!isLoaded || !signUp) return;
