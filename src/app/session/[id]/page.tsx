@@ -81,6 +81,19 @@ export default function SessionVideoPage() {
       return;
     }
 
+    // Detect mobile devices - open Daily.co in new tab for better compatibility
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      console.log('Mobile device detected, opening in new tab');
+      // Build the Daily.co URL with token if available
+      let dailyUrl = sessionInfo.meetingUrl;
+      if (sessionInfo.token) {
+        dailyUrl += `?t=${sessionInfo.token}`;
+      }
+      window.open(dailyUrl, '_blank');
+      return;
+    }
+
     setIsJoining(true);
 
     console.log('Joining call with:', {
@@ -306,7 +319,10 @@ export default function SessionVideoPage() {
                 )}
               </button>
               <p className="text-xs text-surface-500 mt-4">
-                Make sure your camera and microphone are enabled
+                Make sure your camera and microphone are enabled.
+                {/iPhone|iPad|iPod|Android/i.test(typeof navigator !== 'undefined' ? navigator.userAgent : '') && (
+                  <span className="block mt-1">The video call will open in a new tab.</span>
+                )}
               </p>
             </div>
           </div>
