@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, Moon, Sun } from 'lucide-react';
 import { useThemeStore } from '@/lib/stores/theme';
 import { useDrawerStore } from '@/lib/stores/drawer';
+import { useUserRole } from '@/lib/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import {
@@ -28,34 +30,13 @@ export function Header() {
   const pathname = usePathname();
   const { isDarkMode, toggleTheme } = useThemeStore();
   const { open: openDrawer } = useDrawerStore();
-  const { user, isSignedIn } = useUser();
+  const { user } = useUser();
+  const { isAdmin, isMentor } = useUserRole();
   const [mounted, setMounted] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isMentor, setIsMentor] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Check if user is admin or mentor
-  useEffect(() => {
-    if (isSignedIn) {
-      // Check admin status
-      fetch('/api/user/role')
-        .then(res => res.json())
-        .then(data => setIsAdmin(data.isAdmin))
-        .catch(() => setIsAdmin(false));
-
-      // Check mentor status
-      fetch('/api/user/profile')
-        .then(res => res.json())
-        .then(data => setIsMentor(data.isMentor || false))
-        .catch(() => setIsMentor(false));
-    } else {
-      setIsAdmin(false);
-      setIsMentor(false);
-    }
-  }, [isSignedIn]);
 
   // Build nav items based on user role
   let navItems = [...baseNavItems];
@@ -87,15 +68,21 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
-          <img
+          <Image
             src={logoSrc}
             alt="mentor.energy logo"
+            width={180}
+            height={48}
             className="hidden h-10 w-auto md:block md:h-12"
+            priority
           />
-          <img
+          <Image
             src={logoSymbolSrc}
             alt="mentor.energy logo"
+            width={40}
+            height={40}
             className="block h-10 w-auto md:hidden"
+            priority
           />
         </Link>
 

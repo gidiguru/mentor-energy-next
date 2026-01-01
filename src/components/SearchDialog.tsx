@@ -117,7 +117,9 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
         {/* Search Input */}
         <div className="flex items-center gap-3 p-4 border-b border-surface-200 dark:border-surface-700">
           <Search className="w-5 h-5 text-surface-400" />
+          <label htmlFor="search-input" className="sr-only">Search courses, sections, and lessons</label>
           <input
+            id="search-input"
             ref={inputRef}
             type="text"
             value={query}
@@ -125,8 +127,8 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             placeholder="Search courses, sections, and lessons..."
             className="flex-1 bg-transparent text-surface-900 dark:text-white placeholder-surface-500 focus:outline-none"
           />
-          {loading && <Loader2 className="w-5 h-5 animate-spin text-surface-400" />}
-          <button onClick={onClose} className="p-1 text-surface-500 hover:text-surface-700 dark:hover:text-surface-300">
+          {loading && <Loader2 className="w-5 h-5 animate-spin text-surface-400" aria-label="Loading search results" />}
+          <button onClick={onClose} className="p-1 text-surface-500 hover:text-surface-700 dark:hover:text-surface-300" aria-label="Close search">
             <X className="w-5 h-5" />
           </button>
         </div>

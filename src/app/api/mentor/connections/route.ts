@@ -101,11 +101,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching connections:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({
-      error: 'Failed to fetch connections',
-      details: errorMessage,
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch connections' }, { status: 500 });
   }
 }
 
@@ -218,26 +214,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error creating connection:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-    // Check for common database errors
-    if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
-      return NextResponse.json({
-        error: 'Database not configured. Please contact administrator.',
-        details: 'mentor_connections table missing'
-      }, { status: 500 });
-    }
-
-    if (errorMessage.includes('invalid input value for enum')) {
-      return NextResponse.json({
-        error: 'Database configuration error. Please contact administrator.',
-        details: 'connection_status enum missing'
-      }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      error: 'Failed to send connection request',
-      details: errorMessage
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to send connection request' }, { status: 500 });
   }
 }

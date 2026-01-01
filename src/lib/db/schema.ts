@@ -32,7 +32,7 @@ export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'premiu
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   clerkId: varchar('clerk_id', { length: 255 }).notNull().unique(),
-  email: varchar('email', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
   firstName: varchar('first_name', { length: 255 }),
   lastName: varchar('last_name', { length: 255 }),
   profilePicture: text('profile_picture'),
@@ -185,8 +185,8 @@ export const userModuleProgress = pgTable('user_module_progress', {
   startedAt: timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
   completedAt: timestamp('completed_at', { withTimezone: true }),
   lastAccessedAt: timestamp('last_accessed_at', { withTimezone: true }).defaultNow().notNull(),
-  currentSectionId: uuid('current_section_id'),
-  currentPageId: uuid('current_page_id'),
+  currentSectionId: uuid('current_section_id').references(() => moduleSections.id, { onDelete: 'set null' }),
+  currentPageId: uuid('current_page_id').references(() => sectionPages.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
@@ -280,6 +280,8 @@ export const mentorConnections = pgTable('mentor_connections', {
   index('idx_connections_mentor').on(table.mentorId),
   index('idx_connections_student').on(table.studentId),
   index('idx_connections_status').on(table.status),
+  index('idx_connections_mentor_status').on(table.mentorId, table.status),
+  index('idx_connections_student_status').on(table.studentId, table.status),
   unique('unique_mentor_student_connection').on(table.mentorId, table.studentId),
 ]);
 
@@ -299,6 +301,7 @@ export const mentorAvailability = pgTable('mentor_availability', {
 }, (table) => [
   index('idx_availability_mentor').on(table.mentorId),
   index('idx_availability_day').on(table.dayOfWeek),
+  index('idx_availability_mentor_day_active').on(table.mentorId, table.dayOfWeek, table.isActive),
 ]);
 
 // ============================================================================
@@ -342,6 +345,7 @@ export const mentorshipSessions = pgTable('mentorship_sessions', {
   index('idx_sessions_student').on(table.studentId),
   index('idx_sessions_scheduled').on(table.scheduledAt),
   index('idx_sessions_status').on(table.status),
+  index('idx_sessions_rating').on(table.rating),
 ]);
 
 // ============================================================================
@@ -408,7 +412,7 @@ export const lessonComments = pgTable('lesson_comments', {
   pageId: uuid('page_id').notNull().references(() => sectionPages.id, { onDelete: 'cascade' }),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
-  parentId: uuid('parent_id'), // For replies - references another comment
+  parentId: uuid('parent_id'), // For replies - references another comment (self-referencing FK added via migration)
   isEdited: boolean('is_edited').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
