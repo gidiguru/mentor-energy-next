@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
           name: `${m.senderFirstName || ''} ${m.senderLastName || ''}`.trim(),
           profilePicture: m.senderProfilePicture,
         },
-        isOwnMessage: m.senderId === user.id,
+        isOwnMessage: String(m.senderId) === String(user.id),
       })),
       otherParticipant,
       currentUserId: user.id,
