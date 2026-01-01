@@ -106,7 +106,9 @@ export default function SessionVideoPage() {
 
       // Set up event handlers
       frame.on('joined-meeting', () => {
+        console.log('Successfully joined meeting');
         setIsInCall(true);
+        setIsJoining(false);
       });
 
       frame.on('left-meeting', () => {
@@ -139,8 +141,19 @@ export default function SessionVideoPage() {
       }
 
       console.log('Calling frame.join with options:', joinOptions);
+
+      // Add timeout for join operation
+      const joinTimeout = setTimeout(() => {
+        console.error('Join operation timed out');
+        setError('Connection timed out. Please check your internet connection and try again.');
+        setIsJoining(false);
+        frame.destroy();
+      }, 30000); // 30 second timeout
+
       await frame.join(joinOptions);
+      clearTimeout(joinTimeout);
       setCallFrame(frame);
+      console.log('frame.join() completed');
     } catch (err: unknown) {
       console.error('Failed to join call:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -300,10 +313,16 @@ export default function SessionVideoPage() {
         )}
 
         {/* Daily.co video container - always rendered to maintain ref */}
+        {/* Using absolute positioning instead of hidden to keep iframe functional */}
         <div
           ref={containerRef}
-          className={`h-full w-full rounded-xl overflow-hidden bg-black ${!isInCall ? 'hidden' : ''}`}
-          style={{ minHeight: 'calc(100vh - 140px)' }}
+          className="h-full w-full rounded-xl overflow-hidden bg-black"
+          style={{
+            minHeight: 'calc(100vh - 140px)',
+            position: isInCall ? 'relative' : 'absolute',
+            left: isInCall ? 'auto' : '-9999px',
+            opacity: isInCall ? 1 : 0,
+          }}
         />
       </div>
     </div>
