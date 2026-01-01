@@ -61,11 +61,11 @@ export async function GET(
       return NextResponse.json({ error: 'This session has expired' }, { status: 400 });
     }
 
-    // Don't allow joining more than 15 minutes before scheduled time
-    const fifteenMinBefore = sessionTime - (15 * 60 * 1000);
-    if (now < fifteenMinBefore) {
+    // Allow joining up to 24 hours before scheduled time (for flexibility)
+    const twentyFourHoursBefore = sessionTime - (24 * 60 * 60 * 1000);
+    if (now < twentyFourHoursBefore) {
       return NextResponse.json({
-        error: 'Session has not started yet',
+        error: 'Session has not started yet. You can join up to 24 hours before the scheduled time.',
         startsAt: session.scheduledAt,
       }, { status: 400 });
     }
