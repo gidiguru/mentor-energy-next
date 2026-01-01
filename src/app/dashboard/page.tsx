@@ -140,11 +140,21 @@ export default function DashboardPage() {
           setProfile(data.profile);
           setIsMentor(data.isMentor || false);
 
+          // Redirect users with incomplete profiles to complete-signup wizard
+          if (!data.profile || !data.profile.discipline || !data.profile.qualification || !data.profile.role) {
+            router.replace('/auth/complete-signup');
+            return;
+          }
+
           // Redirect mentors to mentoring dashboard
           if (data.isMentor) {
             router.replace('/dashboard/mentoring');
             return;
           }
+        } else {
+          // No profile found - redirect to complete signup
+          router.replace('/auth/complete-signup');
+          return;
         }
 
         // Process enrolled courses with progress
