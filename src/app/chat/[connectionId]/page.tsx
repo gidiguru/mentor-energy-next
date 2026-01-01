@@ -48,9 +48,10 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
+  const prevMessageCount = useRef(0);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
   };
 
   const fetchMessages = useCallback(async () => {
@@ -94,9 +95,12 @@ export default function ChatPage() {
     return () => clearInterval(interval);
   }, [isSignedIn, loading, fetchMessages]);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom only when new messages arrive
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length > prevMessageCount.current) {
+      scrollToBottom();
+    }
+    prevMessageCount.current = messages.length;
   }, [messages]);
 
   // Focus edit input when editing
