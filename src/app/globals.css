@@ -141,47 +141,11 @@ html.dark body {
   overflow: visible !important;
 }
 
-/* Position the social buttons container as reference point */
-.cl-socialButtons {
-  position: relative !important;
-  margin-bottom: 5rem !important; /* Make room for Turnstile */
-}
-
-/* Move Cloudflare Turnstile widget right below social buttons */
-.cl-card iframe[src*="challenges.cloudflare.com"],
-.cl-card [data-testid="cf-turnstile"],
-.cl-rootBox iframe[src*="challenges.cloudflare.com"],
-.cl-rootBox [data-testid="cf-turnstile"] {
-  position: absolute !important;
-  top: auto !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  margin-top: 0.5rem !important;
-  z-index: 10 !important;
-}
-
-/* Target the Turnstile container div */
-.cl-card > div:last-of-type:has(iframe[src*="challenges.cloudflare.com"]),
-div:has(> iframe[src*="challenges.cloudflare.com"]) {
-  position: absolute !important;
-  top: auto !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: 300px !important;
-  z-index: 100 !important;
-}
-
-/* Alternative: Style Turnstile to appear inline after social buttons */
-.cl-socialButtonsBlockButton + div:has(iframe),
-.cl-socialButtons ~ div:has(iframe[src*="cloudflare"]) {
-  margin-top: 1rem !important;
-  margin-bottom: 1rem !important;
-}
-
-/* Cloudflare Turnstile widget container styling */
+/* Cloudflare Turnstile widget styling */
 [data-testid="cf-turnstile"],
 .cf-turnstile,
 iframe[src*="challenges.cloudflare.com"] {
   display: block !important;
   visibility: visible !important;
+  margin: 1rem auto !important;
 }
