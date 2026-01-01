@@ -26,6 +26,12 @@ export default function InactivityHandler({
   const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
+  const showWarningRef = useRef(showWarning);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    showWarningRef.current = showWarning;
+  }, [showWarning]);
 
   const warningMs = warningTime * 60 * 1000;
   const timeoutMs = timeoutTime * 60 * 1000;
@@ -134,8 +140,8 @@ export default function InactivityHandler({
 
       throttleTimeout = setTimeout(() => {
         throttleTimeout = null;
-        // Only reset if we're not in warning mode
-        if (!showWarning) {
+        // Only reset if we're not in warning mode (use ref for current value)
+        if (!showWarningRef.current) {
           lastActivityRef.current = Date.now();
           resetTimers();
         }
@@ -147,19 +153,27 @@ export default function InactivityHandler({
       document.addEventListener(event, handleActivity, { passive: true });
     });
 
-    // Initial timer setup
+    // Initial timer setup on mount
     resetTimers();
 
     return () => {
       activityEvents.forEach(event => {
         document.removeEventListener(event, handleActivity);
       });
+      // Only clear timers if we're unmounting completely (not just re-running due to showWarning change)
+      if (throttleTimeout) clearTimeout(throttleTimeout);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignedIn, enabled]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
       if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
       if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-      if (throttleTimeout) clearTimeout(throttleTimeout);
     };
-  }, [isSignedIn, enabled, resetTimers, showWarning]);
+  }, []);
 
   // Update countdown when in warning state
   useEffect(() => {
