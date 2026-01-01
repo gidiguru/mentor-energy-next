@@ -11,10 +11,13 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  let step = 'init';
   try {
+    step = 'db_init';
     const database = db();
 
     // Get user
+    step = 'get_user';
     const user = await database.query.users.findFirst({
       where: eq(users.clerkId, clerkId),
     });
@@ -24,6 +27,7 @@ export async function GET() {
     }
 
     // Check if user is a mentor (check both role and mentors table)
+    step = 'get_mentor_record';
     const mentorRecord = await database.query.mentors.findFirst({
       where: eq(mentors.userId, user.id),
     });
@@ -35,10 +39,12 @@ export async function GET() {
       userId: user.id,
       userRole: user.role,
       hasMentorRecord: !!mentorRecord,
+      mentorRecordId: mentorRecord?.id,
       isMentor
     });
 
     // Get connections as student
+    step = 'get_student_connections';
     const studentConnections = await database
       .select({
         id: mentorConnections.id,
@@ -61,7 +67,10 @@ export async function GET() {
       .innerJoin(users, eq(mentors.userId, users.id))
       .where(eq(mentorConnections.studentId, user.id));
 
+    console.log('Student connections found:', studentConnections.length);
+
     // Get connections as mentor (if user is a mentor)
+    step = 'init_mentor_connections';
     let mentorConnectionsList: {
       id: string;
       status: string;
@@ -77,6 +86,7 @@ export async function GET() {
     }[] = [];
 
     if (mentorRecord) {
+      step = 'get_mentor_connections';
       mentorConnectionsList = await database
         .select({
           id: mentorConnections.id,
@@ -94,8 +104,11 @@ export async function GET() {
         .from(mentorConnections)
         .innerJoin(users, eq(mentorConnections.studentId, users.id))
         .where(eq(mentorConnections.mentorId, mentorRecord.id));
+
+      console.log('Mentor connections found:', mentorConnectionsList.length);
     }
 
+    step = 'build_response';
     return NextResponse.json({
       asStudent: studentConnections.map(c => ({
         id: c.id,
@@ -131,11 +144,14 @@ export async function GET() {
       isMentor,
     });
   } catch (error) {
-    console.error('Error fetching connections:', error);
+    console.error(`Error at step [${step}] fetching connections:`, error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     return NextResponse.json({
       error: 'Failed to fetch connections',
+      step,
       details: errorMessage,
+      stack: errorStack,
     }, { status: 500 });
   }
 }
