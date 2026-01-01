@@ -4,7 +4,7 @@ import { useSignUp } from '@clerk/nextjs';
 import { Suspense, useState } from 'react';
 import { Mail, Users, Loader2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getErrorMessage } from '@/lib/auth';
+import { getErrorMessage } from '@/lib/clerk-errors';
 
 type AuthMethod = 'choice' | 'social' | 'email';
 

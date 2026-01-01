@@ -2,45 +2,9 @@ import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { db, users, eq } from '@/lib/db';
 
-/**
- * Type for Clerk authentication errors.
- * Clerk errors have a specific structure with an errors array.
- */
-export interface ClerkError {
-  errors?: Array<{
-    code: string;
-    message: string;
-    longMessage?: string;
-    meta?: Record<string, unknown>;
-  }>;
-  status?: number;
-  clerkTraceId?: string;
-}
-
-/**
- * Type guard to check if an error is a Clerk error.
- */
-export function isClerkError(error: unknown): error is ClerkError {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'errors' in error &&
-    Array.isArray((error as ClerkError).errors)
-  );
-}
-
-/**
- * Extract user-friendly error message from Clerk error or unknown error.
- */
-export function getErrorMessage(error: unknown, fallback: string = 'Something went wrong'): string {
-  if (isClerkError(error)) {
-    return error.errors?.[0]?.message || fallback;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return fallback;
-}
+// Re-export client-safe error utilities for server use
+export type { ClerkError } from './clerk-errors';
+export { isClerkError, getErrorMessage } from './clerk-errors';
 
 export interface AuthenticatedUser {
   id: string;

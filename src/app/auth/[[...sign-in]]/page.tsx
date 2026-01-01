@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { Clock, Mail, Users, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getErrorMessage } from '@/lib/auth';
+import { getErrorMessage } from '@/lib/clerk-errors';
 
 type AuthMethod = 'choice' | 'social' | 'email';
 
