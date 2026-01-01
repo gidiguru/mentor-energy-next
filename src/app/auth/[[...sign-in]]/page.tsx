@@ -30,16 +30,19 @@ function TimeoutBanner() {
 
 export default function AuthPage() {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="flex min-h-[80vh] flex-col items-center justify-center p-4 py-8">
+      <div className="w-full max-w-md overflow-visible">
         <Suspense fallback={null}>
           <TimeoutBanner />
         </Suspense>
         <SignIn
           appearance={{
             elements: {
-              rootBox: 'mx-auto',
-              card: 'bg-white dark:bg-surface-800 shadow-lg',
+              rootBox: 'mx-auto w-full overflow-visible',
+              card: 'bg-white dark:bg-surface-800 shadow-lg overflow-visible',
+              cardBox: 'overflow-visible',
+              main: 'overflow-visible',
+              form: 'overflow-visible',
               headerTitle: 'text-surface-900 dark:text-white',
               headerSubtitle: 'text-surface-600 dark:text-surface-400',
               socialButtonsBlockButton:
@@ -51,6 +54,8 @@ export default function AuthPage() {
               footerActionLink: 'text-primary-500 hover:text-primary-600',
               formButtonPrimary:
                 'bg-primary-500 hover:bg-primary-600 text-white',
+              // Ensure Cloudflare Turnstile widget is visible
+              footer: 'overflow-visible',
             },
           }}
           routing="path"
