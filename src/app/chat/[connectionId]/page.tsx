@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Send, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Loader2, Pencil, Trash2, X, Check } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -40,8 +40,14 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Edit/Delete state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,7 +67,7 @@ export default function ChatPage() {
       setOtherParticipant(data.otherParticipant);
       setCurrentUserId(data.currentUserId);
       setError(null);
-    } catch (err) {
+    } catch {
       setError('Failed to connect');
     } finally {
       setLoading(false);
@@ -93,6 +99,13 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  // Focus edit input when editing
+  useEffect(() => {
+    if (editingId) {
+      editInputRef.current?.focus();
+    }
+  }, [editingId]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -117,16 +130,77 @@ export default function ChatPage() {
       if (res.ok) {
         setMessages(prev => [...prev, data.message]);
       } else {
-        setNewMessage(messageContent); // Restore message if failed
+        setNewMessage(messageContent);
         alert(data.error || 'Failed to send message');
       }
-    } catch (err) {
+    } catch {
       setNewMessage(messageContent);
       alert('Failed to send message');
     } finally {
       setSending(false);
       inputRef.current?.focus();
     }
+  };
+
+  const handleEditMessage = async (messageId: string) => {
+    if (!editContent.trim()) return;
+
+    try {
+      const res = await fetch('/api/mentor/messages', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId,
+          content: editContent.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === messageId ? { ...m, content: data.message.content } : m
+          )
+        );
+        setEditingId(null);
+        setEditContent('');
+      } else {
+        alert(data.error || 'Failed to edit message');
+      }
+    } catch {
+      alert('Failed to edit message');
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const res = await fetch(`/api/mentor/messages?messageId=${messageId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+        setDeletingId(null);
+      } else {
+        alert(data.error || 'Failed to delete message');
+      }
+    } catch {
+      alert('Failed to delete message');
+    }
+  };
+
+  const startEditing = (message: Message) => {
+    setEditingId(message.id);
+    setEditContent(message.content);
+    setDeletingId(null);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditContent('');
   };
 
   const formatTime = (dateString: string) => {
@@ -214,12 +288,6 @@ export default function ChatPage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="container mx-auto max-w-2xl space-y-4">
-          {/* Debug info - remove after fixing */}
-          <div className="text-xs bg-yellow-100 dark:bg-yellow-900 p-2 rounded text-yellow-800 dark:text-yellow-200">
-            <p>Your ID: {currentUserId || 'not loaded'}</p>
-            {messages[0] && <p>First msg sender: {messages[0].sender.id}</p>}
-            {messages[0] && <p>Match: {String(messages[0]?.sender?.id === currentUserId)}</p>}
-          </div>
           {messages.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-surface-500 dark:text-surface-400">
@@ -229,33 +297,129 @@ export default function ChatPage() {
           ) : (
             messages.map((message) => {
               const isOwn = currentUserId && message.sender.id === currentUserId;
+              const isEditing = editingId === message.id;
+              const isDeleting = deletingId === message.id;
+
               return (
                 <div
                   key={message.id}
                   className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div
-                    className={`max-w-[80%] sm:max-w-[70%] ${
-                      isOwn
-                        ? 'bg-primary-600 text-white rounded-2xl rounded-br-md'
-                        : 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white rounded-2xl rounded-bl-md border border-surface-200 dark:border-surface-700'
-                    } px-4 py-2`}
-                  >
-                    {!isOwn && (
-                      <p className="text-xs font-medium text-primary-600 dark:text-primary-400 mb-1">
-                        {message.sender.name}
-                      </p>
+                  <div className={`max-w-[80%] sm:max-w-[70%] group relative`}>
+                    {/* Edit/Delete buttons for own messages */}
+                    {isOwn && !isEditing && !isDeleting && (
+                      <div className="absolute -left-16 top-1/2 -translate-y-1/2 hidden group-hover:flex gap-1">
+                        <button
+                          onClick={() => startEditing(message)}
+                          className="p-1.5 rounded-full bg-surface-200 dark:bg-surface-700 hover:bg-surface-300 dark:hover:bg-surface-600 text-surface-600 dark:text-surface-300"
+                          title="Edit"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingId(message.id)}
+                          className="p-1.5 rounded-full bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     )}
-                    <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                    <p
-                      className={`text-xs mt-1 ${
+
+                    {/* Delete confirmation */}
+                    {isDeleting && (
+                      <div className="bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-xl p-3 mb-2 shadow-lg">
+                        <p className="text-sm text-surface-700 dark:text-surface-300 mb-2">Delete this message?</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleDeleteMessage(message.id)}
+                            className="flex-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg"
+                          >
+                            Delete
+                          </button>
+                          <button
+                            onClick={() => setDeletingId(null)}
+                            className="flex-1 px-3 py-1.5 bg-surface-200 dark:bg-surface-700 hover:bg-surface-300 dark:hover:bg-surface-600 text-surface-700 dark:text-surface-300 text-sm rounded-lg"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div
+                      className={`${
                         isOwn
-                          ? 'text-primary-200'
-                          : 'text-surface-400'
-                      }`}
+                          ? 'bg-primary-600 text-white rounded-2xl rounded-br-md'
+                          : 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white rounded-2xl rounded-bl-md border border-surface-200 dark:border-surface-700'
+                      } px-4 py-2`}
                     >
-                      {formatTime(message.createdAt)}
-                    </p>
+                      {!isOwn && (
+                        <p className="text-xs font-medium text-primary-600 dark:text-primary-400 mb-1">
+                          {message.sender.name}
+                        </p>
+                      )}
+
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <input
+                            ref={editInputRef}
+                            type="text"
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            className="w-full px-2 py-1 rounded bg-white/20 text-white placeholder:text-white/60 border border-white/30 focus:outline-none focus:border-white/50"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleEditMessage(message.id);
+                              if (e.key === 'Escape') cancelEditing();
+                            }}
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditMessage(message.id)}
+                              className="p-1 rounded bg-white/20 hover:bg-white/30"
+                              title="Save"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={cancelEditing}
+                              className="p-1 rounded bg-white/20 hover:bg-white/30"
+                              title="Cancel"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                      )}
+
+                      <p
+                        className={`text-xs mt-1 ${
+                          isOwn ? 'text-primary-200' : 'text-surface-400'
+                        }`}
+                      >
+                        {formatTime(message.createdAt)}
+                      </p>
+                    </div>
+
+                    {/* Mobile edit/delete buttons */}
+                    {isOwn && !isEditing && !isDeleting && (
+                      <div className="flex gap-1 mt-1 sm:hidden">
+                        <button
+                          onClick={() => startEditing(message)}
+                          className="p-1.5 rounded-full bg-surface-200 dark:bg-surface-700 text-surface-600 dark:text-surface-300"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingId(message.id)}
+                          className="p-1.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

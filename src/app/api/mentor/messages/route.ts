@@ -208,3 +208,117 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
   }
 }
+
+// PATCH - Edit a message (only own messages)
+export async function PATCH(request: NextRequest) {
+  const { userId: clerkId } = await auth();
+
+  if (!clerkId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const { messageId, content } = body;
+
+    if (!messageId || !content?.trim()) {
+      return NextResponse.json({ error: 'Message ID and content are required' }, { status: 400 });
+    }
+
+    const database = db();
+
+    // Get current user
+    const user = await database.query.users.findFirst({
+      where: eq(users.clerkId, clerkId),
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Get the message
+    const message = await database.query.mentorMessages.findFirst({
+      where: eq(mentorMessages.id, messageId),
+    });
+
+    if (!message) {
+      return NextResponse.json({ error: 'Message not found' }, { status: 404 });
+    }
+
+    // Verify user owns this message
+    if (message.senderId !== user.id) {
+      return NextResponse.json({ error: 'You can only edit your own messages' }, { status: 403 });
+    }
+
+    // Update the message
+    const [updated] = await database
+      .update(mentorMessages)
+      .set({ content: content.trim() })
+      .where(eq(mentorMessages.id, messageId))
+      .returning();
+
+    return NextResponse.json({
+      success: true,
+      message: {
+        id: updated.id,
+        content: updated.content,
+      },
+    });
+  } catch (error) {
+    console.error('Error editing message:', error);
+    return NextResponse.json({ error: 'Failed to edit message' }, { status: 500 });
+  }
+}
+
+// DELETE - Delete a message (only own messages)
+export async function DELETE(request: NextRequest) {
+  const { userId: clerkId } = await auth();
+
+  if (!clerkId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const messageId = searchParams.get('messageId');
+
+  if (!messageId) {
+    return NextResponse.json({ error: 'Message ID is required' }, { status: 400 });
+  }
+
+  try {
+    const database = db();
+
+    // Get current user
+    const user = await database.query.users.findFirst({
+      where: eq(users.clerkId, clerkId),
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Get the message
+    const message = await database.query.mentorMessages.findFirst({
+      where: eq(mentorMessages.id, messageId),
+    });
+
+    if (!message) {
+      return NextResponse.json({ error: 'Message not found' }, { status: 404 });
+    }
+
+    // Verify user owns this message
+    if (message.senderId !== user.id) {
+      return NextResponse.json({ error: 'You can only delete your own messages' }, { status: 403 });
+    }
+
+    // Delete the message
+    await database
+      .delete(mentorMessages)
+      .where(eq(mentorMessages.id, messageId));
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    return NextResponse.json({ error: 'Failed to delete message' }, { status: 500 });
+  }
+}
