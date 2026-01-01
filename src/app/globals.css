@@ -1,7 +1,11 @@
+/* Import theme FIRST so CSS variables are available */
+@import '@skeletonlabs/skeleton/themes/crimson';
 @import 'tailwindcss';
 @import '@skeletonlabs/skeleton';
 @import '@skeletonlabs/skeleton-react';
-@import '@skeletonlabs/skeleton/themes/crimson';
+
+/* Configure dark mode to use class strategy */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Custom overrides for mentor.energy */
 @theme {
@@ -14,6 +18,32 @@
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
+
+  /* Surface colors from crimson theme for Tailwind utility generation */
+  --color-surface-50: oklch(90.65% 0 264.68deg);
+  --color-surface-100: oklch(80.46% 0.01 268.6deg);
+  --color-surface-200: oklch(69.96% 0.01 271.26deg);
+  --color-surface-300: oklch(58.9% 0.02 278.84deg);
+  --color-surface-400: oklch(47.48% 0.03 277.42deg);
+  --color-surface-500: oklch(35.33% 0.04 275.68deg);
+  --color-surface-600: oklch(31.82% 0.03 277.05deg);
+  --color-surface-700: oklch(28.12% 0.03 276.09deg);
+  --color-surface-800: oklch(24.72% 0.03 274.9deg);
+  --color-surface-900: oklch(20.75% 0.02 273.29deg);
+  --color-surface-950: oklch(16.69% 0.02 275.16deg);
+
+  /* Primary colors from crimson theme */
+  --color-primary-50: oklch(88.86% 0.05 4.44deg);
+  --color-primary-100: oklch(80.66% 0.09 5.94deg);
+  --color-primary-200: oklch(72.91% 0.13 8.14deg);
+  --color-primary-300: oklch(65.86% 0.17 10.24deg);
+  --color-primary-400: oklch(59.91% 0.2 14.19deg);
+  --color-primary-500: oklch(55.71% 0.21 19.55deg);
+  --color-primary-600: oklch(50.91% 0.2 19.59deg);
+  --color-primary-700: oklch(46.18% 0.18 19.26deg);
+  --color-primary-800: oklch(41.14% 0.16 19.25deg);
+  --color-primary-900: oklch(36.08% 0.14 18.61deg);
+  --color-primary-950: oklch(30.55% 0.12 17.97deg);
 }
 
 /* Base styles - Skeleton uses scheme-light/dark:scheme-dark for color-scheme */
