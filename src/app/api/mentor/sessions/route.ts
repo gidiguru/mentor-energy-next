@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentors, mentorConnections, mentorshipSessions, eq, and, or, desc } from '@/lib/db';
 import { sendSessionBookedEmail } from '@/lib/email';
+import { createDailyRoom, generateRoomName } from '@/lib/daily';
 
 // GET - List sessions for current user
 export async function GET() {
@@ -196,14 +197,34 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    // Create Daily.co video room for the session
+    const sessionDate = new Date(scheduledAt);
+    const roomExpiryTime = Math.floor(sessionDate.getTime() / 1000) + (24 * 60 * 60); // 24 hours after session
+    const roomName = generateRoomName(session.id);
+
+    const dailyRoom = await createDailyRoom({
+      name: roomName,
+      expiryTime: roomExpiryTime,
+      maxParticipants: 2,
+    });
+
+    // Update session with meeting URL if room was created
+    let meetingUrl: string | null = null;
+    if (dailyRoom) {
+      meetingUrl = dailyRoom.url;
+      await database
+        .update(mentorshipSessions)
+        .set({ meetingUrl })
+        .where(eq(mentorshipSessions.id, session.id));
+    }
+
     // Get mentor user info for email
     const mentorUser = await database.query.users.findFirst({
       where: eq(users.id, mentor.userId),
     });
 
-    const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Student';
+    const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Mentee';
     const mentorName = `${mentorUser?.firstName || ''} ${mentorUser?.lastName || ''}`.trim() || 'Mentor';
-    const sessionDate = new Date(scheduledAt);
 
     // Send email to student
     if (user.email) {
@@ -214,6 +235,7 @@ export async function POST(request: NextRequest) {
         isForMentor: false,
         sessionDate,
         sessionTopic: topic,
+        meetingUrl: meetingUrl || undefined,
       });
     }
 
@@ -226,6 +248,7 @@ export async function POST(request: NextRequest) {
         isForMentor: true,
         sessionDate,
         sessionTopic: topic,
+        meetingUrl: meetingUrl || undefined,
       });
     }
 
@@ -236,6 +259,7 @@ export async function POST(request: NextRequest) {
         scheduledAt: session.scheduledAt,
         durationMinutes: session.durationMinutes,
         status: session.status,
+        meetingUrl,
       },
     });
   } catch (error) {
