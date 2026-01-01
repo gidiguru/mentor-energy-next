@@ -87,26 +87,26 @@ export default function SignUpPage() {
           >
             ← Back to options
           </button>
-          <SignUp
-            appearance={{
-              elements: {
-                rootBox: 'mx-auto w-full',
-                card: 'bg-white dark:bg-surface-800 shadow-lg',
-                form: 'hidden',
-                dividerRow: 'hidden',
-                headerTitle: 'text-surface-900 dark:text-white',
-                headerSubtitle: 'text-surface-600 dark:text-surface-400',
-                socialButtonsBlockButton:
-                  'bg-surface-100 dark:bg-surface-700 hover:bg-surface-200 dark:hover:bg-surface-600 border-surface-300 dark:border-surface-600',
-                socialButtonsBlockButtonText: 'text-surface-900 dark:text-white',
-                footerActionLink: 'text-primary-500 hover:text-primary-600',
-              },
-            }}
-            routing="path"
-            path="/signup"
-            signInUrl="/auth"
-            fallbackRedirectUrl="/auth/complete-signup"
-          />
+          <div className="clerk-social-only">
+            <SignUp
+              appearance={{
+                elements: {
+                  rootBox: 'mx-auto w-full',
+                  card: 'bg-white dark:bg-surface-800 shadow-lg',
+                  headerTitle: 'text-surface-900 dark:text-white',
+                  headerSubtitle: 'text-surface-600 dark:text-surface-400',
+                  socialButtonsBlockButton:
+                    'bg-surface-100 dark:bg-surface-700 hover:bg-surface-200 dark:hover:bg-surface-600 border-surface-300 dark:border-surface-600',
+                  socialButtonsBlockButtonText: 'text-surface-900 dark:text-white',
+                  footerActionLink: 'text-primary-500 hover:text-primary-600',
+                },
+              }}
+              routing="path"
+              path="/signup"
+              signInUrl="/auth"
+              fallbackRedirectUrl="/auth/complete-signup"
+            />
+          </div>
           <div className="mt-4 text-center">
             <button
               onClick={() => setAuthMethod('email')}
@@ -130,29 +130,28 @@ export default function SignUpPage() {
         >
           ← Back to options
         </button>
-        <SignUp
-          appearance={{
-            elements: {
-              rootBox: 'mx-auto w-full',
-              card: 'bg-white dark:bg-surface-800 shadow-lg',
-              socialButtonsBlockButton: 'hidden',
-              socialButtonsProviderIcon: 'hidden',
-              dividerRow: 'hidden',
-              headerTitle: 'text-surface-900 dark:text-white',
-              headerSubtitle: 'text-surface-600 dark:text-surface-400',
-              formFieldLabel: 'text-surface-700 dark:text-surface-300',
-              formFieldInput:
-                'bg-white dark:bg-surface-700 border-surface-300 dark:border-surface-600 text-surface-900 dark:text-white',
-              footerActionLink: 'text-primary-500 hover:text-primary-600',
-              formButtonPrimary:
-                'bg-primary-500 hover:bg-primary-600 text-white',
-            },
-          }}
-          routing="path"
-          path="/signup"
-          signInUrl="/auth"
-          fallbackRedirectUrl="/auth/complete-signup"
-        />
+        <div className="clerk-email-only">
+          <SignUp
+            appearance={{
+              elements: {
+                rootBox: 'mx-auto w-full',
+                card: 'bg-white dark:bg-surface-800 shadow-lg',
+                headerTitle: 'text-surface-900 dark:text-white',
+                headerSubtitle: 'text-surface-600 dark:text-surface-400',
+                formFieldLabel: 'text-surface-700 dark:text-surface-300',
+                formFieldInput:
+                  'bg-white dark:bg-surface-700 border-surface-300 dark:border-surface-600 text-surface-900 dark:text-white',
+                footerActionLink: 'text-primary-500 hover:text-primary-600',
+                formButtonPrimary:
+                  'bg-primary-500 hover:bg-primary-600 text-white',
+              },
+            }}
+            routing="path"
+            path="/signup"
+            signInUrl="/auth"
+            fallbackRedirectUrl="/auth/complete-signup"
+          />
+        </div>
         <div className="mt-4 text-center">
           <button
             onClick={() => setAuthMethod('social')}

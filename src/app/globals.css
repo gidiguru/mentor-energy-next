@@ -149,3 +149,20 @@ iframe[src*="challenges.cloudflare.com"] {
   visibility: visible !important;
   margin: 1rem auto !important;
 }
+
+/* Hide email form in social-only auth flow */
+.clerk-social-only .cl-form,
+.clerk-social-only .cl-dividerRow,
+.clerk-social-only .cl-formFieldRow,
+.clerk-social-only .cl-formButtonPrimary,
+.clerk-social-only .cl-footer__action {
+  display: none !important;
+}
+
+/* Hide social buttons in email-only auth flow */
+.clerk-email-only .cl-socialButtons,
+.clerk-email-only .cl-socialButtonsRoot,
+.clerk-email-only .cl-socialButtonsBlockButton,
+.clerk-email-only .cl-dividerRow {
+  display: none !important;
+}
