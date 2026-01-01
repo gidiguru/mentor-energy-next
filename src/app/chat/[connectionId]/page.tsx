@@ -34,6 +34,7 @@ export default function ChatPage() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [otherParticipant, setOtherParticipant] = useState<OtherParticipant | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -58,6 +59,7 @@ export default function ChatPage() {
 
       setMessages(data.messages);
       setOtherParticipant(data.otherParticipant);
+      setCurrentUserId(data.currentUserId);
       setError(null);
     } catch (err) {
       setError('Failed to connect');
@@ -219,31 +221,39 @@ export default function ChatPage() {
               </p>
             </div>
           ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.isOwnMessage ? 'justify-end' : 'justify-start'}`}
-              >
+            messages.map((message) => {
+              const isOwn = currentUserId && message.sender.id === currentUserId;
+              return (
                 <div
-                  className={`max-w-[80%] sm:max-w-[70%] ${
-                    message.isOwnMessage
-                      ? 'bg-primary-600 text-white rounded-2xl rounded-br-md'
-                      : 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white rounded-2xl rounded-bl-md border border-surface-200 dark:border-surface-700'
-                  } px-4 py-2`}
+                  key={message.id}
+                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                 >
-                  <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                  <p
-                    className={`text-xs mt-1 ${
-                      message.isOwnMessage
-                        ? 'text-primary-200'
-                        : 'text-surface-400'
-                    }`}
+                  <div
+                    className={`max-w-[80%] sm:max-w-[70%] ${
+                      isOwn
+                        ? 'bg-primary-600 text-white rounded-2xl rounded-br-md'
+                        : 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white rounded-2xl rounded-bl-md border border-surface-200 dark:border-surface-700'
+                    } px-4 py-2`}
                   >
-                    {formatTime(message.createdAt)}
-                  </p>
+                    {!isOwn && (
+                      <p className="text-xs font-medium text-primary-600 dark:text-primary-400 mb-1">
+                        {message.sender.name}
+                      </p>
+                    )}
+                    <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                    <p
+                      className={`text-xs mt-1 ${
+                        isOwn
+                          ? 'text-primary-200'
+                          : 'text-surface-400'
+                      }`}
+                    >
+                      {formatTime(message.createdAt)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
           <div ref={messagesEndRef} />
         </div>
