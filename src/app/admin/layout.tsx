@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { LayoutDashboard, BookOpen, FileText, Database, ArrowLeft, Image, Users, BarChart3 } from 'lucide-react';
 import AdminMobileNav from '@/components/AdminMobileNav';
+import AdminThemeToggle from '@/components/AdminThemeToggle';
 import { db, users, eq } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -46,10 +47,13 @@ export default async function AdminLayout({
       {/* Desktop Sidebar - hidden on mobile */}
       <aside className="hidden lg:block w-64 min-h-screen bg-white dark:bg-surface-800 border-r border-surface-200 dark:border-surface-700 fixed left-0 top-0 bottom-0 z-40">
         <div className="p-4 border-b border-surface-200 dark:border-surface-700">
-          <Link href="/dashboard" className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400 hover:text-primary-600 mb-3">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </Link>
+          <div className="flex items-center justify-between mb-3">
+            <Link href="/dashboard" className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400 hover:text-primary-600">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Link>
+            <AdminThemeToggle />
+          </div>
           <h1 className="text-xl font-bold text-surface-900 dark:text-white">Admin Panel</h1>
           <p className="text-sm text-surface-500">Content Management</p>
         </div>

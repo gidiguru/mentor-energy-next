@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, LayoutDashboard, BookOpen, FileText, Database, ArrowLeft, Image, Users, BarChart3 } from 'lucide-react';
+import { Menu, X, LayoutDashboard, BookOpen, FileText, Database, ArrowLeft, Image, Users, BarChart3, Moon, Sun } from 'lucide-react';
+import { useThemeStore } from '@/lib/stores/theme';
 
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
@@ -17,7 +18,13 @@ const navItems = [
 
 export default function AdminMobileNav() {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const { isDarkMode, toggleTheme } = useThemeStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <>
@@ -27,17 +34,33 @@ export default function AdminMobileNav() {
           <div>
             <h1 className="text-lg font-bold text-surface-900 dark:text-white">Admin Panel</h1>
           </div>
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-2 -mr-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors active:scale-95"
-            aria-label="Toggle menu"
-          >
-            {isOpen ? (
-              <X className="w-6 h-6 text-surface-700 dark:text-surface-300" />
-            ) : (
-              <Menu className="w-6 h-6 text-surface-700 dark:text-surface-300" />
+          <div className="flex items-center gap-2">
+            {/* Theme toggle */}
+            {mounted && (
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {isDarkMode ? (
+                  <Sun className="w-5 h-5 text-surface-700 dark:text-surface-300" />
+                ) : (
+                  <Moon className="w-5 h-5 text-surface-700 dark:text-surface-300" />
+                )}
+              </button>
             )}
-          </button>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 -mr-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors active:scale-95"
+              aria-label="Toggle menu"
+            >
+              {isOpen ? (
+                <X className="w-6 h-6 text-surface-700 dark:text-surface-300" />
+              ) : (
+                <Menu className="w-6 h-6 text-surface-700 dark:text-surface-300" />
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
