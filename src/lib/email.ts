@@ -1391,6 +1391,115 @@ export async function sendMentorApplicationSubmittedEmail({
 }
 
 // ============================================================================
+// ADMIN NOTIFICATION - NEW MENTOR APPLICATION
+// ============================================================================
+
+interface AdminNewMentorApplicationEmailParams {
+  applicantName: string;
+  applicantEmail: string;
+  expertise: string[];
+  yearsExperience: number;
+  currentRole: string;
+}
+
+export async function sendAdminNewMentorApplicationEmail({
+  applicantName,
+  applicantEmail,
+  expertise,
+  yearsExperience,
+  currentRole,
+}: AdminNewMentorApplicationEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping admin notification email');
+    return null;
+  }
+
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) {
+    console.warn('ADMIN_EMAIL not configured - skipping admin notification');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [adminEmail],
+      subject: `New Mentor Application: ${applicantName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">New Mentor Application</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        A new mentor application has been submitted and requires your review.
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #92400e; font-size: 14px; margin: 0 0 10px 0;"><strong>Applicant:</strong> ${applicantName}</p>
+                            <p style="color: #92400e; font-size: 14px; margin: 0 0 10px 0;"><strong>Email:</strong> ${applicantEmail}</p>
+                            <p style="color: #92400e; font-size: 14px; margin: 0 0 10px 0;"><strong>Current Role:</strong> ${currentRole}</p>
+                            <p style="color: #92400e; font-size: 14px; margin: 0 0 10px 0;"><strong>Experience:</strong> ${yearsExperience} years</p>
+                            <p style="color: #92400e; font-size: 14px; margin: 0;"><strong>Expertise:</strong> ${expertise.join(', ')}</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                        <tr>
+                          <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 8px;">
+                            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://mentor.energy'}/admin/mentor-applications" style="display: inline-block; padding: 16px 32px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">
+                              Review Application
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px; text-align: center;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                        This is an automated notification from mentor.energy
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending admin notification email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Admin notification sent for new mentor application: ${applicantName}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending admin notification email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
 // MENTOR APPLICATION APPROVED EMAIL
 // ============================================================================
 

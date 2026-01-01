@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentorApplications, eq } from '@/lib/db';
-import { sendMentorApplicationSubmittedEmail } from '@/lib/email';
+import { sendMentorApplicationSubmittedEmail, sendAdminNewMentorApplicationEmail } from '@/lib/email';
 
 // GET - Check application status
 export async function GET() {
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Send confirmation email
+    // Send confirmation email to applicant
     if (user.email) {
       await sendMentorApplicationSubmittedEmail({
         to: user.email,
@@ -125,6 +125,15 @@ export async function POST(request: NextRequest) {
         expertise,
       });
     }
+
+    // Send notification email to admin
+    await sendAdminNewMentorApplicationEmail({
+      applicantName: user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email,
+      applicantEmail: user.email,
+      expertise,
+      yearsExperience,
+      currentRole,
+    });
 
     return NextResponse.json({
       success: true,
