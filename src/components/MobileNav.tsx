@@ -53,10 +53,13 @@ export function MobileNav() {
   // Build nav items based on user role
   let navItems = [...baseNavItems];
 
-  // Add Mentoring Dashboard for mentors (before Find Mentors)
+  // For mentors: replace "Find Mentors" with "Mentoring Dashboard"
   if (isMentor) {
-    const findMentorsIndex = navItems.findIndex(item => item.href === '/mentors');
-    navItems.splice(findMentorsIndex, 0, { href: '/dashboard/mentoring', label: 'Mentoring Dashboard' });
+    navItems = navItems.map(item =>
+      item.href === '/mentors'
+        ? { href: '/dashboard/mentoring', label: 'Mentoring Dashboard' }
+        : item
+    );
   }
 
   // Add Admin for admins
