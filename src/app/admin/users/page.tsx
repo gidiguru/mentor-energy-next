@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Shield, GraduationCap, Users as UsersIcon } from 'lucide-react';
+import { Search, Shield, GraduationCap, Users as UsersIcon, Trash2, Loader2 } from 'lucide-react';
 
 interface User {
   id: string;
@@ -33,6 +33,8 @@ export default function AdminUsersPage() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -74,6 +76,27 @@ export default function AdminUsersPage() {
       alert('Failed to update role');
     } finally {
       setUpdatingUserId(null);
+    }
+  }
+
+  async function deleteUser(userId: string) {
+    setDeletingUserId(userId);
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setUsers(users.filter((u) => u.id !== userId));
+        setDeleteConfirm(null);
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to delete user');
+      }
+    } catch (err) {
+      alert('Failed to delete user');
+    } finally {
+      setDeletingUserId(null);
     }
   }
 
@@ -218,18 +241,50 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <select
-                        value={user.role}
-                        onChange={(e) =>
-                          updateRole(user.id, e.target.value as 'student' | 'mentor' | 'admin')
-                        }
-                        disabled={updatingUserId === user.id}
-                        className="input py-1 text-sm"
-                      >
-                        <option value="student">Student</option>
-                        <option value="mentor">Mentor</option>
-                        <option value="admin">Admin</option>
-                      </select>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={user.role}
+                          onChange={(e) =>
+                            updateRole(user.id, e.target.value as 'student' | 'mentor' | 'admin')
+                          }
+                          disabled={updatingUserId === user.id}
+                          className="input py-1 text-sm"
+                        >
+                          <option value="student">Student</option>
+                          <option value="mentor">Mentor</option>
+                          <option value="admin">Admin</option>
+                        </select>
+
+                        {deleteConfirm === user.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => deleteUser(user.id)}
+                              disabled={deletingUserId === user.id}
+                              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+                            >
+                              {deletingUserId === user.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                'Confirm'
+                              )}
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(null)}
+                              className="px-2 py-1 text-xs bg-surface-200 dark:bg-surface-700 rounded hover:bg-surface-300 dark:hover:bg-surface-600"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setDeleteConfirm(user.id)}
+                            className="p-1.5 text-surface-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                            title="Delete user"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
