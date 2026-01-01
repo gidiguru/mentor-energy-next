@@ -11,147 +11,100 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let step = 'init';
   try {
-    step = 'db_init';
     const database = db();
 
-    // Get user
-    step = 'get_user';
+    // Get user with mentor relation
     const user = await database.query.users.findFirst({
       where: eq(users.clerkId, clerkId),
+      with: {
+        mentor: true,
+      },
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Check if user is a mentor (check both role and mentors table)
-    step = 'get_mentor_record';
-    const mentorRecord = await database.query.mentors.findFirst({
-      where: eq(mentors.userId, user.id),
-    });
+    const isMentor = user.role === 'mentor' || !!user.mentor;
 
-    const isMentor = user.role === 'mentor' || !!mentorRecord;
+    // Try to get connections - if table doesn't exist, return empty arrays
+    let studentConnections: typeof mentorConnections.$inferSelect[] = [];
+    let mentorConnectionsData: typeof mentorConnections.$inferSelect[] = [];
 
-    // Debug logging
-    console.log('Mentor check:', {
-      userId: user.id,
-      userRole: user.role,
-      hasMentorRecord: !!mentorRecord,
-      mentorRecordId: mentorRecord?.id,
-      isMentor
-    });
+    try {
+      // Get connections where user is the student
+      studentConnections = await database.query.mentorConnections.findMany({
+        where: eq(mentorConnections.studentId, user.id),
+        with: {
+          mentor: {
+            with: {
+              user: true,
+            },
+          },
+        },
+      });
 
-    // Get connections as student
-    step = 'get_student_connections';
-    const studentConnections = await database
-      .select({
-        id: mentorConnections.id,
-        status: mentorConnections.status,
-        message: mentorConnections.message,
-        mentorResponse: mentorConnections.mentorResponse,
-        createdAt: mentorConnections.createdAt,
-        mentorId: mentors.id,
-        mentorUserId: mentors.userId,
-        mentorBio: mentors.bio,
-        mentorExpertise: mentors.expertise,
-        mentorRole: mentors.currentRole,
-        mentorCompany: mentors.company,
-        mentorFirstName: users.firstName,
-        mentorLastName: users.lastName,
-        mentorPicture: users.profilePicture,
-      })
-      .from(mentorConnections)
-      .innerJoin(mentors, eq(mentorConnections.mentorId, mentors.id))
-      .innerJoin(users, eq(mentors.userId, users.id))
-      .where(eq(mentorConnections.studentId, user.id));
-
-    console.log('Student connections found:', studentConnections.length);
-
-    // Get connections as mentor (if user is a mentor)
-    step = 'init_mentor_connections';
-    let mentorConnectionsList: {
-      id: string;
-      status: string;
-      message: string | null;
-      mentorResponse: string | null;
-      createdAt: Date;
-      studentId: string;
-      studentFirstName: string | null;
-      studentLastName: string | null;
-      studentPicture: string | null;
-      studentDiscipline: string | null;
-      studentBio: string | null;
-    }[] = [];
-
-    if (mentorRecord) {
-      step = 'get_mentor_connections';
-      mentorConnectionsList = await database
-        .select({
-          id: mentorConnections.id,
-          status: mentorConnections.status,
-          message: mentorConnections.message,
-          mentorResponse: mentorConnections.mentorResponse,
-          createdAt: mentorConnections.createdAt,
-          studentId: mentorConnections.studentId,
-          studentFirstName: users.firstName,
-          studentLastName: users.lastName,
-          studentPicture: users.profilePicture,
-          studentDiscipline: users.discipline,
-          studentBio: users.bio,
-        })
-        .from(mentorConnections)
-        .innerJoin(users, eq(mentorConnections.studentId, users.id))
-        .where(eq(mentorConnections.mentorId, mentorRecord.id));
-
-      console.log('Mentor connections found:', mentorConnectionsList.length);
+      // Get connections where user is the mentor
+      if (user.mentor) {
+        mentorConnectionsData = await database.query.mentorConnections.findMany({
+          where: eq(mentorConnections.mentorId, user.mentor.id),
+          with: {
+            student: true,
+          },
+        });
+      }
+    } catch (connectionError) {
+      // Table might not exist yet - return empty arrays
+      console.warn('Could not fetch connections (table may not exist):', connectionError);
     }
 
-    step = 'build_response';
     return NextResponse.json({
-      asStudent: studentConnections.map(c => ({
-        id: c.id,
-        status: c.status,
-        message: c.message,
-        mentorResponse: c.mentorResponse,
-        createdAt: c.createdAt,
-        mentor: {
-          id: c.mentorId,
-          userId: c.mentorUserId,
-          name: `${c.mentorFirstName || ''} ${c.mentorLastName || ''}`.trim(),
-          profilePicture: c.mentorPicture,
-          bio: c.mentorBio,
-          expertise: c.mentorExpertise,
-          currentRole: c.mentorRole,
-          company: c.mentorCompany,
-        },
-      })),
-      asMentor: mentorConnectionsList.map(c => ({
-        id: c.id,
-        status: c.status,
-        message: c.message,
-        mentorResponse: c.mentorResponse,
-        createdAt: c.createdAt,
-        student: {
-          id: c.studentId,
-          name: `${c.studentFirstName || ''} ${c.studentLastName || ''}`.trim(),
-          profilePicture: c.studentPicture,
-          discipline: c.studentDiscipline,
-          bio: c.studentBio,
-        },
-      })),
+      asStudent: studentConnections.map(c => {
+        const mentorData = (c as typeof c & { mentor: { user: typeof users.$inferSelect } & typeof mentors.$inferSelect }).mentor;
+        return {
+          id: c.id,
+          status: c.status,
+          message: c.message,
+          mentorResponse: c.mentorResponse,
+          createdAt: c.createdAt,
+          mentor: mentorData ? {
+            id: mentorData.id,
+            userId: mentorData.userId,
+            name: `${mentorData.user?.firstName || ''} ${mentorData.user?.lastName || ''}`.trim(),
+            profilePicture: mentorData.user?.profilePicture,
+            bio: mentorData.bio,
+            expertise: mentorData.expertise,
+            currentRole: mentorData.currentRole,
+            company: mentorData.company,
+          } : null,
+        };
+      }),
+      asMentor: mentorConnectionsData.map(c => {
+        const studentData = (c as typeof c & { student: typeof users.$inferSelect }).student;
+        return {
+          id: c.id,
+          status: c.status,
+          message: c.message,
+          mentorResponse: c.mentorResponse,
+          createdAt: c.createdAt,
+          student: studentData ? {
+            id: studentData.id,
+            name: `${studentData.firstName || ''} ${studentData.lastName || ''}`.trim(),
+            profilePicture: studentData.profilePicture,
+            discipline: studentData.discipline,
+            bio: studentData.bio,
+          } : null,
+        };
+      }),
       isMentor,
     });
   } catch (error) {
-    console.error(`Error at step [${step}] fetching connections:`, error);
+    console.error('Error fetching connections:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : undefined;
     return NextResponse.json({
       error: 'Failed to fetch connections',
-      step,
       details: errorMessage,
-      stack: errorStack,
     }, { status: 500 });
   }
 }
