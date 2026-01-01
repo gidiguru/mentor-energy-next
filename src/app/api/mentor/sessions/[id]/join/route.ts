@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { db, users, mentors, mentorshipSessions, eq } from '@/lib/db';
-import { createMeetingToken, generateRoomName } from '@/lib/daily';
+import { createMeetingToken, generateRoomName, createDailyRoom, getDailyRoom } from '@/lib/daily';
 
 // GET - Get meeting token for a session
 export async function GET(
@@ -74,6 +74,33 @@ export async function GET(
     const roomName = generateRoomName(sessionId);
     const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Participant';
 
+    // Check if room exists, create if it doesn't (handles sessions created before Daily integration)
+    let meetingUrl = session.meetingUrl;
+    const existingRoom = await getDailyRoom(roomName);
+
+    if (!existingRoom) {
+      console.log(`Room ${roomName} not found, creating...`);
+      const roomExpiryTime = Math.floor(twoHoursAfter / 1000) + (24 * 60 * 60); // 24 hours after session end
+      const newRoom = await createDailyRoom({
+        name: roomName,
+        expiryTime: roomExpiryTime,
+        maxParticipants: 2,
+      });
+
+      if (newRoom) {
+        meetingUrl = newRoom.url;
+        // Update session with meeting URL
+        await database
+          .update(mentorshipSessions)
+          .set({ meetingUrl })
+          .where(eq(mentorshipSessions.id, sessionId));
+        console.log(`Room created: ${meetingUrl}`);
+      } else {
+        console.error('Failed to create Daily room');
+        return NextResponse.json({ error: 'Failed to create video room. Please check DAILY_API_KEY configuration.' }, { status: 500 });
+      }
+    }
+
     const token = await createMeetingToken({
       roomName,
       userName,
@@ -82,9 +109,10 @@ export async function GET(
     });
 
     if (!token) {
-      // If token creation fails, fall back to direct room URL
+      // If token creation fails, fall back to direct room URL (for public rooms)
+      console.warn('Token creation failed, using direct URL');
       return NextResponse.json({
-        meetingUrl: session.meetingUrl,
+        meetingUrl,
         userName,
         isMentor,
         session: {
@@ -97,7 +125,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      meetingUrl: session.meetingUrl,
+      meetingUrl,
       token,
       roomName,
       userName,
