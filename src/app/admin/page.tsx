@@ -1,6 +1,6 @@
-import { db, learningModules, resources, users } from '@/lib/db';
+import { db, learningModules, resources, users, mentorApplications, eq } from '@/lib/db';
 import Link from 'next/link';
-import { BookOpen, FileText, Users, TrendingUp, Image } from 'lucide-react';
+import { BookOpen, FileText, Users, TrendingUp, Image, UserCheck } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,10 +8,11 @@ export default async function AdminDashboard() {
   const database = db();
 
   // Get counts
-  const [modulesResult, resourcesResult, usersResult] = await Promise.all([
+  const [modulesResult, resourcesResult, usersResult, pendingApplicationsResult] = await Promise.all([
     database.select().from(learningModules),
     database.select().from(resources),
     database.select().from(users),
+    database.select().from(mentorApplications).where(eq(mentorApplications.status, 'pending')),
   ]);
 
   const stats = [
@@ -36,6 +37,13 @@ export default async function AdminDashboard() {
       href: '/admin/users',
       color: 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400',
     },
+    {
+      label: 'Pending Mentor Applications',
+      value: pendingApplicationsResult.length,
+      icon: UserCheck,
+      href: '/admin/mentor-applications',
+      color: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-400',
+    },
   ];
 
   return (
@@ -50,7 +58,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6 md:mb-8">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6 md:mb-8">
         {stats.map((stat) => (
           <Link
             key={stat.label}
@@ -104,6 +112,13 @@ export default async function AdminDashboard() {
           >
             <Users className="w-5 h-5 text-primary-600" />
             <span className="font-medium text-surface-900 dark:text-white">Manage Users</span>
+          </Link>
+          <Link
+            href="/admin/mentor-applications"
+            className="flex items-center gap-3 p-4 rounded-lg bg-surface-50 dark:bg-surface-700 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors"
+          >
+            <UserCheck className="w-5 h-5 text-primary-600" />
+            <span className="font-medium text-surface-900 dark:text-white">Mentor Applications</span>
           </Link>
           <Link
             href="/admin/seed"
