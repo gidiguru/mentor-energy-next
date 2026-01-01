@@ -324,57 +324,59 @@ export default function MentoringDashboard() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-4 mb-6 border-b border-surface-200 dark:border-surface-700">
-          <button
-            onClick={() => setActiveTab('connections')}
-            className={`pb-3 px-1 font-medium border-b-2 transition-colors ${
-              activeTab === 'connections'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
-            }`}
-          >
-            Connections
-          </button>
-          <button
-            onClick={() => setActiveTab('sessions')}
-            className={`pb-3 px-1 font-medium border-b-2 transition-colors ${
-              activeTab === 'sessions'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
-            }`}
-          >
-            Sessions
-          </button>
-          {isMentor && (
+        {/* Tabs - Scrollable on mobile */}
+        <div className="overflow-x-auto -mx-4 px-4 mb-6">
+          <div className="flex gap-2 sm:gap-4 min-w-max border-b border-surface-200 dark:border-surface-700">
             <button
-              onClick={() => setActiveTab('availability')}
-              className={`pb-3 px-1 font-medium border-b-2 transition-colors ${
-                activeTab === 'availability'
+              onClick={() => setActiveTab('connections')}
+              className={`pb-3 px-3 sm:px-1 font-medium border-b-2 transition-colors whitespace-nowrap text-sm sm:text-base ${
+                activeTab === 'connections'
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
               }`}
             >
-              Availability
+              Connections
             </button>
-          )}
-          {isMentor && (
             <button
-              onClick={() => {
-                setActiveTab('find-mentees');
-                if (potentialMentees.length === 0) {
-                  fetchMentees();
-                }
-              }}
-              className={`pb-3 px-1 font-medium border-b-2 transition-colors ${
-                activeTab === 'find-mentees'
+              onClick={() => setActiveTab('sessions')}
+              className={`pb-3 px-3 sm:px-1 font-medium border-b-2 transition-colors whitespace-nowrap text-sm sm:text-base ${
+                activeTab === 'sessions'
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
               }`}
             >
-              Find Mentees
+              Sessions
             </button>
-          )}
+            {isMentor && (
+              <button
+                onClick={() => setActiveTab('availability')}
+                className={`pb-3 px-3 sm:px-1 font-medium border-b-2 transition-colors whitespace-nowrap text-sm sm:text-base ${
+                  activeTab === 'availability'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
+                }`}
+              >
+                Availability
+              </button>
+            )}
+            {isMentor && (
+              <button
+                onClick={() => {
+                  setActiveTab('find-mentees');
+                  if (potentialMentees.length === 0) {
+                    fetchMentees();
+                  }
+                }}
+                className={`pb-3 px-3 sm:px-1 font-medium border-b-2 transition-colors whitespace-nowrap text-sm sm:text-base ${
+                  activeTab === 'find-mentees'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
+                }`}
+              >
+                Find Mentees
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Content */}
@@ -388,58 +390,67 @@ export default function MentoringDashboard() {
                 </h2>
                 <div className="space-y-4">
                   {pendingMentorConnections.map((conn) => (
-                    <div key={conn.id} className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
-                      <div className="flex items-start gap-4">
-                        {conn.student?.profilePicture ? (
-                          <Image
-                            src={conn.student.profilePicture}
-                            alt={conn.student.name}
-                            width={48}
-                            height={48}
-                            className="rounded-full"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-lg text-primary-600">
-                            {conn.student?.name?.charAt(0) || '?'}
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-surface-900 dark:text-white">
-                            {conn.student?.name}
-                          </h3>
-                          {conn.student?.discipline && (
-                            <p className="text-sm text-surface-500">{conn.student.discipline}</p>
+                    <div key={conn.id} className="bg-white dark:bg-surface-800 rounded-xl p-4 sm:p-6 border border-surface-200 dark:border-surface-700">
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                        <div className="flex items-start gap-3 sm:gap-4 flex-1">
+                          {conn.student?.profilePicture ? (
+                            <Image
+                              src={conn.student.profilePicture}
+                              alt={conn.student.name}
+                              width={48}
+                              height={48}
+                              className="rounded-full flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-base sm:text-lg text-primary-600 flex-shrink-0">
+                              {conn.student?.name?.charAt(0) || '?'}
+                            </div>
                           )}
-                          {conn.message && (
-                            <p className="mt-2 text-surface-600 dark:text-surface-400 text-sm bg-surface-50 dark:bg-surface-700 p-3 rounded-lg">
-                              &ldquo;{conn.message}&rdquo;
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-surface-900 dark:text-white truncate">
+                              {conn.student?.name}
+                            </h3>
+                            {conn.student?.discipline && (
+                              <p className="text-sm text-surface-500 truncate">{conn.student.discipline}</p>
+                            )}
+                            <p className="text-xs text-surface-500 mt-1">
+                              Requested {formatDate(conn.createdAt)}
                             </p>
-                          )}
-                          <p className="text-xs text-surface-500 mt-2">
-                            Requested {formatDate(conn.createdAt)}
-                          </p>
+                          </div>
                         </div>
-                        <div className="flex gap-2">
+                        {conn.message && (
+                          <p className="text-surface-600 dark:text-surface-400 text-sm bg-surface-50 dark:bg-surface-700 p-3 rounded-lg sm:hidden">
+                            &ldquo;{conn.message}&rdquo;
+                          </p>
+                        )}
+                        <div className="flex gap-2 sm:flex-shrink-0">
                           <button
                             onClick={() => handleConnectionResponse(conn.id, 'declined')}
                             disabled={updatingConnection === conn.id}
-                            className="p-2 rounded-lg border border-surface-300 dark:border-surface-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
+                            className="flex-1 sm:flex-none p-2 sm:p-2 rounded-lg border border-surface-300 dark:border-surface-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 flex items-center justify-center gap-2"
                           >
                             <XCircle className="w-5 h-5" />
+                            <span className="sm:hidden">Decline</span>
                           </button>
                           <button
                             onClick={() => handleConnectionResponse(conn.id, 'accepted')}
                             disabled={updatingConnection === conn.id}
-                            className="p-2 rounded-lg bg-green-600 hover:bg-green-700 text-white"
+                            className="flex-1 sm:flex-none p-2 sm:p-2 rounded-lg bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2"
                           >
                             {updatingConnection === conn.id ? (
                               <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
                               <CheckCircle className="w-5 h-5" />
                             )}
+                            <span className="sm:hidden">Accept</span>
                           </button>
                         </div>
                       </div>
+                      {conn.message && (
+                        <p className="hidden sm:block mt-3 text-surface-600 dark:text-surface-400 text-sm bg-surface-50 dark:bg-surface-700 p-3 rounded-lg">
+                          &ldquo;{conn.message}&rdquo;
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -466,38 +477,38 @@ export default function MentoringDashboard() {
                   {acceptedConnections.map((conn) => {
                     const person = isMentor ? conn.student : conn.mentor;
                     return (
-                      <div key={conn.id} className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
-                        <div className="flex items-center gap-4 mb-4">
+                      <div key={conn.id} className="bg-white dark:bg-surface-800 rounded-xl p-4 sm:p-6 border border-surface-200 dark:border-surface-700">
+                        <div className="flex items-center gap-3 sm:gap-4 mb-4">
                           {person?.profilePicture ? (
                             <Image
                               src={person.profilePicture}
                               alt={person.name}
                               width={48}
                               height={48}
-                              className="rounded-full"
+                              className="rounded-full flex-shrink-0"
                             />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-lg text-primary-600">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-base sm:text-lg text-primary-600 flex-shrink-0">
                               {person?.name?.charAt(0) || '?'}
                             </div>
                           )}
-                          <div>
-                            <h3 className="font-semibold text-surface-900 dark:text-white">
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-surface-900 dark:text-white truncate">
                               {person?.name}
                             </h3>
-                            <p className="text-sm text-surface-500">
+                            <p className="text-sm text-surface-500 truncate">
                               {isMentor ? (conn.student as Connection['student'])?.discipline : (conn.mentor as Connection['mentor'])?.currentRole}
                             </p>
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <button className="flex-1 py-2 px-4 rounded-lg border border-surface-300 dark:border-surface-600 hover:bg-surface-100 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 flex items-center justify-center gap-2">
+                          <button className="flex-1 py-2 px-2 sm:px-4 rounded-lg border border-surface-300 dark:border-surface-600 hover:bg-surface-100 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 flex items-center justify-center gap-1 sm:gap-2 text-sm">
                             <MessageSquare className="w-4 h-4" />
-                            Message
+                            <span className="hidden xs:inline">Message</span>
                           </button>
-                          <button className="flex-1 py-2 px-4 rounded-lg bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center gap-2">
+                          <button className="flex-1 py-2 px-2 sm:px-4 rounded-lg bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center gap-1 sm:gap-2 text-sm">
                             <Calendar className="w-4 h-4" />
-                            Schedule
+                            <span className="hidden xs:inline">Schedule</span>
                           </button>
                         </div>
                       </div>
@@ -526,41 +537,44 @@ export default function MentoringDashboard() {
                   {upcomingSessions.map((session) => {
                     const person = session.mentor || session.student;
                     return (
-                      <div key={session.id} className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-lg text-primary-600">
+                      <div key={session.id} className="bg-white dark:bg-surface-800 rounded-xl p-4 sm:p-6 border border-surface-200 dark:border-surface-700">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-base sm:text-lg text-primary-600 flex-shrink-0">
                               {person?.name?.charAt(0) || '?'}
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-surface-900 dark:text-white">
+                            <div className="min-w-0">
+                              <h3 className="font-semibold text-surface-900 dark:text-white truncate">
                                 {session.topic || 'Mentoring Session'}
                               </h3>
-                              <p className="text-sm text-surface-500">
+                              <p className="text-sm text-surface-500 truncate">
                                 with {person?.name}
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-medium text-surface-900 dark:text-white">
-                              {formatDate(session.scheduledAt)}
-                            </p>
-                            <p className="text-sm text-surface-500">
-                              {session.durationMinutes} minutes
-                            </p>
+                          <div className="flex items-center justify-between sm:justify-end sm:text-right gap-4 pl-13 sm:pl-0">
+                            <div>
+                              <p className="font-medium text-surface-900 dark:text-white text-sm sm:text-base">
+                                {formatDate(session.scheduledAt)}
+                              </p>
+                              <p className="text-xs sm:text-sm text-surface-500">
+                                {session.durationMinutes} min
+                              </p>
+                            </div>
+                            {session.meetingUrl && (
+                              <a
+                                href={session.meetingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm whitespace-nowrap"
+                              >
+                                <Video className="w-4 h-4" />
+                                <span className="hidden sm:inline">Join Meeting</span>
+                                <span className="sm:hidden">Join</span>
+                              </a>
+                            )}
                           </div>
                         </div>
-                        {session.meetingUrl && (
-                          <a
-                            href={session.meetingUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                          >
-                            <Video className="w-4 h-4" />
-                            Join Meeting
-                          </a>
-                        )}
                       </div>
                     );
                   })}
@@ -581,27 +595,29 @@ export default function MentoringDashboard() {
                     const canRate = isStudentSession && !session.rating;
 
                     return (
-                      <div key={session.id} className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-lg text-green-600">
-                              <CheckCircle className="w-6 h-6" />
+                      <div key={session.id} className="bg-white dark:bg-surface-800 rounded-xl p-4 sm:p-6 border border-surface-200 dark:border-surface-700">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                          <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-base sm:text-lg text-green-600 flex-shrink-0">
+                              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-surface-900 dark:text-white">
+                            <div className="min-w-0">
+                              <h3 className="font-semibold text-surface-900 dark:text-white truncate">
                                 {session.topic || 'Mentoring Session'}
                               </h3>
-                              <p className="text-sm text-surface-500">
+                              <p className="text-sm text-surface-500 truncate">
                                 with {person?.name}
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-medium text-surface-900 dark:text-white">
-                              {formatDate(session.scheduledAt)}
-                            </p>
+                          <div className="flex items-center justify-between sm:justify-end gap-4 pl-13 sm:pl-0">
+                            <div className="sm:text-right">
+                              <p className="font-medium text-surface-900 dark:text-white text-sm sm:text-base">
+                                {formatDate(session.scheduledAt)}
+                              </p>
+                            </div>
                             {session.rating && (
-                              <div className="flex items-center gap-1 justify-end mt-1">
+                              <div className="flex items-center gap-0.5">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                   <Star
                                     key={star}
@@ -621,41 +637,45 @@ export default function MentoringDashboard() {
                         {canRate && (
                           <div className="mt-4 pt-4 border-t border-surface-200 dark:border-surface-700">
                             {ratingSession === session.id ? (
-                              <div className="flex items-center gap-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                                 <span className="text-sm text-surface-600 dark:text-surface-400">Rate this session:</span>
-                                <div className="flex gap-1">
-                                  {[1, 2, 3, 4, 5].map((star) => (
+                                <div className="flex items-center gap-4">
+                                  <div className="flex gap-1">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <button
+                                        key={star}
+                                        onClick={() => setSelectedRating(star)}
+                                        className="p-1"
+                                      >
+                                        <Star
+                                          className={`w-6 h-6 sm:w-6 sm:h-6 transition-colors ${
+                                            star <= selectedRating
+                                              ? 'text-yellow-500 fill-yellow-500'
+                                              : 'text-surface-300 hover:text-yellow-400'
+                                          }`}
+                                        />
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <div className="flex gap-2">
                                     <button
-                                      key={star}
-                                      onClick={() => setSelectedRating(star)}
-                                      className="p-1"
+                                      onClick={() => handleRateSession(session.id)}
+                                      disabled={selectedRating === 0}
+                                      className="px-3 sm:px-4 py-1.5 bg-primary-600 hover:bg-primary-700 disabled:bg-surface-300 text-white rounded-lg text-sm"
                                     >
-                                      <Star
-                                        className={`w-6 h-6 transition-colors ${
-                                          star <= selectedRating
-                                            ? 'text-yellow-500 fill-yellow-500'
-                                            : 'text-surface-300 hover:text-yellow-400'
-                                        }`}
-                                      />
+                                      Submit
                                     </button>
-                                  ))}
+                                    <button
+                                      onClick={() => {
+                                        setRatingSession(null);
+                                        setSelectedRating(0);
+                                      }}
+                                      className="text-sm text-surface-500 hover:text-surface-700 px-2"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
                                 </div>
-                                <button
-                                  onClick={() => handleRateSession(session.id)}
-                                  disabled={selectedRating === 0}
-                                  className="px-4 py-1.5 bg-primary-600 hover:bg-primary-700 disabled:bg-surface-300 text-white rounded-lg text-sm"
-                                >
-                                  Submit
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setRatingSession(null);
-                                    setSelectedRating(0);
-                                  }}
-                                  className="text-sm text-surface-500 hover:text-surface-700"
-                                >
-                                  Cancel
-                                </button>
                               </div>
                             ) : (
                               <button
@@ -680,7 +700,7 @@ export default function MentoringDashboard() {
         {/* Availability Tab (Mentor Only) */}
         {activeTab === 'availability' && isMentor && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
                   Your Availability
@@ -691,7 +711,7 @@ export default function MentoringDashboard() {
               </div>
               <button
                 onClick={() => setShowAddSlot(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg w-full sm:w-auto"
               >
                 <Plus className="w-4 h-4" />
                 Add Time Slot
@@ -700,7 +720,7 @@ export default function MentoringDashboard() {
 
             {/* Add Slot Form */}
             {showAddSlot && (
-              <div className="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-200 dark:border-surface-700">
+              <div className="bg-white dark:bg-surface-800 rounded-xl p-4 sm:p-6 border border-surface-200 dark:border-surface-700">
                 <h3 className="font-semibold text-surface-900 dark:text-white mb-4">Add Availability Slot</h3>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
@@ -740,20 +760,20 @@ export default function MentoringDashboard() {
                     />
                   </div>
                 </div>
-                <div className="flex gap-3 mt-4">
+                <div className="flex flex-col-reverse sm:flex-row gap-3 mt-4">
+                  <button
+                    onClick={() => setShowAddSlot(false)}
+                    className="px-4 py-2 border border-surface-300 dark:border-surface-600 rounded-lg text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 w-full sm:w-auto"
+                  >
+                    Cancel
+                  </button>
                   <button
                     onClick={handleAddAvailability}
                     disabled={savingSlot}
-                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-surface-400 text-white rounded-lg flex items-center gap-2"
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-surface-400 text-white rounded-lg flex items-center justify-center gap-2 w-full sm:w-auto"
                   >
                     {savingSlot && <Loader2 className="w-4 h-4 animate-spin" />}
                     Save Slot
-                  </button>
-                  <button
-                    onClick={() => setShowAddSlot(false)}
-                    className="px-4 py-2 border border-surface-300 dark:border-surface-600 rounded-lg text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700"
-                  >
-                    Cancel
                   </button>
                 </div>
               </div>
@@ -767,47 +787,81 @@ export default function MentoringDashboard() {
                 <p className="text-sm text-surface-500 mt-1">Add time slots when you&apos;re available for mentoring</p>
               </div>
             ) : (
-              <div className="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900">
-                      <th className="px-6 py-3 text-left text-sm font-medium text-surface-600 dark:text-surface-400">Day</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-surface-600 dark:text-surface-400">Time</th>
-                      <th className="px-6 py-3 text-left text-sm font-medium text-surface-600 dark:text-surface-400">Status</th>
-                      <th className="px-6 py-3 text-right text-sm font-medium text-surface-600 dark:text-surface-400">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {availability.map((slot) => (
-                      <tr key={slot.id} className="border-b border-surface-200 dark:border-surface-700 last:border-0">
-                        <td className="px-6 py-4 text-surface-900 dark:text-white font-medium">
-                          {DAYS_OF_WEEK[slot.dayOfWeek]}
-                        </td>
-                        <td className="px-6 py-4 text-surface-600 dark:text-surface-400">
-                          {slot.startTime} - {slot.endTime}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+              <>
+                {/* Mobile Cards */}
+                <div className="sm:hidden space-y-3">
+                  {availability.map((slot) => (
+                    <div key={slot.id} className="bg-white dark:bg-surface-800 rounded-xl p-4 border border-surface-200 dark:border-surface-700">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <p className="font-medium text-surface-900 dark:text-white">
+                            {DAYS_OF_WEEK[slot.dayOfWeek]}
+                          </p>
+                          <p className="text-sm text-surface-600 dark:text-surface-400 mt-1">
+                            {slot.startTime} - {slot.endTime}
+                          </p>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-2 ${
                             slot.isActive
                               ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                               : 'bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-400'
                           }`}>
                             {slot.isActive ? 'Active' : 'Inactive'}
                           </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => handleDeleteAvailability(slot.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteAvailability(slot.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg flex-shrink-0"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden sm:block bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900">
+                        <th className="px-6 py-3 text-left text-sm font-medium text-surface-600 dark:text-surface-400">Day</th>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-surface-600 dark:text-surface-400">Time</th>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-surface-600 dark:text-surface-400">Status</th>
+                        <th className="px-6 py-3 text-right text-sm font-medium text-surface-600 dark:text-surface-400">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {availability.map((slot) => (
+                        <tr key={slot.id} className="border-b border-surface-200 dark:border-surface-700 last:border-0">
+                          <td className="px-6 py-4 text-surface-900 dark:text-white font-medium">
+                            {DAYS_OF_WEEK[slot.dayOfWeek]}
+                          </td>
+                          <td className="px-6 py-4 text-surface-600 dark:text-surface-400">
+                            {slot.startTime} - {slot.endTime}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              slot.isActive
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-400'
+                            }`}>
+                              {slot.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              onClick={() => handleDeleteAvailability(slot.id)}
+                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         )}
