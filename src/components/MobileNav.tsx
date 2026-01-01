@@ -28,22 +28,41 @@ export function MobileNav() {
   const { close } = useDrawerStore();
   const { isSignedIn } = useUser();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMentor, setIsMentor] = useState(false);
 
-  // Check if user is admin
+  // Check if user is admin or mentor
   useEffect(() => {
     if (isSignedIn) {
+      // Check admin status
       fetch('/api/user/role')
         .then(res => res.json())
         .then(data => setIsAdmin(data.isAdmin))
         .catch(() => setIsAdmin(false));
+
+      // Check mentor status
+      fetch('/api/user/profile')
+        .then(res => res.json())
+        .then(data => setIsMentor(data.isMentor || false))
+        .catch(() => setIsMentor(false));
     } else {
       setIsAdmin(false);
+      setIsMentor(false);
     }
   }, [isSignedIn]);
 
-  const navItems = isAdmin
-    ? [...baseNavItems, { href: '/admin', label: 'Admin' }]
-    : baseNavItems;
+  // Build nav items based on user role
+  let navItems = [...baseNavItems];
+
+  // Add Mentoring Dashboard for mentors (before Find Mentors)
+  if (isMentor) {
+    const findMentorsIndex = navItems.findIndex(item => item.href === '/mentors');
+    navItems.splice(findMentorsIndex, 0, { href: '/dashboard/mentoring', label: 'Mentoring Dashboard' });
+  }
+
+  // Add Admin for admins
+  if (isAdmin) {
+    navItems.push({ href: '/admin', label: 'Admin' });
+  }
 
   return (
     <div className="p-4">
