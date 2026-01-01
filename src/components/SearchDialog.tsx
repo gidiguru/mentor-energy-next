@@ -144,7 +144,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
 
           {hasSearched && !loading && results.length === 0 && (
             <div className="p-8 text-center text-surface-500">
-              <p>No results found for "{query}"</p>
+              <p>No results found for &ldquo;{query}&rdquo;</p>
             </div>
           )}
 

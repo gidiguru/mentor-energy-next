@@ -8,7 +8,7 @@ import { useThemeStore } from '@/lib/stores/theme';
 import { useDrawerStore } from '@/lib/stores/drawer';
 import { useUserRole } from '@/lib/hooks/useUserRole';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   SignOutButton,
   UserButton,
@@ -34,9 +34,14 @@ export function Header() {
   const { isAdmin, isMentor } = useUserRole();
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
+  const handleMount = useCallback(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration pattern
+    handleMount();
+  }, [handleMount]);
 
   // Build nav items based on user role
   let navItems = [...baseNavItems];

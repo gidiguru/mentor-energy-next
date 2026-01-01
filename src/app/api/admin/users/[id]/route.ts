@@ -48,9 +48,10 @@ export async function DELETE(
       try {
         const clerk = await clerkClient();
         await clerk.users.deleteUser(userToDelete.clerkId);
-      } catch (clerkError: any) {
+      } catch (clerkError: unknown) {
         // If user doesn't exist in Clerk, continue with database deletion
-        if (clerkError?.status !== 404) {
+        const clerkErr = clerkError as { status?: number };
+        if (clerkErr?.status !== 404) {
           console.error('Error deleting user from Clerk:', clerkError);
           return NextResponse.json(
             { error: 'Failed to delete user from authentication provider' },

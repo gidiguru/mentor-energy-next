@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 
 interface UserRoleState {
@@ -32,13 +32,13 @@ async function fetchUserRole(): Promise<{ isAdmin: boolean; isMentor: boolean }>
 
 export function useUserRole(): UserRoleState {
   const { isSignedIn } = useUser();
-  const [state, setState] = useState<UserRoleState>({
+  const [state, setState] = useState<UserRoleState>(() => ({
     isAdmin: cachedRole?.isAdmin || false,
     isMentor: cachedRole?.isMentor || false,
     isLoading: !cachedRole && !!isSignedIn,
-  });
+  }));
 
-  useEffect(() => {
+  const loadRole = useCallback(async () => {
     if (!isSignedIn) {
       cachedRole = null;
       fetchPromise = null;
@@ -57,15 +57,19 @@ export function useUserRole(): UserRoleState {
       fetchPromise = fetchUserRole();
     }
 
-    fetchPromise
-      .then((role) => {
-        cachedRole = role;
-        setState({ ...role, isLoading: false });
-      })
-      .catch(() => {
-        setState({ isAdmin: false, isMentor: false, isLoading: false });
-      });
+    try {
+      const role = await fetchPromise;
+      cachedRole = role;
+      setState({ ...role, isLoading: false });
+    } catch {
+      setState({ isAdmin: false, isMentor: false, isLoading: false });
+    }
   }, [isSignedIn]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async state fetch pattern
+    loadRole();
+  }, [loadRole]);
 
   return state;
 }

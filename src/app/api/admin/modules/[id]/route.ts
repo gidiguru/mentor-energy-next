@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: Props) {
 
   try {
     const database = db();
-    const module = await database.query.learningModules.findFirst({
+    const moduleData = await database.query.learningModules.findFirst({
       where: eq(learningModules.id, id),
       with: {
         sections: {
@@ -29,11 +29,11 @@ export async function GET(request: NextRequest, { params }: Props) {
       },
     });
 
-    if (!module) {
+    if (!moduleData) {
       return NextResponse.json({ error: 'Module not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ module });
+    return NextResponse.json({ module: moduleData });
   } catch (error) {
     console.error('Error fetching module:', error);
     return NextResponse.json(

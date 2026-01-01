@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const module = modules[0];
+    const moduleData = modules[0];
 
     // Check if a test certificate already exists for this user and module
     const existingCert = await database.query.certificates.findFirst({
@@ -51,17 +51,17 @@ export async function POST(request: NextRequest) {
     // Create certificate
     const [newCertificate] = await database.insert(certificates).values({
       userId: user.id,
-      moduleId: module.id,
+      moduleId: moduleData.id,
       certificateNumber,
       completedAt: new Date(),
     }).returning();
 
     return NextResponse.json({
       success: true,
-      message: `Demo certificate created for "${module.title}"`,
+      message: `Demo certificate created for "${moduleData.title}"`,
       certificate: {
         ...newCertificate,
-        moduleTitle: module.title,
+        moduleTitle: moduleData.title,
       },
     });
   } catch (error) {

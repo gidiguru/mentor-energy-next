@@ -24,11 +24,11 @@ export async function POST(request: NextRequest, { params }: Props) {
     const database = db();
 
     // Check module exists
-    const module = await database.query.learningModules.findFirst({
+    const moduleData = await database.query.learningModules.findFirst({
       where: eq(learningModules.id, moduleId),
     });
 
-    if (!module) {
+    if (!moduleData) {
       return NextResponse.json({ error: 'Module not found' }, { status: 404 });
     }
 
