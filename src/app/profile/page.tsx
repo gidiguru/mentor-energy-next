@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useClerk } from '@clerk/nextjs';
-import { User, Mail, GraduationCap, Building, Lock } from 'lucide-react';
+import { User, Mail, GraduationCap, Building, Lock, Users, Award, CheckCircle, Clock } from 'lucide-react';
+import Link from 'next/link';
 
 interface UserProfile {
   id: string;
@@ -17,6 +18,13 @@ interface UserProfile {
   role: string;
 }
 
+interface MentoringStats {
+  connectionsAsMentor: number;
+  connectionsAsStudent: number;
+  pendingRequests: number;
+  acceptedConnections: number;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
@@ -26,6 +34,13 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isMentor, setIsMentor] = useState(false);
+  const [mentoringStats, setMentoringStats] = useState<MentoringStats>({
+    connectionsAsMentor: 0,
+    connectionsAsStudent: 0,
+    pendingRequests: 0,
+    acceptedConnections: 0,
+  });
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -43,9 +58,14 @@ export default function ProfilePage() {
       }
 
       try {
-        const response = await fetch('/api/user/profile');
-        if (response.ok) {
-          const data = await response.json();
+        // Fetch profile and connections in parallel
+        const [profileRes, connectionsRes] = await Promise.all([
+          fetch('/api/user/profile'),
+          fetch('/api/mentor/connections'),
+        ]);
+
+        if (profileRes.ok) {
+          const data = await profileRes.json();
           if (data.profile) {
             setProfile(data.profile);
             setFirstName(data.profile.first_name || '');
@@ -58,6 +78,22 @@ export default function ProfilePage() {
             setFirstName(data.clerkUser.firstName || '');
             setLastName(data.clerkUser.lastName || '');
           }
+          setIsMentor(data.isMentor || false);
+        }
+
+        if (connectionsRes.ok) {
+          const connData = await connectionsRes.json();
+          const asMentor = connData.asMentor || [];
+          const asStudent = connData.asStudent || [];
+
+          setMentoringStats({
+            connectionsAsMentor: asMentor.length,
+            connectionsAsStudent: asStudent.length,
+            pendingRequests: asMentor.filter((c: { status: string }) => c.status === 'pending').length,
+            acceptedConnections: isMentor
+              ? asMentor.filter((c: { status: string }) => c.status === 'accepted').length
+              : asStudent.filter((c: { status: string }) => c.status === 'accepted').length,
+          });
         }
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -275,6 +311,109 @@ export default function ProfilePage() {
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </form>
+
+      {/* Mentoring Status Section */}
+      <div className="mt-8 border-t border-surface-200 pt-8 dark:border-surface-700">
+        <h2 className="h3 mb-4">Mentoring Status</h2>
+
+        {/* Status Badge */}
+        <div className="card preset-filled-surface-100-900 p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {isMentor ? (
+                <>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/20">
+                    <Award className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">Verified Mentor</p>
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    </div>
+                    <p className="text-sm text-surface-500">
+                      You can mentor students on the platform
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-500/20">
+                    <Users className="h-5 w-5 text-primary-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Student / Mentee</p>
+                    <p className="text-sm text-surface-500">
+                      Connect with mentors to accelerate your learning
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+            <Link
+              href={isMentor ? '/dashboard/mentoring' : '/mentors'}
+              className="btn btn-ghost"
+            >
+              {isMentor ? 'Manage' : 'Find Mentors'}
+            </Link>
+          </div>
+        </div>
+
+        {/* Mentoring Stats */}
+        <div className="grid grid-cols-2 gap-4">
+          {isMentor ? (
+            <>
+              <div className="card preset-filled-surface-100-900 p-4 text-center">
+                <div className="flex items-center justify-center gap-2 text-2xl font-bold text-primary-500">
+                  <Users className="h-6 w-6" />
+                  {mentoringStats.connectionsAsMentor}
+                </div>
+                <p className="text-sm text-surface-500">Total Mentees</p>
+              </div>
+              <div className="card preset-filled-surface-100-900 p-4 text-center">
+                <div className="flex items-center justify-center gap-2 text-2xl font-bold text-yellow-500">
+                  <Clock className="h-6 w-6" />
+                  {mentoringStats.pendingRequests}
+                </div>
+                <p className="text-sm text-surface-500">Pending Requests</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="card preset-filled-surface-100-900 p-4 text-center">
+                <div className="flex items-center justify-center gap-2 text-2xl font-bold text-primary-500">
+                  <Users className="h-6 w-6" />
+                  {mentoringStats.connectionsAsStudent}
+                </div>
+                <p className="text-sm text-surface-500">My Mentors</p>
+              </div>
+              <div className="card preset-filled-surface-100-900 p-4 text-center">
+                <div className="flex items-center justify-center gap-2 text-2xl font-bold text-green-500">
+                  <CheckCircle className="h-6 w-6" />
+                  {mentoringStats.acceptedConnections}
+                </div>
+                <p className="text-sm text-surface-500">Active Connections</p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Become a Mentor CTA for students */}
+        {!isMentor && (
+          <div className="mt-4 card preset-outlined-primary-500 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Want to become a mentor?</p>
+                <p className="text-sm text-surface-500">
+                  Share your expertise and help others grow
+                </p>
+              </div>
+              <Link href="/mentors/apply" className="btn btn-primary">
+                Apply Now
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Security Section */}
       <div className="mt-8 border-t border-surface-200 pt-8 dark:border-surface-700">
