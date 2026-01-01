@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useUser, SignUpButton } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { AIChatPreview } from '@/components';
 
 const stats = [
@@ -55,7 +57,33 @@ const testimonials = [
 ];
 
 export default function Home() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
+
+  // Redirect signed-in users to dashboard
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.push('/dashboard');
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  // Show loading state while checking auth
+  if (!isLoaded) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render home page if signed in (will redirect)
+  if (isSignedIn) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-lg">Redirecting to dashboard...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in overflow-x-hidden">
