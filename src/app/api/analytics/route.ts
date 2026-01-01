@@ -202,16 +202,23 @@ export async function GET() {
       .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime())
       .slice(0, 5);
 
+    // Batch fetch page titles to avoid N+1 query
+    const recentPageIds = recentCompletedLessons.map(l => l.pageId);
+    const recentPages = recentPageIds.length > 0
+      ? await database.query.sectionPages.findMany({
+          where: (pages, { inArray }) => inArray(pages.id, recentPageIds),
+          columns: { id: true, title: true },
+        })
+      : [];
+    const pageMap = new Map(recentPages.map(p => [p.id, p.title]));
+
     for (const lesson of recentCompletedLessons) {
-      // Get page title
-      const page = await database.query.sectionPages.findFirst({
-        where: eq(sectionPages.id, lesson.pageId),
-      });
-      if (page) {
+      const pageTitle = pageMap.get(lesson.pageId);
+      if (pageTitle) {
         recentActivity.push({
           type: 'lesson_completed',
           title: 'Lesson Completed',
-          description: page.title,
+          description: pageTitle,
           date: lesson.completedAt!,
           icon: '📚',
         });

@@ -1,14 +1,11 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, learningModules, moduleSections, eq } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 
-// GET all modules
+// GET all modules (admin only)
 export async function GET() {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   try {
     const database = db();
@@ -31,13 +28,10 @@ export async function GET() {
   }
 }
 
-// POST create new module
+// POST create new module (admin only)
 export async function POST(request: NextRequest) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   try {
     const body = await request.json();

@@ -4,6 +4,7 @@ import { useSignUp } from '@clerk/nextjs';
 import { Suspense, useState } from 'react';
 import { Mail, Users, Loader2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { getErrorMessage } from '@/lib/auth';
 
 type AuthMethod = 'choice' | 'social' | 'email';
 
@@ -38,8 +39,8 @@ function SignUpPageContent() {
         redirectUrl: '/auth/sso-callback',
         redirectUrlComplete: completeSignupUrl,
       });
-    } catch (err: any) {
-      setError(err.errors?.[0]?.message || 'Something went wrong');
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   };
 
@@ -60,8 +61,8 @@ function SignUpPageContent() {
 
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
       setPendingVerification(true);
-    } catch (err: any) {
-      setError(err.errors?.[0]?.message || 'Something went wrong');
+    } catch (err) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -80,8 +81,8 @@ function SignUpPageContent() {
       if (result.status === 'complete') {
         router.push(completeSignupUrl);
       }
-    } catch (err: any) {
-      setError(err.errors?.[0]?.message || 'Invalid verification code');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Invalid verification code'));
     } finally {
       setLoading(false);
     }

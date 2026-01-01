@@ -1,18 +1,15 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, learningModules, eq } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-// GET single module
+// GET single module (admin only)
 export async function GET(request: NextRequest, { params }: Props) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const { id } = await params;
 
@@ -46,13 +43,10 @@ export async function GET(request: NextRequest, { params }: Props) {
   }
 }
 
-// PUT update module
+// PUT update module (admin only)
 export async function PUT(request: NextRequest, { params }: Props) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const { id } = await params;
 
@@ -112,13 +106,10 @@ export async function PUT(request: NextRequest, { params }: Props) {
   }
 }
 
-// DELETE module
+// DELETE module (admin only)
 export async function DELETE(request: NextRequest, { params }: Props) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const { id } = await params;
 

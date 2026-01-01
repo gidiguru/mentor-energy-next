@@ -1,14 +1,11 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { listR2Files, deleteFromR2, isR2Configured } from '@/lib/r2';
+import { requireAdmin } from '@/lib/auth';
 
-// GET - List all files in R2 bucket
+// GET - List all files in R2 bucket (admin only)
 export async function GET(request: NextRequest) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   if (!isR2Configured()) {
     return NextResponse.json(
@@ -37,13 +34,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// DELETE - Delete a file from R2
+// DELETE - Delete a file from R2 (admin only)
 export async function DELETE(request: NextRequest) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   if (!isR2Configured()) {
     return NextResponse.json(

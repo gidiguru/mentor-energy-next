@@ -192,6 +192,7 @@ export const userModuleProgress = pgTable('user_module_progress', {
 }, (table) => [
   index('idx_module_progress_user').on(table.userId),
   index('idx_module_progress_module').on(table.moduleId),
+  index('idx_module_progress_user_completed').on(table.userId, table.isCompleted),
   unique('unique_user_module_progress').on(table.userId, table.moduleId),
 ]);
 
@@ -227,6 +228,8 @@ export const userPageProgress = pgTable('user_page_progress', {
 }, (table) => [
   index('idx_page_progress_user').on(table.userId),
   index('idx_page_progress_page').on(table.pageId),
+  index('idx_page_progress_user_completed').on(table.userId, table.isCompleted),
+  index('idx_page_progress_completed').on(table.isCompleted),
   unique('unique_user_page_progress').on(table.userId, table.pageId),
 ]);
 

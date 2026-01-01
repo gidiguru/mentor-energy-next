@@ -59,7 +59,8 @@ export async function POST(request: Request) {
     const database = db();
     const clerkUser = await currentUser();
     const body = await request.json();
-    const { discipline, qualification, university, role } = body;
+    // Security: Do NOT accept 'role' from user input - role can only be set by admins
+    const { discipline, qualification, university } = body;
 
     // Check if user exists
     const existingUser = await database.query.users.findFirst({
@@ -67,14 +68,13 @@ export async function POST(request: Request) {
     });
 
     if (existingUser) {
-      // Update existing user
+      // Update existing user - preserve existing role
       const [updated] = await database
         .update(users)
         .set({
           discipline,
           qualification,
           university,
-          role: role as 'student' | 'mentor' | 'admin',
           updatedAt: new Date(),
         })
         .where(eq(users.clerkId, userId))
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json({ profile: updated });
     } else {
-      // Create new user
+      // Create new user - default to 'student' role
       const email = clerkUser?.emailAddresses[0]?.emailAddress || '';
       const firstName = clerkUser?.firstName || null;
       const lastName = clerkUser?.lastName || null;
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
           discipline,
           qualification,
           university,
-          role: (role as 'student' | 'mentor' | 'admin') || 'student',
+          role: 'student',
         })
         .returning();
 

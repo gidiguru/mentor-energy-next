@@ -1,18 +1,15 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, sectionPages, mediaContent, eq } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 
 interface Props {
   params: Promise<{ id: string; sectionId: string; pageId: string }>;
 }
 
-// GET a page
+// GET a page (admin only)
 export async function GET(request: NextRequest, { params }: Props) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const { pageId } = await params;
 
@@ -53,13 +50,10 @@ export async function GET(request: NextRequest, { params }: Props) {
   }
 }
 
-// PUT update a page
+// PUT update a page (admin only)
 export async function PUT(request: NextRequest, { params }: Props) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const { pageId } = await params;
 
@@ -137,13 +131,10 @@ export async function PUT(request: NextRequest, { params }: Props) {
   }
 }
 
-// DELETE a page
+// DELETE a page (admin only)
 export async function DELETE(request: NextRequest, { params }: Props) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const { pageId } = await params;
 

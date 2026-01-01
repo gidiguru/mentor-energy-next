@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { Clock, Mail, Users, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { getErrorMessage } from '@/lib/auth';
 
 type AuthMethod = 'choice' | 'social' | 'email';
 
@@ -51,8 +52,8 @@ function AuthPageContent() {
         redirectUrl: '/auth/sso-callback',
         redirectUrlComplete: '/dashboard',
       });
-    } catch (err: any) {
-      setError(err.errors?.[0]?.message || 'Something went wrong');
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   };
 
@@ -73,8 +74,8 @@ function AuthPageContent() {
         await setActive({ session: result.createdSessionId });
         router.push('/dashboard');
       }
-    } catch (err: any) {
-      setError(err.errors?.[0]?.message || 'Invalid email or password');
+    } catch (err) {
+      setError(getErrorMessage(err, 'Invalid email or password'));
     } finally {
       setLoading(false);
     }

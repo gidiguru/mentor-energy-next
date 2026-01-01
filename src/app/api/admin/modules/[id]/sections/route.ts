@@ -1,18 +1,15 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, moduleSections, learningModules, eq } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-// POST create new section
+// POST create new section (admin only)
 export async function POST(request: NextRequest, { params }: Props) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const { id: moduleId } = await params;
 
