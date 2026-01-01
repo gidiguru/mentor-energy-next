@@ -81,6 +81,19 @@ export default function SessionVideoPage() {
       return;
     }
 
+    // Detect mobile devices - open Daily.co in new tab for better compatibility
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      console.log('Mobile device detected, opening in new tab');
+      // Build the Daily.co URL with token if available
+      let dailyUrl = sessionInfo.meetingUrl;
+      if (sessionInfo.token) {
+        dailyUrl += `?t=${sessionInfo.token}`;
+      }
+      window.open(dailyUrl, '_blank');
+      return;
+    }
+
     setIsJoining(true);
 
     console.log('Joining call with:', {
