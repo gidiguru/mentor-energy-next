@@ -18,10 +18,13 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   const isAdminPage = pathname?.startsWith('/admin');
   const hideMainLayout = isAdminPage;
 
+  // Disable inactivity timeout during video sessions (users may not interact while in call)
+  const isSessionPage = pathname?.startsWith('/session');
+
   if (hideMainLayout) {
     return (
       <>
-        <InactivityHandler warningTime={25} timeoutTime={30} />
+        <InactivityHandler warningTime={25} timeoutTime={30} enabled={!isSessionPage} />
         {children}
       </>
     );
@@ -29,7 +32,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
 
   return (
     <>
-      <InactivityHandler warningTime={25} timeoutTime={30} />
+      <InactivityHandler warningTime={25} timeoutTime={30} enabled={!isSessionPage} />
       <Drawer>
         <MobileNav />
       </Drawer>
