@@ -319,7 +319,10 @@ export default function SessionVideoPage() {
                 )}
               </button>
               <p className="text-xs text-surface-500 mt-4">
-                Make sure your camera and microphone are enabled
+                Make sure your camera and microphone are enabled.
+                {/iPhone|iPad|iPod|Android/i.test(typeof navigator !== 'undefined' ? navigator.userAgent : '') && (
+                  <span className="block mt-1">The video call will open in a new tab.</span>
+                )}
               </p>
             </div>
           </div>
