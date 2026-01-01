@@ -562,16 +562,14 @@ export default function MentoringDashboard() {
                               </p>
                             </div>
                             {session.meetingUrl && (
-                              <a
-                                href={session.meetingUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm whitespace-nowrap"
+                              <Link
+                                href={`/session/${session.id}`}
+                                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm whitespace-nowrap"
                               >
                                 <Video className="w-4 h-4" />
-                                <span className="hidden sm:inline">Join Meeting</span>
+                                <span className="hidden sm:inline">Join Session</span>
                                 <span className="sm:hidden">Join</span>
-                              </a>
+                              </Link>
                             )}
                           </div>
                         </div>
