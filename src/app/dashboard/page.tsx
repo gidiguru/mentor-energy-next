@@ -637,13 +637,22 @@ export default function DashboardPage() {
                   Mentoring Dashboard
                 </Link>
               ) : (
-                <Link
-                  href="/dashboard/mentoring"
-                  className="btn preset-filled-secondary-500 w-full flex items-center justify-center gap-2"
-                >
-                  <Calendar className="w-4 h-4" />
-                  Book Mentorship
-                </Link>
+                <>
+                  <Link
+                    href="/mentors"
+                    className="btn preset-filled-secondary-500 w-full flex items-center justify-center gap-2"
+                  >
+                    <Users className="w-4 h-4" />
+                    Find a Mentor
+                  </Link>
+                  <Link
+                    href="/dashboard/mentoring"
+                    className="btn preset-outlined-surface-500 w-full flex items-center justify-center gap-2"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    My Connections
+                  </Link>
+                </>
               )}
               <Link href="/profile" className="btn preset-outlined-surface-500 w-full">
                 Update Profile
