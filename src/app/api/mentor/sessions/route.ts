@@ -1,8 +1,18 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { db, users, mentors, mentorConnections, mentorshipSessions, eq, and, or, desc } from '@/lib/db';
+import { db, users, mentors, mentorConnections, mentorshipSessions, eq, and, or, desc, gte } from '@/lib/db';
 import { sendSessionBookedEmail } from '@/lib/email';
 import { createDailyRoom, generateRoomName } from '@/lib/daily';
+
+// Session limits configuration
+const SESSION_LIMITS = {
+  FREE_MONTHLY_SESSIONS: 4, // Max sessions per month for free users
+  PREMIUM_MONTHLY_SESSIONS: 20, // Max sessions per month for premium users
+  MAX_DURATION_MINUTES: 90, // Maximum session duration
+  MIN_DURATION_MINUTES: 15, // Minimum session duration
+  MIN_HOURS_BETWEEN_SESSIONS: 24, // Minimum hours between sessions with same mentor
+  MAX_DAYS_IN_ADVANCE: 30, // Can't book more than 30 days in advance
+};
 
 // GET - List sessions for current user
 export async function GET() {
@@ -185,21 +195,116 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'You must be connected with this mentor to book a session' }, { status: 403 });
     }
 
+    // ============================================
+    // GUARDRAILS: Session limits and validations
+    // ============================================
+
+    const requestedDuration = durationMinutes || 60;
+    const sessionDate = new Date(scheduledAt);
+    const now = new Date();
+
+    // 1. Validate duration limits
+    if (requestedDuration < SESSION_LIMITS.MIN_DURATION_MINUTES) {
+      return NextResponse.json({
+        error: `Minimum session duration is ${SESSION_LIMITS.MIN_DURATION_MINUTES} minutes`,
+      }, { status: 400 });
+    }
+
+    if (requestedDuration > SESSION_LIMITS.MAX_DURATION_MINUTES) {
+      return NextResponse.json({
+        error: `Maximum session duration is ${SESSION_LIMITS.MAX_DURATION_MINUTES} minutes`,
+      }, { status: 400 });
+    }
+
+    // 2. Validate scheduling time (not too far in advance)
+    const maxAdvanceDate = new Date();
+    maxAdvanceDate.setDate(maxAdvanceDate.getDate() + SESSION_LIMITS.MAX_DAYS_IN_ADVANCE);
+
+    if (sessionDate > maxAdvanceDate) {
+      return NextResponse.json({
+        error: `Cannot book sessions more than ${SESSION_LIMITS.MAX_DAYS_IN_ADVANCE} days in advance`,
+      }, { status: 400 });
+    }
+
+    // 3. Validate not in the past
+    if (sessionDate < now) {
+      return NextResponse.json({
+        error: 'Cannot book sessions in the past',
+      }, { status: 400 });
+    }
+
+    // 4. Check monthly session limit
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const userSessionsThisMonth = await database
+      .select({ id: mentorshipSessions.id })
+      .from(mentorshipSessions)
+      .where(
+        and(
+          eq(mentorshipSessions.studentId, user.id),
+          gte(mentorshipSessions.createdAt, startOfMonth),
+          or(
+            eq(mentorshipSessions.status, 'scheduled'),
+            eq(mentorshipSessions.status, 'completed')
+          )
+        )
+      );
+
+    const monthlyLimit = user.subscriptionTier === 'premium'
+      ? SESSION_LIMITS.PREMIUM_MONTHLY_SESSIONS
+      : SESSION_LIMITS.FREE_MONTHLY_SESSIONS;
+
+    if (userSessionsThisMonth.length >= monthlyLimit) {
+      return NextResponse.json({
+        error: `Monthly session limit reached (${monthlyLimit} sessions). ${user.subscriptionTier === 'free' ? 'Upgrade to premium for more sessions.' : 'Please wait until next month.'}`,
+        limit: monthlyLimit,
+        used: userSessionsThisMonth.length,
+      }, { status: 429 });
+    }
+
+    // 5. Check cooldown with same mentor (prevent rapid booking)
+    const cooldownTime = new Date();
+    cooldownTime.setHours(cooldownTime.getHours() - SESSION_LIMITS.MIN_HOURS_BETWEEN_SESSIONS);
+
+    const recentSessionWithMentor = await database
+      .select({ id: mentorshipSessions.id, scheduledAt: mentorshipSessions.scheduledAt })
+      .from(mentorshipSessions)
+      .where(
+        and(
+          eq(mentorshipSessions.studentId, user.id),
+          eq(mentorshipSessions.mentorId, mentorId),
+          gte(mentorshipSessions.createdAt, cooldownTime),
+          or(
+            eq(mentorshipSessions.status, 'scheduled'),
+            eq(mentorshipSessions.status, 'completed')
+          )
+        )
+      )
+      .limit(1);
+
+    if (recentSessionWithMentor.length > 0) {
+      return NextResponse.json({
+        error: `Please wait ${SESSION_LIMITS.MIN_HOURS_BETWEEN_SESSIONS} hours between booking sessions with the same mentor`,
+      }, { status: 429 });
+    }
+
+    // ============================================
+    // END GUARDRAILS
+    // ============================================
+
     // Create session
     const [session] = await database
       .insert(mentorshipSessions)
       .values({
         mentorId,
         studentId: user.id,
-        scheduledAt: new Date(scheduledAt),
-        durationMinutes: durationMinutes || 60,
+        scheduledAt: sessionDate,
+        durationMinutes: requestedDuration,
         topic: topic || null,
       })
       .returning();
 
     // Create Daily.co video room for the session
-    const sessionDate = new Date(scheduledAt);
-    const roomExpiryTime = Math.floor(sessionDate.getTime() / 1000) + (24 * 60 * 60); // 24 hours after session
+    const roomExpiryTime = Math.floor(sessionDate.getTime() / 1000) + (requestedDuration * 60) + (2 * 60 * 60); // Session duration + 2 hours buffer
     const roomName = generateRoomName(session.id);
 
     const dailyRoom = await createDailyRoom({

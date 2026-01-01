@@ -98,6 +98,11 @@ export default function MentoringDashboard() {
   const [bookingMentor, setBookingMentor] = useState<{ id: string; name: string } | null>(null);
   const [bookingForm, setBookingForm] = useState({ date: '', time: '', duration: 60, topic: '' });
   const [bookingSession, setBookingSession] = useState(false);
+  const [sessionUsage, setSessionUsage] = useState<{
+    sessionsUsed: number;
+    sessionsRemaining: number;
+    monthlyLimit: number;
+  } | null>(null);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -227,7 +232,7 @@ export default function MentoringDashboard() {
     }
   };
 
-  const openBookingModal = (mentorId: string, mentorName: string) => {
+  const openBookingModal = async (mentorId: string, mentorName: string) => {
     setBookingMentor({ id: mentorId, name: mentorName });
     // Set default date to tomorrow
     const tomorrow = new Date();
@@ -239,6 +244,17 @@ export default function MentoringDashboard() {
       topic: '',
     });
     setShowBookingModal(true);
+
+    // Fetch usage stats
+    try {
+      const res = await fetch('/api/mentor/sessions/usage');
+      if (res.ok) {
+        const data = await res.json();
+        setSessionUsage(data.usage);
+      }
+    } catch (error) {
+      console.error('Error fetching usage:', error);
+    }
   };
 
   const handleBookSession = async () => {
@@ -1040,9 +1056,28 @@ export default function MentoringDashboard() {
             <h2 className="text-xl font-bold text-surface-900 dark:text-white mb-2">
               Book a Session
             </h2>
-            <p className="text-surface-600 dark:text-surface-400 mb-6">
+            <p className="text-surface-600 dark:text-surface-400 mb-2">
               Schedule a mentoring session with {bookingMentor.name}
             </p>
+
+            {/* Usage stats banner */}
+            {sessionUsage && (
+              <div className={`p-3 rounded-lg mb-4 ${
+                sessionUsage.sessionsRemaining === 0
+                  ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                  : sessionUsage.sessionsRemaining <= 1
+                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+              }`}>
+                <p className="text-sm font-medium">
+                  {sessionUsage.sessionsRemaining === 0 ? (
+                    <>Monthly limit reached ({sessionUsage.monthlyLimit} sessions)</>
+                  ) : (
+                    <>{sessionUsage.sessionsRemaining} of {sessionUsage.monthlyLimit} sessions remaining this month</>
+                  )}
+                </p>
+              </div>
+            )}
 
             <div className="space-y-4">
               <div>
@@ -1109,11 +1144,11 @@ export default function MentoringDashboard() {
               </button>
               <button
                 onClick={handleBookSession}
-                disabled={bookingSession || !bookingForm.date || !bookingForm.time}
+                disabled={bookingSession || !bookingForm.date || !bookingForm.time || (sessionUsage?.sessionsRemaining === 0)}
                 className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-surface-400 text-white rounded-lg flex items-center justify-center gap-2"
               >
                 {bookingSession && <Loader2 className="w-4 h-4 animate-spin" />}
-                Book Session
+                {sessionUsage?.sessionsRemaining === 0 ? 'Limit Reached' : 'Book Session'}
               </button>
             </div>
           </div>
