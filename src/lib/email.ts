@@ -2278,3 +2278,109 @@ export async function sendSessionCancelledEmail({
     return { error: error instanceof Error ? error.message : String(error) };
   }
 }
+
+// ============================================================================
+// MENTOR STATUS REVOKED EMAIL
+// ============================================================================
+
+interface MentorStatusRevokedEmailParams {
+  to: string;
+  userName: string;
+  reason?: string;
+}
+
+export async function sendMentorStatusRevokedEmail({
+  to,
+  userName,
+  reason,
+}: MentorStatusRevokedEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping mentor revoked email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `Update on Your Mentor Status`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Mentor Status Update</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        We're writing to inform you that your mentor status on mentor.energy has been revoked.
+                      </p>
+                      ${reason ? `
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f3f4f6; border-left: 4px solid #6b7280; border-radius: 0 8px 8px 0; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #374151; font-size: 14px; margin: 0;"><strong>Reason:</strong> ${reason}</p>
+                          </td>
+                        </tr>
+                      </table>
+                      ` : ''}
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        Your profile will no longer be visible to students, and you will not be able to accept new mentoring requests.
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        If you believe this was a mistake or would like to discuss this decision, please contact our support team.
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="mailto:support@mentor.energy" style="display: inline-block; background-color: #6b7280; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Contact Support
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Thank you for your contributions to mentor.energy.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending mentor revoked email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Mentor revoked email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending mentor revoked email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}

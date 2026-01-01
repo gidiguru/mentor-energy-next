@@ -1,6 +1,6 @@
 import { db, learningModules, resources, users, mentorApplications, eq } from '@/lib/db';
 import Link from 'next/link';
-import { BookOpen, FileText, Users, TrendingUp, Image, UserCheck } from 'lucide-react';
+import { BookOpen, FileText, Users, TrendingUp, Image, UserCheck, UserCog } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -119,6 +119,13 @@ export default async function AdminDashboard() {
           >
             <UserCheck className="w-5 h-5 text-primary-600" />
             <span className="font-medium text-surface-900 dark:text-white">Mentor Applications</span>
+          </Link>
+          <Link
+            href="/admin/mentors"
+            className="flex items-center gap-3 p-4 rounded-lg bg-surface-50 dark:bg-surface-700 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors"
+          >
+            <UserCog className="w-5 h-5 text-primary-600" />
+            <span className="font-medium text-surface-900 dark:text-white">Manage Mentors</span>
           </Link>
           <Link
             href="/admin/seed"
