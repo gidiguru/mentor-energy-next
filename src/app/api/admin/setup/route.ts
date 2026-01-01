@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user exists in database
-    let dbUser = await database.query.users.findFirst({
+    const dbUser = await database.query.users.findFirst({
       where: eq(users.clerkId, userId),
     });
 

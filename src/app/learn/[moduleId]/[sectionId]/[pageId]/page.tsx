@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import DOMPurify from 'dompurify';
 import { ArrowLeft, ArrowRight, CheckCircle, Clock, Menu, X, BookOpen, HelpCircle, AlertCircle, Loader2, Download, File, FileText, Image, Music, Lock, FlaskConical } from 'lucide-react';
 import LessonComments from '@/components/LessonComments';
 import LessonRating from '@/components/LessonRating';
@@ -422,7 +423,7 @@ export default function LessonPage() {
                   <div className="card preset-filled-surface-100-900 p-6">
                     <h3 className="h4 mb-4">About this lesson</h3>
                     <article className="prose prose-sm md:prose-base dark:prose-invert max-w-none">
-                      <div dangerouslySetInnerHTML={{ __html: formatMarkdown(page.content) }} />
+                      <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formatMarkdown(page.content)) }} />
                     </article>
                   </div>
                 )}

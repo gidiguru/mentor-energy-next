@@ -1,6 +1,6 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { db, users, eq } from '@/lib/db';
+import { db, users, mentors, mentorApplications, eq } from '@/lib/db';
 
 // DELETE - Delete a user (admin only)
 export async function DELETE(
@@ -48,9 +48,10 @@ export async function DELETE(
       try {
         const clerk = await clerkClient();
         await clerk.users.deleteUser(userToDelete.clerkId);
-      } catch (clerkError: any) {
+      } catch (clerkError: unknown) {
         // If user doesn't exist in Clerk, continue with database deletion
-        if (clerkError?.status !== 404) {
+        const clerkErr = clerkError as { status?: number };
+        if (clerkErr?.status !== 404) {
           console.error('Error deleting user from Clerk:', clerkError);
           return NextResponse.json(
             { error: 'Failed to delete user from authentication provider' },
@@ -60,7 +61,14 @@ export async function DELETE(
       }
     }
 
-    // Delete from database
+    // Explicitly delete related records that might not cascade properly
+    // Delete mentor record if exists (this is critical to prevent mentor role persistence)
+    await database.delete(mentors).where(eq(mentors.userId, id));
+
+    // Delete mentor applications
+    await database.delete(mentorApplications).where(eq(mentorApplications.userId, id));
+
+    // Delete from users table (other records should cascade, but mentor is explicitly handled)
     await database.delete(users).where(eq(users.id, id));
 
     return NextResponse.json({ success: true, message: 'User deleted successfully' });

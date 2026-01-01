@@ -1,9 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db, users, eq } from '@/lib/db';
+import { sql } from 'drizzle-orm';
 
-// GET - List all users (admin only)
-export async function GET() {
+// GET - List all users (admin only) with pagination
+export async function GET(request: NextRequest) {
   const { userId } = await auth();
 
   if (!userId) {
@@ -22,12 +23,35 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Fetch all users
-    const allUsers = await database.query.users.findMany({
-      orderBy: (users, { desc }) => [desc(users.createdAt)],
-    });
+    // Parse pagination params
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')));
+    const offset = (page - 1) * limit;
 
-    return NextResponse.json({ users: allUsers });
+    // Fetch users with pagination
+    const [allUsers, countResult] = await Promise.all([
+      database.query.users.findMany({
+        orderBy: (users, { desc }) => [desc(users.createdAt)],
+        limit,
+        offset,
+      }),
+      database.select({ count: sql<number>`count(*)` }).from(users),
+    ]);
+
+    const totalCount = Number(countResult[0]?.count || 0);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return NextResponse.json({
+      users: allUsers,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        hasMore: page < totalPages,
+      },
+    });
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });

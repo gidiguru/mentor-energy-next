@@ -204,14 +204,20 @@ export default function InactivityHandler({
   if (!isSignedIn || !enabled || !showWarning) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-surface-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" role="presentation">
+      <div
+        className="bg-white dark:bg-surface-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="inactivity-title"
+        aria-describedby="inactivity-description"
+      >
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
             <AlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-surface-900 dark:text-white">
+            <h3 id="inactivity-title" className="text-lg font-semibold text-surface-900 dark:text-white">
               Session Timeout Warning
             </h3>
             <p className="text-sm text-surface-500">
@@ -220,7 +226,7 @@ export default function InactivityHandler({
           </div>
         </div>
 
-        <p className="text-surface-600 dark:text-surface-400 mb-4">
+        <p id="inactivity-description" className="text-surface-600 dark:text-surface-400 mb-4">
           For your security, you will be automatically logged out in:
         </p>
 

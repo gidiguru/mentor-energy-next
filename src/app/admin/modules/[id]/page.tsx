@@ -67,19 +67,19 @@ export default function EditModulePage() {
       const response = await fetch(`/api/admin/modules/${moduleUuid}`);
       if (response.ok) {
         const data = await response.json();
-        const module = data.module;
+        const moduleData = data.module;
         setFormData({
-          moduleId: module.moduleId || '',
-          title: module.title || '',
-          description: module.description || '',
-          duration: module.duration || '',
-          discipline: module.discipline || '',
-          difficultyLevel: module.difficultyLevel || 'beginner',
-          status: module.status || 'draft',
-          thumbnailUrl: module.thumbnailUrl || '',
-          learningObjectives: module.learningObjectives?.length ? module.learningObjectives : [''],
+          moduleId: moduleData.moduleId || '',
+          title: moduleData.title || '',
+          description: moduleData.description || '',
+          duration: moduleData.duration || '',
+          discipline: moduleData.discipline || '',
+          difficultyLevel: moduleData.difficultyLevel || 'beginner',
+          status: moduleData.status || 'draft',
+          thumbnailUrl: moduleData.thumbnailUrl || '',
+          learningObjectives: moduleData.learningObjectives?.length ? moduleData.learningObjectives : [''],
         });
-        setSections(module.sections || []);
+        setSections(moduleData.sections || []);
       } else {
         setError('Module not found');
       }

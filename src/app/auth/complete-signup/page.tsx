@@ -7,7 +7,7 @@ import { Loader2, ChevronLeft, GraduationCap, Briefcase } from 'lucide-react';
 
 // Step 1: Role selection
 const roles = [
-  { id: 'student', label: 'Student / Mentee', icon: '🎓', description: 'I want to learn and be mentored' },
+  { id: 'student', label: 'Mentee', icon: '🎓', description: 'I want to learn and be mentored' },
   { id: 'mentor', label: 'Mentor', icon: '👨‍🏫', description: 'I want to guide and mentor others' },
 ];
 

@@ -492,8 +492,8 @@ async function autoGenerateCertificate(
       return existingCert;
     }
 
-    // Generate certificate number
-    const certificateNumber = `CERT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    // Generate certificate number using cryptographically secure random
+    const certificateNumber = `CERT-${crypto.randomUUID().split('-').slice(0, 2).join('').toUpperCase()}`;
     const completedAt = new Date();
 
     // Create certificate

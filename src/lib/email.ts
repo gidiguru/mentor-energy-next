@@ -1560,10 +1560,10 @@ export async function sendMentorApplicationApprovedEmail({
                           <td style="padding: 20px;">
                             <p style="color: #059669; font-size: 16px; font-weight: bold; margin: 0 0 15px 0;">Getting Started as a Mentor:</p>
                             <ul style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
-                              <li>Your profile is now visible to students</li>
+                              <li>Your profile is now visible to mentees</li>
                               <li>Set your availability in your mentoring dashboard</li>
                               <li>Respond to connection requests promptly</li>
-                              <li>Schedule sessions with connected students</li>
+                              <li>Schedule sessions with connected mentees</li>
                             </ul>
                           </td>
                         </tr>
@@ -2346,7 +2346,7 @@ export async function sendMentorStatusRevokedEmail({
                       </table>
                       ` : ''}
                       <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-                        Your profile will no longer be visible to students, and you will not be able to accept new mentoring requests.
+                        Your profile will no longer be visible to mentees, and you will not be able to accept new mentoring requests.
                       </p>
                       <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
                         If you believe this was a mistake or would like to discuss this decision, please contact our support team.
@@ -2445,7 +2445,7 @@ export async function sendMentorStatusReinstatedEmail({
                           <td style="padding: 20px;">
                             <p style="color: #059669; font-size: 16px; font-weight: bold; margin: 0 0 15px 0;">What's Next:</p>
                             <ul style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
-                              <li>Your profile is now visible to students again</li>
+                              <li>Your profile is now visible to mentees again</li>
                               <li>Review and update your availability</li>
                               <li>Check for any pending connection requests</li>
                               <li>Continue making an impact!</li>

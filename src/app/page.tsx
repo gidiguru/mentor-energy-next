@@ -10,7 +10,7 @@ const stats = [
   { label: 'Active Mentors', value: '50+' },
   { label: 'Universities', value: '6' },
   { label: 'Success Rate', value: '85%' },
-  { label: 'Student Projects', value: '200+' },
+  { label: 'Mentee Projects', value: '200+' },
 ];
 
 const features = [
@@ -119,7 +119,7 @@ export default function Home() {
               <div className="text-center">
                 <span className="mb-4 block text-6xl">🎓🌍</span>
                 <p className="text-xl font-medium">
-                  Connecting Students with Industry Experts
+                  Connecting Mentees with Industry Experts
                 </p>
               </div>
             </div>
@@ -209,7 +209,7 @@ export default function Home() {
           ) : (
             <>
               <Link href="/signup?role=student" className="btn btn-primary">
-                Sign Up as Student
+                Sign Up as Mentee
               </Link>
               <Link href="/signup?role=mentor" className="btn btn-ghost">
                 Become a Mentor

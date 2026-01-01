@@ -1,15 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useDrawerStore } from '@/lib/stores/drawer';
+import { useUserRole } from '@/lib/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import {
   SignOutButton,
   SignedIn,
   SignedOut,
-  useUser,
 } from '@clerk/nextjs';
 
 const baseNavItems = [
@@ -25,29 +24,7 @@ const baseNavItems = [
 export function MobileNav() {
   const pathname = usePathname();
   const { close } = useDrawerStore();
-  const { isSignedIn } = useUser();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isMentor, setIsMentor] = useState(false);
-
-  // Check if user is admin or mentor
-  useEffect(() => {
-    if (isSignedIn) {
-      // Check admin status
-      fetch('/api/user/role')
-        .then(res => res.json())
-        .then(data => setIsAdmin(data.isAdmin))
-        .catch(() => setIsAdmin(false));
-
-      // Check mentor status
-      fetch('/api/user/profile')
-        .then(res => res.json())
-        .then(data => setIsMentor(data.isMentor || false))
-        .catch(() => setIsMentor(false));
-    } else {
-      setIsAdmin(false);
-      setIsMentor(false);
-    }
-  }, [isSignedIn]);
+  const { isAdmin, isMentor } = useUserRole();
 
   // Build nav items based on user role
   let navItems = [...baseNavItems];
