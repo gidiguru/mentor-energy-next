@@ -40,6 +40,7 @@ export default function MentorsPage() {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [showConnectModal, setShowConnectModal] = useState<Mentor | null>(null);
   const [connectMessage, setConnectMessage] = useState('');
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMentors();
@@ -92,6 +93,7 @@ export default function MentorsPage() {
     if (!showConnectModal) return;
 
     setConnecting(showConnectModal.id);
+    setConnectionError(null);
     try {
       const res = await fetch('/api/mentor/connections', {
         method: 'POST',
@@ -102,13 +104,18 @@ export default function MentorsPage() {
         }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
         await fetchConnections();
         setShowConnectModal(null);
         setConnectMessage('');
+      } else {
+        setConnectionError(data.error || 'Failed to send connection request');
       }
     } catch (error) {
       console.error('Error sending connection:', error);
+      setConnectionError('Network error - please try again');
     } finally {
       setConnecting(null);
     }
@@ -333,11 +340,18 @@ export default function MentorsPage() {
               className="w-full px-4 py-3 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent mb-4"
             />
 
+            {connectionError && (
+              <div className="mb-4 p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm">
+                {connectionError}
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button
                 onClick={() => {
                   setShowConnectModal(null);
                   setConnectMessage('');
+                  setConnectionError(null);
                 }}
                 className="flex-1 px-4 py-2 rounded-lg border border-surface-300 dark:border-surface-600 text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700"
               >
