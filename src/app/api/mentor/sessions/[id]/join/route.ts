@@ -76,7 +76,11 @@ export async function GET(
 
     // Check if room exists, create if it doesn't (handles sessions created before Daily integration)
     let meetingUrl = session.meetingUrl;
+    console.log(`Checking for room: ${roomName}, existing meetingUrl: ${meetingUrl}`);
+    console.log(`DAILY_API_KEY configured: ${!!process.env.DAILY_API_KEY}`);
+
     const existingRoom = await getDailyRoom(roomName);
+    console.log(`Existing room found: ${!!existingRoom}`);
 
     if (!existingRoom) {
       console.log(`Room ${roomName} not found, creating...`);
