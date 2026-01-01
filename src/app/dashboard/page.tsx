@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Flame, Trophy, Medal, BookOpen, Award, TrendingUp, Bookmark, Clock, ChevronRight, GraduationCap, BarChart3, FileText, Download, Users } from 'lucide-react';
 
@@ -87,6 +88,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
+  const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -132,11 +134,17 @@ export default function DashboardPage() {
           fetch('/api/certificates'),
         ]);
 
-        // Process profile
+        // Process profile and check for mentor redirect
         if (profileRes.ok) {
           const data = await profileRes.json();
           setProfile(data.profile);
           setIsMentor(data.isMentor || false);
+
+          // Redirect mentors to mentoring dashboard
+          if (data.isMentor) {
+            router.replace('/dashboard/mentoring');
+            return;
+          }
         }
 
         // Process enrolled courses with progress
