@@ -30,6 +30,14 @@ export async function GET() {
 
     const isMentor = user.role === 'mentor' || !!mentorRecord;
 
+    // Debug logging
+    console.log('Mentor check:', {
+      userId: user.id,
+      userRole: user.role,
+      hasMentorRecord: !!mentorRecord,
+      isMentor
+    });
+
     // Get connections as student
     const studentConnections = await database
       .select({
