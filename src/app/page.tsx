@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { useUser, SignUpButton } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { AIChatPreview } from '@/components';
 
@@ -105,9 +105,9 @@ export default function Home() {
                   Go to Dashboard
                 </Link>
               ) : (
-                <SignUpButton mode="modal" forceRedirectUrl="/auth/complete-signup">
-                  <button className="btn btn-primary">Get Started</button>
-                </SignUpButton>
+                <Link href="/signup" className="btn btn-primary">
+                  Get Started
+                </Link>
               )}
               <Link href="/mentors" className="btn btn-ghost">
                 Browse Mentors
@@ -208,12 +208,12 @@ export default function Home() {
             </Link>
           ) : (
             <>
-              <SignUpButton mode="modal" forceRedirectUrl="/auth/complete-signup?role=student">
-                <button className="btn btn-primary">Sign Up as Student</button>
-              </SignUpButton>
-              <SignUpButton mode="modal" forceRedirectUrl="/auth/complete-signup?role=mentor">
-                <button className="btn btn-ghost">Become a Mentor</button>
-              </SignUpButton>
+              <Link href="/signup?role=student" className="btn btn-primary">
+                Sign Up as Student
+              </Link>
+              <Link href="/signup?role=mentor" className="btn btn-ghost">
+                Become a Mentor
+              </Link>
             </>
           )}
         </div>

@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { useDrawerStore } from '@/lib/stores/drawer';
 import { cn } from '@/lib/utils';
 import {
-  SignInButton,
   SignOutButton,
   SignedIn,
   SignedOut,
@@ -103,14 +102,13 @@ export function MobileNav() {
           </SignOutButton>
         </SignedIn>
         <SignedOut>
-          <SignInButton mode="modal">
-            <button
-              onClick={close}
-              className="btn btn-primary w-full"
-            >
-              Sign In
-            </button>
-          </SignInButton>
+          <Link
+            href="/auth"
+            onClick={close}
+            className="btn btn-primary w-full"
+          >
+            Sign In
+          </Link>
         </SignedOut>
       </div>
     </div>

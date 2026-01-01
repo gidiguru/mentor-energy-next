@@ -1,16 +1,23 @@
 'use client';
 
 import { useSignUp } from '@clerk/nextjs';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Mail, Users, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 type AuthMethod = 'choice' | 'social' | 'email';
 
-export default function SignUpPage() {
+function SignUpPageContent() {
   const [authMethod, setAuthMethod] = useState<AuthMethod>('choice');
   const { signUp, isLoaded } = useSignUp();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get role from URL (e.g., /signup?role=student or /signup?role=mentor)
+  const role = searchParams.get('role');
+  const completeSignupUrl = role
+    ? `/auth/complete-signup?role=${role}`
+    : '/auth/complete-signup';
 
   // Email form state
   const [firstName, setFirstName] = useState('');
@@ -29,7 +36,7 @@ export default function SignUpPage() {
       await signUp.authenticateWithRedirect({
         strategy: provider,
         redirectUrl: '/auth/sso-callback',
-        redirectUrlComplete: '/auth/complete-signup',
+        redirectUrlComplete: completeSignupUrl,
       });
     } catch (err: any) {
       setError(err.errors?.[0]?.message || 'Something went wrong');
@@ -71,7 +78,7 @@ export default function SignUpPage() {
       const result = await signUp.attemptEmailAddressVerification({ code });
 
       if (result.status === 'complete') {
-        router.push('/auth/complete-signup');
+        router.push(completeSignupUrl);
       }
     } catch (err: any) {
       setError(err.errors?.[0]?.message || 'Invalid verification code');
@@ -367,5 +374,13 @@ export default function SignUpPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[80vh] items-center justify-center">Loading...</div>}>
+      <SignUpPageContent />
+    </Suspense>
   );
 }

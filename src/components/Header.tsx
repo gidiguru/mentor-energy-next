@@ -8,7 +8,6 @@ import { useDrawerStore } from '@/lib/stores/drawer';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import {
-  SignInButton,
   SignOutButton,
   UserButton,
   SignedIn,
@@ -164,11 +163,9 @@ export function Header() {
             </SignOutButton>
           </SignedIn>
           <SignedOut>
-            <SignInButton mode="modal">
-              <button className="btn btn-primary hidden md:inline-flex">
-                Sign In
-              </button>
-            </SignInButton>
+            <Link href="/auth" className="btn btn-primary hidden md:inline-flex">
+              Sign In
+            </Link>
           </SignedOut>
         </div>
       </div>
