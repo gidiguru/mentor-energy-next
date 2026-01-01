@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Users, Calendar, MessageSquare, Clock, CheckCircle, XCircle,
-  Loader2, UserPlus, Video, ArrowRight, Star, Plus, Trash2, Settings
+  Loader2, UserPlus, Video, ArrowRight, Star, Plus, Trash2, Settings, X
 } from 'lucide-react';
 
 interface Connection {
@@ -92,6 +92,12 @@ export default function MentoringDashboard() {
   const [showAddSlot, setShowAddSlot] = useState(false);
   const [newSlot, setNewSlot] = useState({ dayOfWeek: 1, startTime: '09:00', endTime: '17:00' });
   const [savingSlot, setSavingSlot] = useState(false);
+
+  // Session booking state
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingMentor, setBookingMentor] = useState<{ id: string; name: string } | null>(null);
+  const [bookingForm, setBookingForm] = useState({ date: '', time: '', duration: 60, topic: '' });
+  const [bookingSession, setBookingSession] = useState(false);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -218,6 +224,55 @@ export default function MentoringDashboard() {
       }
     } catch (error) {
       console.error('Error rating session:', error);
+    }
+  };
+
+  const openBookingModal = (mentorId: string, mentorName: string) => {
+    setBookingMentor({ id: mentorId, name: mentorName });
+    // Set default date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setBookingForm({
+      date: tomorrow.toISOString().split('T')[0],
+      time: '10:00',
+      duration: 60,
+      topic: '',
+    });
+    setShowBookingModal(true);
+  };
+
+  const handleBookSession = async () => {
+    if (!bookingMentor || !bookingForm.date || !bookingForm.time) return;
+
+    setBookingSession(true);
+    try {
+      const scheduledAt = new Date(`${bookingForm.date}T${bookingForm.time}`);
+
+      const res = await fetch('/api/mentor/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mentorId: bookingMentor.id,
+          scheduledAt: scheduledAt.toISOString(),
+          durationMinutes: bookingForm.duration,
+          topic: bookingForm.topic || null,
+        }),
+      });
+
+      if (res.ok) {
+        await fetchData();
+        setShowBookingModal(false);
+        setBookingMentor(null);
+        setActiveTab('sessions');
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to book session');
+      }
+    } catch (error) {
+      console.error('Error booking session:', error);
+      alert('Failed to book session');
+    } finally {
+      setBookingSession(false);
     }
   };
 
@@ -506,10 +561,15 @@ export default function MentoringDashboard() {
                             <MessageSquare className="w-4 h-4" />
                             <span className="hidden xs:inline">Message</span>
                           </button>
-                          <button className="flex-1 py-2 px-2 sm:px-4 rounded-lg bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center gap-1 sm:gap-2 text-sm">
-                            <Calendar className="w-4 h-4" />
-                            <span className="hidden xs:inline">Schedule</span>
-                          </button>
+                          {!isMentor && conn.mentor && (
+                            <button
+                              onClick={() => openBookingModal(conn.mentor!.id, conn.mentor!.name)}
+                              className="flex-1 py-2 px-2 sm:px-4 rounded-lg bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center gap-1 sm:gap-2 text-sm"
+                            >
+                              <Calendar className="w-4 h-4" />
+                              <span className="hidden xs:inline">Schedule</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -959,6 +1019,103 @@ export default function MentoringDashboard() {
           </div>
         )}
       </div>
+
+      {/* Session Booking Modal */}
+      {showBookingModal && bookingMentor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowBookingModal(false)}
+          />
+          <div className="relative bg-white dark:bg-surface-800 rounded-xl p-6 w-full max-w-md shadow-xl">
+            <button
+              onClick={() => setShowBookingModal(false)}
+              className="absolute top-4 right-4 p-1 text-surface-400 hover:text-surface-600 dark:hover:text-surface-300"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-surface-900 dark:text-white mb-2">
+              Book a Session
+            </h2>
+            <p className="text-surface-600 dark:text-surface-400 mb-6">
+              Schedule a mentoring session with {bookingMentor.name}
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  value={bookingForm.date}
+                  onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                  Time
+                </label>
+                <input
+                  type="time"
+                  value={bookingForm.time}
+                  onChange={(e) => setBookingForm({ ...bookingForm, time: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                  Duration
+                </label>
+                <select
+                  value={bookingForm.duration}
+                  onChange={(e) => setBookingForm({ ...bookingForm, duration: parseInt(e.target.value) })}
+                  className="w-full px-3 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white"
+                >
+                  <option value={30}>30 minutes</option>
+                  <option value={45}>45 minutes</option>
+                  <option value={60}>1 hour</option>
+                  <option value={90}>1.5 hours</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                  Topic (optional)
+                </label>
+                <input
+                  type="text"
+                  value={bookingForm.topic}
+                  onChange={(e) => setBookingForm({ ...bookingForm, topic: e.target.value })}
+                  placeholder="What would you like to discuss?"
+                  className="w-full px-3 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white placeholder:text-surface-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowBookingModal(false)}
+                className="flex-1 px-4 py-2 border border-surface-300 dark:border-surface-600 rounded-lg text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBookSession}
+                disabled={bookingSession || !bookingForm.date || !bookingForm.time}
+                className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-surface-400 text-white rounded-lg flex items-center justify-center gap-2"
+              >
+                {bookingSession && <Loader2 className="w-4 h-4 animate-spin" />}
+                Book Session
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
