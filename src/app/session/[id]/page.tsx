@@ -244,7 +244,7 @@ export default function SessionVideoPage() {
 
       {/* Video Container */}
       <div className="flex-1 p-4">
-        {!isInCall ? (
+        {!isInCall && (
           <div className="h-full flex items-center justify-center">
             <div className="bg-surface-800 rounded-xl p-8 max-w-md text-center">
               <Video className="w-16 h-16 text-primary-500 mx-auto mb-4" />
@@ -264,16 +264,14 @@ export default function SessionVideoPage() {
               </p>
             </div>
           </div>
-        ) : (
-          <div
-            ref={containerRef}
-            className="h-full w-full rounded-xl overflow-hidden bg-black"
-            style={{ minHeight: 'calc(100vh - 140px)' }}
-          />
         )}
 
-        {/* Hidden container for Daily.co frame before joining */}
-        {!isInCall && <div ref={containerRef} className="hidden" />}
+        {/* Daily.co video container - always rendered to maintain ref */}
+        <div
+          ref={containerRef}
+          className={`h-full w-full rounded-xl overflow-hidden bg-black ${!isInCall ? 'hidden' : ''}`}
+          style={{ minHeight: 'calc(100vh - 140px)' }}
+        />
       </div>
     </div>
   );
