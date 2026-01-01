@@ -33,6 +33,7 @@ export default function SessionVideoPage() {
   const [callFrame, setCallFrame] = useState<DailyCall | null>(null);
   const [isInCall, setIsInCall] = useState(false);
   const [participants, setParticipants] = useState(0);
+  const [isJoining, setIsJoining] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -68,11 +69,19 @@ export default function SessionVideoPage() {
 
   // Initialize Daily.co call
   const joinCall = useCallback(async () => {
+    // Prevent double-joining
+    if (isJoining || callFrame) {
+      console.log('Already joining or in call, skipping...');
+      return;
+    }
+
     if (!sessionInfo?.meetingUrl || !containerRef.current) {
       console.error('Missing meetingUrl or container ref');
       setError('Video room not configured. Please contact support.');
       return;
     }
+
+    setIsJoining(true);
 
     console.log('Joining call with:', {
       meetingUrl: sessionInfo.meetingUrl,
@@ -136,8 +145,9 @@ export default function SessionVideoPage() {
       console.error('Failed to join call:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(`Failed to start video call: ${errorMessage}`);
+      setIsJoining(false);
     }
-  }, [sessionInfo, router]);
+  }, [sessionInfo, router, isJoining, callFrame]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -267,10 +277,20 @@ export default function SessionVideoPage() {
               </p>
               <button
                 onClick={joinCall}
-                className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold flex items-center justify-center gap-2"
+                disabled={isJoining}
+                className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed text-white rounded-lg font-semibold flex items-center justify-center gap-2"
               >
-                <Video className="w-5 h-5" />
-                Join Video Call
+                {isJoining ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <Video className="w-5 h-5" />
+                    Join Video Call
+                  </>
+                )}
               </button>
               <p className="text-xs text-surface-500 mt-4">
                 Make sure your camera and microphone are enabled
