@@ -214,6 +214,12 @@ export default function ChatPage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="container mx-auto max-w-2xl space-y-4">
+          {/* Debug info - remove after fixing */}
+          <div className="text-xs bg-yellow-100 dark:bg-yellow-900 p-2 rounded text-yellow-800 dark:text-yellow-200">
+            <p>Your ID: {currentUserId || 'not loaded'}</p>
+            {messages[0] && <p>First msg sender: {messages[0].sender.id}</p>}
+            {messages[0] && <p>Match: {String(messages[0]?.sender?.id === currentUserId)}</p>}
+          </div>
           {messages.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-surface-500 dark:text-surface-400">
