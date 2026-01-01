@@ -2,7 +2,7 @@
 
 import { SignIn } from '@clerk/nextjs';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { Clock, ShieldCheck } from 'lucide-react';
 
 function TimeoutBanner() {
@@ -28,7 +28,50 @@ function TimeoutBanner() {
   );
 }
 
+function VerificationNote({ show }: { show: boolean }) {
+  if (!show) return null;
+
+  return (
+    <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg animate-fade-in">
+      <div className="flex items-start gap-3">
+        <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="font-medium text-blue-800 dark:text-blue-200">
+            Verification Required
+          </p>
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            Please complete the "Verify you are human" checkbox at the bottom of the form before clicking Continue.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AuthPage() {
+  const [showVerificationNote, setShowVerificationNote] = useState(false);
+
+  useEffect(() => {
+    // Listen for clicks on Clerk buttons
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // Check if clicked element is a Clerk button (social or submit)
+      const isClerkButton =
+        target.closest('.cl-socialButtonsBlockButton') ||
+        target.closest('.cl-formButtonPrimary') ||
+        target.closest('button[data-localization-key]') ||
+        target.closest('.cl-socialButtonsIconButton');
+
+      if (isClerkButton) {
+        setShowVerificationNote(true);
+      }
+    };
+
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
+
   return (
     <div className="flex min-h-[80vh] flex-col items-center justify-center p-4 py-8">
       <div className="w-full max-w-md">
@@ -36,20 +79,8 @@ export default function AuthPage() {
           <TimeoutBanner />
         </Suspense>
 
-        {/* Helper text for Cloudflare verification */}
-        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <div className="flex items-start gap-3">
-            <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium text-blue-800 dark:text-blue-200">
-                Verification Required
-              </p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                Please complete the "Verify you are human" checkbox at the bottom of the form before clicking Continue.
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Helper text for Cloudflare verification - shows after button click */}
+        <VerificationNote show={showVerificationNote} />
 
         <SignIn
           appearance={{
