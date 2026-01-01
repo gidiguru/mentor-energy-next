@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentors, mentorConnections, eq, and } from '@/lib/db';
+import { sendConnectionRequestEmail } from '@/lib/email';
 
 // GET - List connections for current user (as student or mentor)
 export async function GET() {
@@ -135,18 +136,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Check mentor exists and is available
+    // Check mentor exists and is available, include user info for email
     const mentor = await database.query.mentors.findFirst({
       where: and(
         eq(mentors.id, mentorId),
         eq(mentors.isVerified, true),
         eq(mentors.isAvailable, true)
       ),
+      with: {
+        user: true,
+      },
     });
 
     if (!mentor) {
       return NextResponse.json({ error: 'Mentor not found or unavailable' }, { status: 404 });
     }
+
+    const mentorUser = mentor.user;
 
     // Check if not requesting self
     if (mentor.userId === user.id) {
@@ -188,6 +194,19 @@ export async function POST(request: NextRequest) {
         },
       })
       .returning();
+
+    // Send email notification to mentor (don't await - send in background)
+    if (mentorUser?.email) {
+      const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'A student';
+      const mentorName = `${mentorUser.firstName || ''} ${mentorUser.lastName || ''}`.trim() || 'Mentor';
+
+      sendConnectionRequestEmail({
+        to: mentorUser.email,
+        mentorName,
+        studentName,
+        studentMessage: message || undefined,
+      }).catch(err => console.error('Error sending connection request email:', err));
+    }
 
     return NextResponse.json({
       success: true,
