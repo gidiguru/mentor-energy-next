@@ -1,5 +1,11 @@
 import { Resend } from 'resend';
 
+// Helper to get app URL without trailing slash
+function getAppUrl(): string {
+  const url = process.env.NEXT_PUBLIC_APP_URL || 'https://mentor.energy';
+  return url.replace(/\/+$/, ''); // Remove trailing slashes
+}
+
 // Lazy initialization to avoid build-time errors
 let resend: Resend | null = null;
 
@@ -122,7 +128,7 @@ export async function sendCertificateEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/dashboard/certifications"
+                            <a href="${getAppUrl()}/dashboard/certifications"
                                style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               View My Certificates
                             </a>
@@ -240,7 +246,7 @@ export async function sendWelcomeEmail({ to, userName }: WelcomeEmailParams) {
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/learn" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/learn" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Start Learning
                             </a>
                           </td>
@@ -346,7 +352,7 @@ export async function sendEnrollmentEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/learn/${moduleId}" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/learn/${moduleId}" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Start Course
                             </a>
                           </td>
@@ -455,7 +461,7 @@ export async function sendAchievementEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/dashboard" style="display: inline-block; background-color: #f59e0b; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/dashboard" style="display: inline-block; background-color: #f59e0b; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               View All Achievements
                             </a>
                           </td>
@@ -568,7 +574,7 @@ export async function sendStreakMilestoneEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/learn" style="display: inline-block; background-color: #ea580c; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/learn" style="display: inline-block; background-color: #ea580c; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Continue Learning
                             </a>
                           </td>
@@ -786,7 +792,7 @@ export async function sendSessionFollowUpEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/dashboard" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/dashboard" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Rate Your Session
                             </a>
                           </td>
@@ -921,7 +927,7 @@ export async function sendWeeklyDigestEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/learn" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/learn" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Continue Learning
                             </a>
                           </td>
@@ -1029,7 +1035,7 @@ export async function sendInactivityEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/learn" style="display: inline-block; background-color: #3b82f6; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/learn" style="display: inline-block; background-color: #3b82f6; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Resume Learning
                             </a>
                           </td>
@@ -1133,7 +1139,7 @@ export async function sendNewCourseEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/learn/${moduleId}" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/learn/${moduleId}" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Enroll Now
                             </a>
                           </td>
@@ -1462,7 +1468,7 @@ export async function sendAdminNewMentorApplicationEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
                         <tr>
                           <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 8px;">
-                            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://mentor.energy'}/admin/mentor-applications" style="display: inline-block; padding: 16px 32px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">
+                            <a href="${getAppUrl()}/admin/mentor-applications" style="display: inline-block; padding: 16px 32px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">
                               Review Application
                             </a>
                           </td>
@@ -1565,7 +1571,7 @@ export async function sendMentorApplicationApprovedEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/dashboard/mentoring" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/dashboard/mentoring" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Go to Mentor Dashboard
                             </a>
                           </td>
@@ -1674,7 +1680,7 @@ export async function sendMentorApplicationRejectedEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/learn" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/learn" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Continue Learning
                             </a>
                           </td>
@@ -1781,7 +1787,7 @@ export async function sendConnectionRequestEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/dashboard/mentoring" style="display: inline-block; background-color: #3b82f6; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/dashboard/mentoring" style="display: inline-block; background-color: #3b82f6; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               View Request
                             </a>
                           </td>
@@ -1897,7 +1903,7 @@ export async function sendConnectionAcceptedEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/dashboard/mentoring" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/dashboard/mentoring" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Schedule a Session
                             </a>
                           </td>
@@ -1991,7 +1997,7 @@ export async function sendConnectionDeclinedEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/mentors" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/mentors" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Find Other Mentors
                             </a>
                           </td>
@@ -2123,7 +2129,7 @@ export async function sendSessionBookedEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/dashboard/mentoring" style="display: inline-block; background-color: #7c3aed; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/dashboard/mentoring" style="display: inline-block; background-color: #7c3aed; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               View Session Details
                             </a>
                           </td>
@@ -2242,7 +2248,7 @@ export async function sendSessionCancelledEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="https://mentor.energy/dashboard/mentoring" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/dashboard/mentoring" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Reschedule Session
                             </a>
                           </td>
@@ -2450,7 +2456,7 @@ export async function sendMentorStatusReinstatedEmail({
                       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                           <td align="center">
-                            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://mentor.energy'}/dashboard/mentoring" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                            <a href="${getAppUrl()}/dashboard/mentoring" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                               Go to Mentor Dashboard
                             </a>
                           </td>
