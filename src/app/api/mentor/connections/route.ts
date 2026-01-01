@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentors, mentorConnections, eq, and } from '@/lib/db';
 import { sendConnectionRequestEmail } from '@/lib/email';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET - List connections for current user (as student or mentor)
 export async function GET() {
   const { userId: clerkId } = await auth();

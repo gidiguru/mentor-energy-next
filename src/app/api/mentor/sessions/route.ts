@@ -4,6 +4,10 @@ import { db, users, mentors, mentorConnections, mentorshipSessions, eq, and, or,
 import { sendSessionBookedEmail } from '@/lib/email';
 import { createDailyRoom, generateRoomName } from '@/lib/daily';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Session limits configuration
 const SESSION_LIMITS = {
   FREE_MONTHLY_SESSIONS: 4, // Max sessions per month for free users

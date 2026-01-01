@@ -325,13 +325,37 @@ export default function MentoringDashboard() {
     <div className="min-h-screen bg-surface-50 dark:bg-surface-900 py-8">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-surface-900 dark:text-white mb-2">
-            Mentoring Dashboard
-          </h1>
-          <p className="text-surface-600 dark:text-surface-400">
-            {isMentor ? 'Manage your mentees and sessions' : 'Track your mentorship connections'}
-          </p>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-surface-900 dark:text-white mb-2">
+              Mentoring Dashboard
+            </h1>
+            <p className="text-surface-600 dark:text-surface-400">
+              {isMentor ? 'Manage your mentees and sessions' : 'Track your mentorship connections'}
+            </p>
+          </div>
+          {!isMentor && (
+            <Link
+              href="/mentors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+              Find a Mentor
+            </Link>
+          )}
+        </div>
+
+        {/* Debug info */}
+        <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg text-xs text-yellow-800 dark:text-yellow-200">
+          <p><strong>Mode:</strong> {isMentor ? 'Mentor' : 'Student/Mentee'}</p>
+          <p><strong>Connections as student:</strong> {connections.asStudent.length}</p>
+          <p><strong>Connections as mentor:</strong> {connections.asMentor.length}</p>
+          {connections.asStudent.length > 0 && (
+            <p><strong>My mentors:</strong> {connections.asStudent.map(c => c.mentor?.name).join(', ')}</p>
+          )}
+          {connections.asMentor.length > 0 && (
+            <p><strong>My mentees:</strong> {connections.asMentor.map(c => c.student?.name).join(', ')}</p>
+          )}
         </div>
 
         {/* Stats Cards */}
