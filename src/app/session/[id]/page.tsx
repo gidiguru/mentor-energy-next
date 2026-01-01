@@ -68,7 +68,17 @@ export default function SessionVideoPage() {
 
   // Initialize Daily.co call
   const joinCall = useCallback(async () => {
-    if (!sessionInfo?.meetingUrl || !containerRef.current) return;
+    if (!sessionInfo?.meetingUrl || !containerRef.current) {
+      console.error('Missing meetingUrl or container ref');
+      setError('Video room not configured. Please contact support.');
+      return;
+    }
+
+    console.log('Joining call with:', {
+      meetingUrl: sessionInfo.meetingUrl,
+      hasToken: !!sessionInfo.token,
+      userName: sessionInfo.userName,
+    });
 
     try {
       // Dynamically import Daily.co
@@ -104,8 +114,9 @@ export default function SessionVideoPage() {
       });
 
       frame.on('error', (e) => {
-        console.error('Daily error:', e);
-        setError('Video call error. Please try again.');
+        console.error('Daily error event:', e);
+        const errorMessage = e?.error?.message || e?.errorMsg || 'Unknown error';
+        setError(`Video call error: ${errorMessage}`);
       });
 
       // Join the call
@@ -118,11 +129,13 @@ export default function SessionVideoPage() {
         joinOptions.token = sessionInfo.token;
       }
 
+      console.log('Calling frame.join with options:', joinOptions);
       await frame.join(joinOptions);
       setCallFrame(frame);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to join call:', err);
-      setError('Failed to start video call. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(`Failed to start video call: ${errorMessage}`);
     }
   }, [sessionInfo, router]);
 
