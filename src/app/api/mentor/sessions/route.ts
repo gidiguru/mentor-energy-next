@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentors, mentorConnections, mentorshipSessions, eq, and, or, desc } from '@/lib/db';
+import { sendSessionBookedEmail } from '@/lib/email';
 
 // GET - List sessions for current user
 export async function GET() {
@@ -194,6 +195,39 @@ export async function POST(request: NextRequest) {
         topic: topic || null,
       })
       .returning();
+
+    // Get mentor user info for email
+    const mentorUser = await database.query.users.findFirst({
+      where: eq(users.id, mentor.userId),
+    });
+
+    const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Student';
+    const mentorName = `${mentorUser?.firstName || ''} ${mentorUser?.lastName || ''}`.trim() || 'Mentor';
+    const sessionDate = new Date(scheduledAt);
+
+    // Send email to student
+    if (user.email) {
+      await sendSessionBookedEmail({
+        to: user.email,
+        recipientName: studentName,
+        otherPartyName: mentorName,
+        isForMentor: false,
+        sessionDate,
+        sessionTopic: topic,
+      });
+    }
+
+    // Send email to mentor
+    if (mentorUser?.email) {
+      await sendSessionBookedEmail({
+        to: mentorUser.email,
+        recipientName: mentorName,
+        otherPartyName: studentName,
+        isForMentor: true,
+        sessionDate,
+        sessionTopic: topic,
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentors, mentorConnections, eq, and } from '@/lib/db';
+import { sendConnectionAcceptedEmail, sendConnectionDeclinedEmail } from '@/lib/email';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -71,6 +72,33 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       })
       .where(eq(mentorConnections.id, id))
       .returning();
+
+    // Send email to student for accept/decline
+    if (status === 'accepted' || status === 'declined') {
+      const student = await database.query.users.findFirst({
+        where: eq(users.id, connection.studentId),
+      });
+
+      const mentorName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Your mentor';
+      const studentName = `${student?.firstName || ''} ${student?.lastName || ''}`.trim() || 'Student';
+
+      if (student?.email) {
+        if (status === 'accepted') {
+          await sendConnectionAcceptedEmail({
+            to: student.email,
+            studentName,
+            mentorName,
+            mentorResponse: response,
+          });
+        } else {
+          await sendConnectionDeclinedEmail({
+            to: student.email,
+            studentName,
+            mentorName,
+          });
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -1288,3 +1288,884 @@ export async function sendCommentReplyEmail({
     return { error: error instanceof Error ? error.message : String(error) };
   }
 }
+
+// ============================================================================
+// MENTOR APPLICATION SUBMITTED EMAIL
+// ============================================================================
+
+interface MentorApplicationSubmittedEmailParams {
+  to: string;
+  userName: string;
+  expertise: string[];
+}
+
+export async function sendMentorApplicationSubmittedEmail({
+  to,
+  userName,
+  expertise,
+}: MentorApplicationSubmittedEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping mentor application email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `Your Mentor Application Has Been Received`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Application Received!</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        Thank you for applying to become a mentor on mentor.energy! We've received your application and our team will review it shortly.
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f3ff; border-left: 4px solid #7c3aed; border-radius: 0 8px 8px 0; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #5b21b6; font-size: 14px; text-transform: uppercase; margin: 0 0 10px 0;">Your Expertise Areas</p>
+                            <p style="color: #374151; font-size: 16px; margin: 0;">${expertise.join(', ')}</p>
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        <strong>What happens next?</strong>
+                      </p>
+                      <ul style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0 0 30px 0;">
+                        <li>Our team will review your application within 2-3 business days</li>
+                        <li>We may reach out if we need additional information</li>
+                        <li>You'll receive an email once a decision has been made</li>
+                      </ul>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+                        Thank you for your interest in giving back to the energy sector community!
+                      </p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Questions? Reply to this email and we'll be happy to help.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending mentor application email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Mentor application email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending mentor application email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// MENTOR APPLICATION APPROVED EMAIL
+// ============================================================================
+
+interface MentorApplicationApprovedEmailParams {
+  to: string;
+  userName: string;
+}
+
+export async function sendMentorApplicationApprovedEmail({
+  to,
+  userName,
+}: MentorApplicationApprovedEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping mentor approval email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `Congratulations! You're Now a Mentor`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 40px; text-align: center;">
+                      <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Welcome to the Mentor Team!</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        Great news! Your mentor application has been <strong style="color: #059669;">approved</strong>. You're now officially a mentor on mentor.energy!
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f0fdf4; border-radius: 8px; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #059669; font-size: 16px; font-weight: bold; margin: 0 0 15px 0;">Getting Started as a Mentor:</p>
+                            <ul style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                              <li>Your profile is now visible to students</li>
+                              <li>Set your availability in your mentoring dashboard</li>
+                              <li>Respond to connection requests promptly</li>
+                              <li>Schedule sessions with connected students</li>
+                            </ul>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/dashboard/mentoring" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Go to Mentor Dashboard
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Thank you for helping shape the future of Nigeria's energy sector!
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending mentor approval email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Mentor approval email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending mentor approval email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// MENTOR APPLICATION REJECTED EMAIL
+// ============================================================================
+
+interface MentorApplicationRejectedEmailParams {
+  to: string;
+  userName: string;
+  reason?: string;
+}
+
+export async function sendMentorApplicationRejectedEmail({
+  to,
+  userName,
+  reason,
+}: MentorApplicationRejectedEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping mentor rejection email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `Update on Your Mentor Application`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Application Update</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        Thank you for your interest in becoming a mentor on mentor.energy. After careful review, we're unable to approve your application at this time.
+                      </p>
+                      ${reason ? `
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f3f4f6; border-left: 4px solid #6b7280; border-radius: 0 8px 8px 0; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #4b5563; font-size: 14px; margin: 0 0 5px 0;">Feedback:</p>
+                            <p style="color: #374151; font-size: 14px; margin: 0;">${reason}</p>
+                          </td>
+                        </tr>
+                      </table>
+                      ` : ''}
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        This doesn't mean the door is closed! We encourage you to:
+                      </p>
+                      <ul style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0 0 30px 0;">
+                        <li>Continue building your expertise in the energy sector</li>
+                        <li>Engage with the community through our learning platform</li>
+                        <li>Reapply in the future when you have additional experience</li>
+                      </ul>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/learn" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Continue Learning
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Questions? Reply to this email and we'll be happy to discuss.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending mentor rejection email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Mentor rejection email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending mentor rejection email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// CONNECTION REQUEST RECEIVED EMAIL (to mentor)
+// ============================================================================
+
+interface ConnectionRequestEmailParams {
+  to: string;
+  mentorName: string;
+  studentName: string;
+  studentMessage?: string;
+}
+
+export async function sendConnectionRequestEmail({
+  to,
+  mentorName,
+  studentName,
+  studentMessage,
+}: ConnectionRequestEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping connection request email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `New Mentorship Request from ${studentName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 40px; text-align: center;">
+                      <div style="font-size: 48px; margin-bottom: 10px;">👋</div>
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">New Connection Request</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${mentorName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        <strong>${studentName}</strong> wants to connect with you for mentorship!
+                      </p>
+                      ${studentMessage ? `
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #1d4ed8; font-size: 14px; margin: 0 0 10px 0;">Their message:</p>
+                            <p style="color: #374151; font-size: 14px; margin: 0; font-style: italic;">"${studentMessage}"</p>
+                          </td>
+                        </tr>
+                      </table>
+                      ` : ''}
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        Please review this request and respond at your earliest convenience. Your guidance can make a real difference in someone's career!
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/dashboard/mentoring" style="display: inline-block; background-color: #3b82f6; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              View Request
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Responding promptly helps maintain a positive mentoring experience.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending connection request email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Connection request email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending connection request email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// CONNECTION ACCEPTED EMAIL (to student)
+// ============================================================================
+
+interface ConnectionAcceptedEmailParams {
+  to: string;
+  studentName: string;
+  mentorName: string;
+  mentorResponse?: string;
+}
+
+export async function sendConnectionAcceptedEmail({
+  to,
+  studentName,
+  mentorName,
+  mentorResponse,
+}: ConnectionAcceptedEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping connection accepted email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `${mentorName} Accepted Your Connection Request!`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 40px; text-align: center;">
+                      <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Connection Accepted!</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${studentName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        Great news! <strong>${mentorName}</strong> has accepted your connection request. You're now connected and can schedule mentoring sessions!
+                      </p>
+                      ${mentorResponse ? `
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f0fdf4; border-left: 4px solid #059669; border-radius: 0 8px 8px 0; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #047857; font-size: 14px; margin: 0 0 10px 0;">Message from ${mentorName}:</p>
+                            <p style="color: #374151; font-size: 14px; margin: 0; font-style: italic;">"${mentorResponse}"</p>
+                          </td>
+                        </tr>
+                      </table>
+                      ` : ''}
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f0fdf4; border-radius: 8px; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #059669; font-size: 16px; font-weight: bold; margin: 0 0 15px 0;">Next Steps:</p>
+                            <ul style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                              <li>Visit your mentoring dashboard</li>
+                              <li>Schedule your first session with ${mentorName}</li>
+                              <li>Prepare topics or questions to discuss</li>
+                            </ul>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/dashboard/mentoring" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Schedule a Session
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Make the most of this opportunity - your mentor is here to help you succeed!
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending connection accepted email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Connection accepted email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending connection accepted email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// CONNECTION DECLINED EMAIL (to student)
+// ============================================================================
+
+interface ConnectionDeclinedEmailParams {
+  to: string;
+  studentName: string;
+  mentorName: string;
+}
+
+export async function sendConnectionDeclinedEmail({
+  to,
+  studentName,
+  mentorName,
+}: ConnectionDeclinedEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping connection declined email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `Update on Your Connection Request`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Connection Request Update</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${studentName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        Unfortunately, <strong>${mentorName}</strong> is unable to accept your connection request at this time. This could be due to their current availability or mentee capacity.
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        Don't be discouraged! There are many other experienced mentors on our platform who would love to help you grow.
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/mentors" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Find Other Mentors
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Keep learning and building your skills - the right mentor match is out there!
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending connection declined email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Connection declined email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending connection declined email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// SESSION BOOKED EMAIL
+// ============================================================================
+
+interface SessionBookedEmailParams {
+  to: string;
+  recipientName: string;
+  otherPartyName: string;
+  isForMentor: boolean;
+  sessionDate: Date;
+  sessionTopic?: string;
+  meetingUrl?: string;
+}
+
+export async function sendSessionBookedEmail({
+  to,
+  recipientName,
+  otherPartyName,
+  isForMentor,
+  sessionDate,
+  sessionTopic,
+  meetingUrl,
+}: SessionBookedEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping session booked email');
+    return null;
+  }
+
+  const formattedDate = sessionDate.toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  const roleLabel = isForMentor ? 'mentee' : 'mentor';
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `Mentorship Session Scheduled with ${otherPartyName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); padding: 40px; text-align: center;">
+                      <div style="font-size: 48px; margin-bottom: 10px;">📅</div>
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Session Scheduled!</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${recipientName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        A mentorship session has been scheduled with your ${roleLabel}, <strong>${otherPartyName}</strong>.
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f3ff; border: 2px solid #7c3aed; border-radius: 8px; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 30px;">
+                            <p style="color: #5b21b6; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 15px 0;">Session Details</p>
+                            <p style="color: #374151; font-size: 16px; margin: 0 0 10px 0;"><strong>When:</strong> ${formattedDate}</p>
+                            <p style="color: #374151; font-size: 16px; margin: 0 0 10px 0;"><strong>${isForMentor ? 'Mentee' : 'Mentor'}:</strong> ${otherPartyName}</p>
+                            ${sessionTopic ? `<p style="color: #374151; font-size: 16px; margin: 0;"><strong>Topic:</strong> ${sessionTopic}</p>` : ''}
+                          </td>
+                        </tr>
+                      </table>
+                      ${meetingUrl ? `
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="${meetingUrl}" style="display: inline-block; background-color: #7c3aed; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Join Meeting
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      ` : `
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/dashboard/mentoring" style="display: inline-block; background-color: #7c3aed; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              View Session Details
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      `}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Add this to your calendar and come prepared!
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending session booked email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Session booked email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending session booked email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+// ============================================================================
+// SESSION CANCELLED EMAIL
+// ============================================================================
+
+interface SessionCancelledEmailParams {
+  to: string;
+  recipientName: string;
+  otherPartyName: string;
+  sessionDate: Date;
+  cancelledBy: string;
+  reason?: string;
+}
+
+export async function sendSessionCancelledEmail({
+  to,
+  recipientName,
+  otherPartyName,
+  sessionDate,
+  cancelledBy,
+  reason,
+}: SessionCancelledEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping session cancelled email');
+    return null;
+  }
+
+  const formattedDate = sessionDate.toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `Mentorship Session Cancelled`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Session Cancelled</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${recipientName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        Your mentorship session with <strong>${otherPartyName}</strong> has been cancelled by ${cancelledBy}.
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fef2f2; border-left: 4px solid #dc2626; border-radius: 0 8px 8px 0; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #dc2626; font-size: 14px; margin: 0 0 10px 0;">Cancelled Session:</p>
+                            <p style="color: #374151; font-size: 14px; margin: 0;">${formattedDate}</p>
+                            ${reason ? `<p style="color: #6b7280; font-size: 14px; margin: 10px 0 0 0;"><strong>Reason:</strong> ${reason}</p>` : ''}
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                        You can reschedule a new session from your mentoring dashboard.
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://mentor.energy/dashboard/mentoring" style="display: inline-block; background-color: #dc2626; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Reschedule Session
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        We apologize for any inconvenience caused.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending session cancelled email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Session cancelled email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending session cancelled email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}

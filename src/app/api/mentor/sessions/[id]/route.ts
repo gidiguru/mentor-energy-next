@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentors, mentorshipSessions, eq } from '@/lib/db';
+import { sendSessionCancelledEmail } from '@/lib/email';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -89,6 +90,48 @@ export async function PATCH(request: NextRequest, { params }: Props) {
           updatedAt: new Date(),
         })
         .where(eq(mentors.id, session.mentorId));
+    }
+
+    // Send cancellation emails if session was cancelled
+    if (status === 'cancelled') {
+      // Get mentor info
+      const mentor = await database.query.mentors.findFirst({
+        where: eq(mentors.id, session.mentorId),
+      });
+      const mentorUser = mentor ? await database.query.users.findFirst({
+        where: eq(users.id, mentor.userId),
+      }) : null;
+
+      // Get student info
+      const student = await database.query.users.findFirst({
+        where: eq(users.id, session.studentId),
+      });
+
+      const mentorName = `${mentorUser?.firstName || ''} ${mentorUser?.lastName || ''}`.trim() || 'Mentor';
+      const studentName = `${student?.firstName || ''} ${student?.lastName || ''}`.trim() || 'Student';
+      const cancelledBy = isMentor ? mentorName : studentName;
+
+      // Send to student (if cancelled by mentor)
+      if (isMentor && student?.email) {
+        await sendSessionCancelledEmail({
+          to: student.email,
+          recipientName: studentName,
+          otherPartyName: mentorName,
+          sessionDate: session.scheduledAt,
+          cancelledBy,
+        });
+      }
+
+      // Send to mentor (if cancelled by student)
+      if (isStudent && mentorUser?.email) {
+        await sendSessionCancelledEmail({
+          to: mentorUser.email,
+          recipientName: mentorName,
+          otherPartyName: studentName,
+          sessionDate: session.scheduledAt,
+          cancelledBy,
+        });
+      }
     }
 
     return NextResponse.json({

@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentorApplications, eq } from '@/lib/db';
+import { sendMentorApplicationSubmittedEmail } from '@/lib/email';
 
 // GET - Check application status
 export async function GET() {
@@ -115,6 +116,15 @@ export async function POST(request: NextRequest) {
         availability: availability || null,
       })
       .returning();
+
+    // Send confirmation email
+    if (user.email) {
+      await sendMentorApplicationSubmittedEmail({
+        to: user.email,
+        userName: user.firstName || user.email,
+        expertise,
+      });
+    }
 
     return NextResponse.json({
       success: true,

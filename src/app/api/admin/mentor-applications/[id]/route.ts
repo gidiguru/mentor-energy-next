@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentors, mentorApplications, eq } from '@/lib/db';
+import { sendMentorApplicationApprovedEmail, sendMentorApplicationRejectedEmail } from '@/lib/email';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -61,6 +62,11 @@ export async function PATCH(request: NextRequest, { params }: Props) {
       .where(eq(mentorApplications.id, id))
       .returning();
 
+    // Get applicant info for email
+    const applicant = await database.query.users.findFirst({
+      where: eq(users.id, application.userId),
+    });
+
     // If approved, create mentor profile and update user role
     if (status === 'approved') {
       // Create mentor profile
@@ -84,6 +90,23 @@ export async function PATCH(request: NextRequest, { params }: Props) {
           updatedAt: new Date(),
         })
         .where(eq(users.id, application.userId));
+
+      // Send approval email
+      if (applicant?.email) {
+        await sendMentorApplicationApprovedEmail({
+          to: applicant.email,
+          userName: applicant.firstName || applicant.email,
+        });
+      }
+    } else {
+      // Send rejection email
+      if (applicant?.email) {
+        await sendMentorApplicationRejectedEmail({
+          to: applicant.email,
+          userName: applicant.firstName || applicant.email,
+          reason: reviewNotes,
+        });
+      }
     }
 
     return NextResponse.json({

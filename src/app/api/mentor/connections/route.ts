@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentors, mentorConnections, eq, and } from '@/lib/db';
+import { sendConnectionRequestEmail } from '@/lib/email';
 
 // GET - List connections for current user (as student or mentor)
 export async function GET() {
@@ -203,6 +204,24 @@ export async function POST(request: NextRequest) {
         },
       })
       .returning();
+
+    // Get mentor's user info for email
+    const mentorUser = await database.query.users.findFirst({
+      where: eq(users.id, mentor.userId),
+    });
+
+    // Send email to mentor
+    if (mentorUser?.email) {
+      const studentName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+      const mentorName = `${mentorUser.firstName || ''} ${mentorUser.lastName || ''}`.trim() || 'Mentor';
+
+      await sendConnectionRequestEmail({
+        to: mentorUser.email,
+        mentorName,
+        studentName,
+        studentMessage: message,
+      });
+    }
 
     return NextResponse.json({
       success: true,
