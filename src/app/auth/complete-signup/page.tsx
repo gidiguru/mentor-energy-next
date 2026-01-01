@@ -105,7 +105,12 @@ function CompleteSignupContent() {
       });
 
       if (response.ok) {
-        router.push('/dashboard');
+        // Redirect mentors to the application page, students to dashboard
+        if (role === 'mentor') {
+          router.push('/mentors/apply');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to save profile');
@@ -343,6 +348,14 @@ function CompleteSignupContent() {
                 </p>
               </div>
 
+              {role === 'mentor' && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    <strong>Next step:</strong> After completing your profile, you'll be directed to the mentor application form where you can share your experience and expertise.
+                  </p>
+                </div>
+              )}
+
               {/* Summary */}
               <div className="bg-surface-50 dark:bg-surface-900/50 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between text-sm">
@@ -382,18 +395,22 @@ function CompleteSignupContent() {
                     <Loader2 className="h-5 w-5 animate-spin" />
                     Saving...
                   </>
+                ) : role === 'mentor' ? (
+                  'Continue to Mentor Application'
                 ) : (
                   'Complete Profile'
                 )}
               </button>
 
-              <button
-                onClick={handleComplete}
-                disabled={saving}
-                className="w-full py-2 text-sm text-surface-500 hover:text-surface-700 dark:hover:text-surface-300"
-              >
-                Skip for now
-              </button>
+              {role !== 'mentor' && (
+                <button
+                  onClick={handleComplete}
+                  disabled={saving}
+                  className="w-full py-2 text-sm text-surface-500 hover:text-surface-700 dark:hover:text-surface-300"
+                >
+                  Skip for now
+                </button>
+              )}
             </div>
           )}
         </div>
