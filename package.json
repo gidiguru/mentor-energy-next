@@ -37,6 +37,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@netlify/functions": "^5.1.2",
     "@skeletonlabs/skeleton": "^4.8.0",
     "@skeletonlabs/skeleton-react": "^4.8.0",
     "@tailwindcss/postcss": "^4",
