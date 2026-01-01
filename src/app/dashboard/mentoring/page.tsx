@@ -706,7 +706,7 @@ export default function MentoringDashboard() {
                   Your Availability
                 </h2>
                 <p className="text-sm text-surface-600 dark:text-surface-400">
-                  Set when students can book sessions with you
+                  Set when mentees can book sessions with you
                 </p>
               </div>
               <button
@@ -871,10 +871,10 @@ export default function MentoringDashboard() {
           <div className="space-y-6">
             <div>
               <h2 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                Find Students to Mentor
+                Find Mentees
               </h2>
               <p className="text-sm text-surface-600 dark:text-surface-400 mb-6">
-                Discover students whose interests match your expertise
+                Discover mentees whose interests match your expertise
               </p>
             </div>
 
@@ -882,7 +882,7 @@ export default function MentoringDashboard() {
               <div className="text-center py-12 bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700">
                 <Users className="w-12 h-12 text-surface-400 mx-auto mb-4" />
                 <p className="text-surface-600 dark:text-surface-400">No potential mentees found</p>
-                <p className="text-sm text-surface-500 mt-1">Check back later as more students join</p>
+                <p className="text-sm text-surface-500 mt-1">Check back later as more mentees join</p>
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

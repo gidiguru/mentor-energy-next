@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
               <p className="text-2xl font-bold">
                 {users.filter((u) => u.role === 'student').length}
               </p>
-              <p className="text-sm text-surface-500">Students</p>
+              <p className="text-sm text-surface-500">Mentees</p>
             </div>
           </div>
         </div>
@@ -250,7 +250,7 @@ export default function AdminUsersPage() {
                           disabled={updatingUserId === user.id}
                           className="input py-1 text-sm"
                         >
-                          <option value="student">Student</option>
+                          <option value="student">Mentee</option>
                           <option value="mentor">Mentor</option>
                           <option value="admin">Admin</option>
                         </select>

@@ -325,8 +325,8 @@ export default function ManageMentorsPage() {
               This will:
             </p>
             <ul className="text-sm text-surface-500 list-disc list-inside mb-6 space-y-1">
-              <li>Change their role back to student</li>
-              <li>Hide their mentor profile from students</li>
+              <li>Change their role back to mentee</li>
+              <li>Hide their mentor profile from mentees</li>
               <li>Send them an email notification</li>
             </ul>
 
