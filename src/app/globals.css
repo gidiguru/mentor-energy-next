@@ -136,46 +136,46 @@ html.dark body {
 .cl-cardBox,
 .cl-main,
 .cl-form,
-.cl-footer {
+.cl-footer,
+.cl-formButtonPrimary {
   overflow: visible !important;
 }
 
-/* Reorder Clerk form elements to show Turnstile after social buttons */
-.cl-main {
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-/* Social buttons section - show first */
+/* Position the social buttons container as reference point */
 .cl-socialButtons {
-  order: 1 !important;
+  position: relative !important;
+  margin-bottom: 5rem !important; /* Make room for Turnstile */
 }
 
-/* Cloudflare Turnstile widget - show second (right after social buttons) */
-.cl-main > div:has(iframe[src*="challenges.cloudflare.com"]),
-.cl-main > div:has([data-testid="cf-turnstile"]),
-.cl-main > div:has(.cf-turnstile),
-.cl-footerAction:has(iframe),
-[data-testid="cf-turnstile"],
-.cf-turnstile {
-  order: 2 !important;
+/* Move Cloudflare Turnstile widget right below social buttons */
+.cl-card iframe[src*="challenges.cloudflare.com"],
+.cl-card [data-testid="cf-turnstile"],
+.cl-rootBox iframe[src*="challenges.cloudflare.com"],
+.cl-rootBox [data-testid="cf-turnstile"] {
+  position: absolute !important;
+  top: auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  margin-top: 0.5rem !important;
+  z-index: 10 !important;
+}
+
+/* Target the Turnstile container div */
+.cl-card > div:last-of-type:has(iframe[src*="challenges.cloudflare.com"]),
+div:has(> iframe[src*="challenges.cloudflare.com"]) {
+  position: absolute !important;
+  top: auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 300px !important;
+  z-index: 100 !important;
+}
+
+/* Alternative: Style Turnstile to appear inline after social buttons */
+.cl-socialButtonsBlockButton + div:has(iframe),
+.cl-socialButtons ~ div:has(iframe[src*="cloudflare"]) {
   margin-top: 1rem !important;
   margin-bottom: 1rem !important;
-}
-
-/* Divider - show third */
-.cl-dividerRow {
-  order: 3 !important;
-}
-
-/* Form fields - show fourth */
-.cl-form {
-  order: 4 !important;
-}
-
-/* Footer - show last */
-.cl-footer {
-  order: 5 !important;
 }
 
 /* Cloudflare Turnstile widget container styling */
