@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { Flame, Trophy, Medal, BookOpen, Award, TrendingUp, Bookmark, Clock, ChevronRight, GraduationCap, BarChart3, FileText, Download, Users } from 'lucide-react';
+import { Flame, Trophy, Medal, BookOpen, Award, TrendingUp, Bookmark, Clock, ChevronRight, GraduationCap, BarChart3, FileText, Download, Users, Calendar } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -638,9 +638,10 @@ export default function DashboardPage() {
                 </Link>
               ) : (
                 <Link
-                  href="/dashboard/mentorship"
-                  className="btn preset-filled-secondary-500 w-full"
+                  href="/dashboard/mentoring"
+                  className="btn preset-filled-secondary-500 w-full flex items-center justify-center gap-2"
                 >
+                  <Calendar className="w-4 h-4" />
                   Book Mentorship
                 </Link>
               )}
