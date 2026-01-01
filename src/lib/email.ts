@@ -2384,3 +2384,105 @@ export async function sendMentorStatusRevokedEmail({
     return { error: error instanceof Error ? error.message : String(error) };
   }
 }
+
+// ============================================================================
+// MENTOR STATUS REINSTATED EMAIL
+// ============================================================================
+
+interface MentorStatusReinstatedEmailParams {
+  to: string;
+  userName: string;
+}
+
+export async function sendMentorStatusReinstatedEmail({
+  to,
+  userName,
+}: MentorStatusReinstatedEmailParams) {
+  const client = getResendClient();
+  if (!client) {
+    console.warn('RESEND_API_KEY not configured - skipping mentor reinstated email');
+    return null;
+  }
+
+  try {
+    const { data, error } = await client.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Mentor Energy <hello@mentor.energy>',
+      to: [to],
+      subject: `Welcome Back! Your Mentor Status Has Been Reinstated`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f5;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 40px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Welcome Back!</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="color: #374151; font-size: 18px; margin: 0 0 20px 0;">
+                        Hi <strong>${userName}</strong>,
+                      </p>
+                      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                        Great news! Your mentor status on mentor.energy has been <strong style="color: #059669;">reinstated</strong>.
+                      </p>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f0fdf4; border-radius: 8px; margin: 0 0 30px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="color: #059669; font-size: 16px; font-weight: bold; margin: 0 0 15px 0;">What's Next:</p>
+                            <ul style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                              <li>Your profile is now visible to students again</li>
+                              <li>Review and update your availability</li>
+                              <li>Check for any pending connection requests</li>
+                              <li>Continue making an impact!</li>
+                            </ul>
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://mentor.energy'}/dashboard/mentoring" style="display: inline-block; background-color: #059669; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                              Go to Mentor Dashboard
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f9fafb; padding: 30px 40px; border-top: 1px solid #e5e7eb;">
+                      <p style="color: #6b7280; font-size: 14px; margin: 0; text-align: center;">
+                        Thank you for being part of mentor.energy!
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error('Error sending mentor reinstated email:', error);
+      return { error: error.message || JSON.stringify(error) };
+    }
+
+    console.log(`Mentor reinstated email sent to ${to}`);
+    return data;
+  } catch (error) {
+    console.error('Error sending mentor reinstated email:', error);
+    return { error: error instanceof Error ? error.message : String(error) };
+  }
+}

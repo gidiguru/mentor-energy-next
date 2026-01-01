@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { db, users, mentors, eq } from '@/lib/db';
-import { sendMentorStatusRevokedEmail } from '@/lib/email';
+import { sendMentorStatusRevokedEmail, sendMentorStatusReinstatedEmail } from '@/lib/email';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -100,6 +100,14 @@ export async function PATCH(request: NextRequest, { params }: Props) {
           updatedAt: new Date(),
         })
         .where(eq(users.id, mentor.userId));
+
+      // Send notification email
+      if (mentor.user?.email) {
+        await sendMentorStatusReinstatedEmail({
+          to: mentor.user.email,
+          userName: mentor.user.firstName || mentor.user.email,
+        });
+      }
 
       return NextResponse.json({
         success: true,
