@@ -1422,6 +1422,8 @@ export async function sendAdminNewMentorApplicationEmail({
   }
 
   const adminEmail = process.env.ADMIN_EMAIL;
+  console.log('Admin email config:', { adminEmail: adminEmail ? `${adminEmail.substring(0, 3)}...` : 'NOT SET' });
+
   if (!adminEmail) {
     console.warn('ADMIN_EMAIL not configured - skipping admin notification');
     return null;

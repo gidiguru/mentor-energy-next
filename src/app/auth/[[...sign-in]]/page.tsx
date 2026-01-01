@@ -1,8 +1,8 @@
 'use client';
 
-import { useSignIn } from '@clerk/nextjs';
+import { useSignIn, useUser } from '@clerk/nextjs';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { Clock, Mail, Users, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getErrorMessage } from '@/lib/clerk-errors';
@@ -35,6 +35,7 @@ function TimeoutBanner() {
 function AuthPageContent() {
   const [authMethod, setAuthMethod] = useState<AuthMethod>('choice');
   const { signIn, isLoaded, setActive } = useSignIn();
+  const { isSignedIn, isLoaded: userLoaded } = useUser();
   const router = useRouter();
 
   // Email form state
@@ -42,6 +43,22 @@ function AuthPageContent() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Redirect if already signed in
+  useEffect(() => {
+    if (userLoaded && isSignedIn) {
+      router.push('/dashboard');
+    }
+  }, [userLoaded, isSignedIn, router]);
+
+  // Show loading while checking auth state
+  if (!userLoaded || isSignedIn) {
+    return (
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+      </div>
+    );
+  }
 
   const handleSocialSignIn = async (provider: 'oauth_google' | 'oauth_linkedin_oidc') => {
     if (!isLoaded || !signIn) return;
