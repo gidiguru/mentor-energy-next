@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
-import { Flame, Trophy, Medal, BookOpen, Award, TrendingUp, Bookmark, Clock, ChevronRight, GraduationCap, BarChart3, FileText, Download } from 'lucide-react';
+import { Flame, Trophy, Medal, BookOpen, Award, TrendingUp, Bookmark, Clock, ChevronRight, GraduationCap, BarChart3, FileText, Download, Users } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -102,6 +102,7 @@ export default function DashboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [isMentor, setIsMentor] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -135,6 +136,7 @@ export default function DashboardPage() {
         if (profileRes.ok) {
           const data = await profileRes.json();
           setProfile(data.profile);
+          setIsMentor(data.isMentor || false);
         }
 
         // Process enrolled courses with progress
@@ -608,12 +610,22 @@ export default function DashboardPage() {
               >
                 Browse Courses
               </Link>
-              <Link
-                href="/dashboard/mentorship"
-                className="btn preset-filled-secondary-500 w-full"
-              >
-                Book Mentorship
-              </Link>
+              {isMentor ? (
+                <Link
+                  href="/dashboard/mentoring"
+                  className="btn preset-filled-secondary-500 w-full flex items-center justify-center gap-2"
+                >
+                  <Users className="w-4 h-4" />
+                  Mentoring Dashboard
+                </Link>
+              ) : (
+                <Link
+                  href="/dashboard/mentorship"
+                  className="btn preset-filled-secondary-500 w-full"
+                >
+                  Book Mentorship
+                </Link>
+              )}
               <Link href="/profile" className="btn preset-outlined-surface-500 w-full">
                 Update Profile
               </Link>

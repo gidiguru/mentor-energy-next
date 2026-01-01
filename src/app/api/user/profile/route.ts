@@ -1,6 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { db, users, eq } from '@/lib/db';
+import { db, users, mentors, eq } from '@/lib/db';
 import { sendWelcomeEmail } from '@/lib/email';
 
 export async function GET() {
@@ -21,6 +21,7 @@ export async function GET() {
       const clerkUser = await currentUser();
       return NextResponse.json({
         profile: null,
+        isMentor: false,
         clerkUser: {
           id: clerkUser?.id,
           email: clerkUser?.emailAddresses[0]?.emailAddress,
@@ -30,7 +31,14 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({ profile });
+    // Check if user is an approved mentor
+    const mentorRecord = await database.query.mentors.findFirst({
+      where: eq(mentors.userId, profile.id),
+    });
+
+    const isMentor = profile.role === 'mentor' || (!!mentorRecord && mentorRecord.isVerified);
+
+    return NextResponse.json({ profile, isMentor });
   } catch (error) {
     console.error('Error fetching profile:', error);
     return NextResponse.json(
